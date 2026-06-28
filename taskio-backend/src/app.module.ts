@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { User } from './user/entities/user.entity';
-import { UserModule } from './user/user.module'; // 1. تأكد من استيراد الـ UserModule هنا
+import { User } from './auth/entities/user.entity';
+import { UserModule } from './auth/auth.module'; // 1. تأكد من استيراد الـ UserModule هنا
 
 @Module({
   imports: [

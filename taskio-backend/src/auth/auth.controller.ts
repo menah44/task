@@ -1,14 +1,13 @@
 import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
-import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto'; // استيراد الـ DTO
+import { CreateUserDto } from './dto/create-user.dto';
 
-@Controller('user')
+@Controller('user') // أو 'auth' لو غيرت المسار لـ auth
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  // الـ Controller بيستدعي الـ Service فقط، ومبيحتاجش يحقن الـ Repository هنا
+  constructor() {}
 
   @Post('login')
   login(@Body() body: CreateUserDto) {
-    // غيرنا any للـ DTO هنا
     if (body.email === 'admin@taskio.com' && body.password === '123456') {
       return {
         accessToken: 'mock_access_token_abc123',

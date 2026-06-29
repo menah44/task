@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -27,35 +28,39 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginForm) => {
-    setApiError("");
-    setIsLoading(true);
-    try {
-      // خطوة 7: إرسال الطلب
-      const response = await apiClient.post("/user/login", data);
-      const result = response.data;
+const onSubmit = async (data: LoginForm) => {
+  setApiError("");
+  setIsLoading(true);
 
-      // حفظ التوكنز عن طريق الـ tokenStore الجديد
-      tokenStore.setTokens(result.accessToken, result.refreshToken);
+  try {
+    const response = await apiClient.post("/auth/login", data);
+    const result = response.data;
 
-      // التوجيه حسب الـ Role
-      if (result.role === "ADMIN") {
-        router.push("/admin");
-      } else {
-        router.push("/forms");
-      }
-    } catch (error: any) {
-      if (error.response?.status === 401) {
+    tokenStore.setTokens(result.accessToken, result.refreshToken);
+
+    if (result.role === "ADMIN") {
+      router.push("/admin");
+    } else {
+      router.push("/userForms");
+    }
+  } catch (error: unknown) {
+    if (typeof error === "object" && error !== null && "response" in error) {
+      const err = error as {
+        response?: { status?: number };
+      };
+
+      if (err.response?.status === 401) {
         setApiError("Invalid credentials");
-      } else if (error.response?.status === 403) {
+      } else if (err.response?.status === 403) {
         setApiError("Account deactivated");
       } else {
         setApiError("Login failed. Please try again.");
       }
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-slate-50 to-indigo-50">

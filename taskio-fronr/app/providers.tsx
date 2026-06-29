@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Toaster } from "react-hot-toast";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -10,8 +11,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 60 ثانية بناءً على شروط التأسك
-            retry: 2, // محاولتين عند الفشل
+            staleTime: 60 * 1000, 
+            retry: 2, 
           },
         },
       }),
@@ -19,6 +20,15 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          error: {
+            duration: 10000,
+          },
+        }}
+      />
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

@@ -1,20 +1,44 @@
-import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
+import { AuthService } from './auth.service';
 
-@Controller('user') // أو 'auth' لو غيرت المسار لـ auth
-export class UserController {
-  // الـ Controller بيستدعي الـ Service فقط، ومبيحتاجش يحقن الـ Repository هنا
-  constructor() {}
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  login(@Body() body: CreateUserDto) {
-    if (body.email === 'admin@taskio.com' && body.password === '123456') {
-      return {
-        accessToken: 'mock_access_token_abc123',
-        refreshToken: 'mock_refresh_token_xyz789',
-        role: 'ADMIN',
-      };
+  async login(@Body() body: CreateUserDto) {
+    const user = await this.authService.findByEmail(body.email);
+
+    // email مش موجود
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
     }
-    throw new UnauthorizedException('Invalid credentials');
+
+    // account deactivated
+    if (!user.isActive) {
+      throw new ForbiddenException('Account deactivated');
+    }
+
+    // password check
+    const isPasswordValid = await bcrypt.compare(body.password, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const tokens = this.authService.generateTokens(user);
+
+    return {
+      ...tokens,
+      role: user.role,
+    };
   }
 }

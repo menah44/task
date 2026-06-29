@@ -3,14 +3,17 @@ import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 @Entity('user')
 export class User {
   @PrimaryGeneratedColumn()
-  id!: number; // ضفنا علامة تعجب هنا
+  id!: number;
 
   @Column({ unique: true })
-  email!: string; // وهنا
+  email!: string;
 
   @Column()
-  password!: string; // وهنا
+  password!: string;
 
   @Column({ default: 'USER' })
-  role!: string; // وهنا
+  role!: string;
+
+  @Column({ default: true })
+  isActive!: boolean;
 }

@@ -1,16 +1,20 @@
 import { Module } from '@nestjs/common';
-import { UserService } from './auth.service';
-import { UserController } from './auth.controller';
-import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
+
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
 import { User } from './entities/user.entity';
 
 @Module({
   imports: [
-    // 1. السطر ده هو اللي هيخلي الـ UserService يشوف الـ UserRepository وينجح في قراءته
     TypeOrmModule.forFeature([User]),
+    JwtModule.register({
+      secret: 'super-secret-key',
+      signOptions: { expiresIn: '15m' },
+    }),
   ],
-  controllers: [UserController],
-  providers: [UserService],
-  exports: [UserService],
+  controllers: [AuthController],
+  providers: [AuthService],
 })
-export class UserModule {}
+export class AuthModule {}

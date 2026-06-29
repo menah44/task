@@ -54,7 +54,7 @@ apiClient.interceptors.response.use(
         const refreshToken = tokenStore.getRefreshToken();
 
         // ✨ التعديل هنا: غيرنا المسار لـ /user/refresh عشان يطابق الباكيند الحالي
-        const res = await axios.post(`${baseURL}/user/refresh`, {
+        const res = await axios.post(`${baseURL}/auth/refresh`, {
           refreshToken,
         });
 

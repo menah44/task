@@ -3,7 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { User } from './auth/entities/user.entity';
-import { AuthModule } from './auth/auth.module'; // 1. تأكد من استيراد الـ UserModule هنا
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { AuthModule } from './auth/auth.module'; // 1. تأكد من استير�
       entities: [User],
       synchronize: true,
     }),
-    AuthModule, // 2. تأكد من إضافة الـ AuthModule هنا جوه الـ imports!
+    AuthModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

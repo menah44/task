@@ -1,25 +1,12 @@
 import axios from "axios";
+import { useAuthStore } from "@/lib/auth-store";
 
-// خطوة 4: تحديد الـ Base URL من الـ env
 const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
 
-// خطوة 6: الـ Token Store (الافتراضي localStorage)
-export const tokenStore = {
-  getAccessToken: () => localStorage.getItem("accessToken"),
-  getRefreshToken: () => localStorage.getItem("refreshToken"),
-  setTokens(access: string, refresh: string) {
-    localStorage.setItem("accessToken", access);
-    localStorage.setItem("refreshToken", refresh);
-  },
-  clearTokens() {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-  },
-};
-
-// خطوة 5: دالة إظهار الـ Toast
 function showToast(message: string) {
-  alert(message); // سيظهر رسالة تنبيه عادية في المتصفح عند حدوث خطأ 403 أو 500
+  if (typeof window !== "undefined") {
+    alert(message);
+  }
 }
 
 const apiClient = axios.create({
@@ -29,53 +16,55 @@ const apiClient = axios.create({
   },
 });
 
-// خطوة 2: الـ Request Interceptor لربط التوكن تلقائياً
+// Request Interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    const token = tokenStore.getAccessToken();
+    // Get latest token from the Zustand store
+    const token = useAuthStore.getState().accessToken || (typeof window !== "undefined" ? localStorage.getItem("accessToken") : null);
+
     if (token && config.headers) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error),
 );
 
-// خطوة 3: الـ Response Interceptor للـ Refresh والـ Toasts
+// Response Interceptor
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // 401 -> Silent Refresh
+    // 401 Unauthorized check for automatic token refresh retry
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+
       try {
-        const refreshToken = tokenStore.getRefreshToken();
+        const store = useAuthStore.getState();
+        
+        // Trigger token refresh through the store to ensure state sync
+        await store.refreshAccessToken();
+        
+        const newAccessToken = useAuthStore.getState().accessToken;
 
-        // ✨ التعديل هنا: غيرنا المسار لـ /user/refresh عشان يطابق الباكيند الحالي
-        const res = await axios.post(`${baseURL}/auth/refresh`, {
-          refreshToken,
-        });
-
-        if (res.status === 200) {
-          const { accessToken, refreshToken: newRefresh } = res.data;
-          tokenStore.setTokens(accessToken, newRefresh);
-          originalRequest.headers["Authorization"] = `Bearer ${accessToken}`;
+        if (newAccessToken) {
+          originalRequest.headers = originalRequest.headers || {};
+          originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
           return apiClient(originalRequest);
         }
-      } catch (refreshError) {
-        tokenStore.clearTokens();
-        window.location.href = "/login";
-        return Promise.reject(refreshError);
+      } catch (err) {
+        console.error("Token refresh via interceptor failed:", err);
+        return Promise.reject(err);
       }
     }
 
-    // خطوة 3: إظهار التوست حسب نوع الخطأ
+    // 403 Forbidden check
     if (error.response?.status === 403) {
-      showToast("Access denied");
+      showToast("غير مسموح لك بالوصول إلى هذا الجزء.");
     } else if (error.response?.status === 500) {
-      showToast("Server error");
+      showToast("خطأ في الخادم الداخلي.");
     }
 
     return Promise.reject(error);

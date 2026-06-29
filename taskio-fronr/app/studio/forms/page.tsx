@@ -4,7 +4,6 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
-// 1. الأنماط (Types) متطابقة مع متطلبات الأعمدة (Columns)
 interface FormPermissions {
   canEdit: boolean;
   canView: boolean;
@@ -19,10 +18,8 @@ interface FormItem {
   permissions: FormPermissions;
 }
 
-// 2. دالة الـ Fetch الذكية - تضمن تشغيل الصفحة حتى لو الـ API لسه مش قايم
 const fetchStudioForms = async (): Promise<FormItem[]> => {
   try {
-    // محاولة جلب البيانات من الـ Endpoint المطلوبة في التأسك (A3-07)
     const response = await fetch("/api/accessible-forms");
     if (response.ok) {
       return await response.json();
@@ -31,7 +28,6 @@ const fetchStudioForms = async (): Promise<FormItem[]> => {
     console.log("Backend API not connected yet, using fallback data.");
   }
 
-  // البيانات التجريبية (Mock Data) مطابقة تماماً لشروط القبول (Acceptance Criteria)
   return [
     {
       id: "form-101",
@@ -58,11 +54,10 @@ const fetchStudioForms = async (): Promise<FormItem[]> => {
 };
 
 export default function StudioFormsPage() {
-  // 3. استخدام الـ React Query بكفاءة طبقاً للتأسك الأول
   const { data: forms, isLoading } = useQuery<FormItem[]>({
     queryKey: ["accessible-forms"],
     queryFn: fetchStudioForms,
-    staleTime: 60 * 1000, // 60 ثانية كاش
+    staleTime: 60 * 1000,
   });
 
   if (isLoading) {
@@ -75,7 +70,6 @@ export default function StudioFormsPage() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* الـ Header الهيكل الأساسي */}
       <div className="flex justify-between items-center border-b border-gray-200 pb-5">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Studio Forms</h1>
@@ -83,15 +77,19 @@ export default function StudioFormsPage() {
             Manage your forms and check deployment criteria.
           </p>
         </div>
+        {/* ✅ زرار Create New Form */}
+        <Link
+          href="/studio/forms/new"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+          + Create New Form
+        </Link>
       </div>
 
-      {/* الـ Table/Card المذكور في خطوة رقم 1 من الـ Subtasks */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
             <thead className="bg-gray-50 text-gray-700 uppercase text-xs font-semibold tracking-wider">
               <tr>
-                {/* خطوة رقم 2 من الـ Subtasks: الأعمدة المطلوبة */}
                 <th className="px-6 py-4">Title</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Updated</th>
@@ -105,12 +103,12 @@ export default function StudioFormsPage() {
                   <tr
                     key={form.id}
                     className="hover:bg-gray-50 transition-colors">
-                    {/* 1. Title */}
+                    {/* Title */}
                     <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                       {form.title}
                     </td>
 
-                    {/* 2. Status Badge (Acceptance Criteria: badges reflect status) */}
+                    {/* Status Badge */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
@@ -124,7 +122,7 @@ export default function StudioFormsPage() {
                       </span>
                     </td>
 
-                    {/* 3. Updated Date */}
+                    {/* Updated Date */}
                     <td className="px-6 py-4 whitespace-nowrap text-gray-500">
                       {new Date(form.updatedAt).toLocaleDateString("en-US", {
                         year: "numeric",
@@ -133,7 +131,7 @@ export default function StudioFormsPage() {
                       })}
                     </td>
 
-                    {/* 4. Permissions Icons */}
+                    {/* Permissions Icons */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-3 text-base">
                         {form.permissions?.canEdit && (
@@ -148,7 +146,7 @@ export default function StudioFormsPage() {
                       </div>
                     </td>
 
-                    {/* 5. Actions per row (خطوة رقم 3 من الـ Subtasks والـ Navigation الصح) */}
+                    {/* Actions */}
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                       <Link
                         href={`/studio/forms/${form.id}/builder`}

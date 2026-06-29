@@ -7,13 +7,18 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {
-      colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-      },
+  extend: {
+    colors: {
+      primary: "#2563EB",
+      success: "#16A34A",
+      warning: "#D97706",
+      error: "#DC2626",
+    },
+    fontFamily: {
+      sans: ["Inter", "sans-serif"],
     },
   },
+},
   plugins: [],
 };
 export default config;

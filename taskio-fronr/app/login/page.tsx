@@ -38,25 +38,17 @@ const onSubmit = async (data: LoginForm) => {
 
     tokenStore.setTokens(result.accessToken, result.refreshToken);
 
+    localStorage.setItem("userEmail", data.email);
+    localStorage.setItem("userRole", result.role);
+
     if (result.role === "ADMIN") {
       router.push("/admin");
     } else {
       router.push("/userForms");
     }
-  } catch (error: unknown) {
-    if (typeof error === "object" && error !== null && "response" in error) {
-      const err = error as {
-        response?: { status?: number };
-      };
-
-      if (err.response?.status === 401) {
-        setApiError("Invalid credentials");
-      } else if (err.response?.status === 403) {
-        setApiError("Account deactivated");
-      } else {
-        setApiError("Login failed. Please try again.");
-      }
-    }
+  } catch (error) {
+    console.error(error);
+    setApiError("Login failed");
   } finally {
     setIsLoading(false);
   }

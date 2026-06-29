@@ -1,0 +1,86 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import UserMenu from "@/components/UserMenu";
+import { tokenStore } from "@/lib/api/client";
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+
+  const [user, setUser] = useState({
+    role: "ADMIN",
+    email: "",
+  });
+
+  useEffect(() => {
+    const storedRole = localStorage.getItem("userRole");
+    const storedEmail = localStorage.getItem("userEmail");
+
+    setUser({
+      role: storedRole || "ADMIN",
+      email: storedEmail || "admin@taskio.com",
+    });
+  }, []);
+
+  const handleLogout = () => {
+    tokenStore.clearTokens();
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userEmail");
+    router.push("/login");
+  };
+
+  return (
+    <div className="min-h-screen flex bg-slate-100">
+      {/* Sidebar */}
+      <aside className="w-72 bg-slate-900 text-white flex flex-col shadow-xl">
+        <div className="px-6 py-8 border-b border-slate-800">
+          <h1 className="text-3xl font-bold">
+            Taskio <span className="text-primary">Pro</span>
+          </h1>
+          <p className="text-sm text-slate-400 mt-2">Admin Workspace</p>
+        </div>
+
+        <nav className="flex-1 px-4 py-6 space-y-2">
+          <button className="w-full text-left px-4 py-3 rounded-xl bg-primary font-medium">
+            Dashboard
+          </button>
+
+          <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition">
+            Forms
+          </button>
+
+          <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition">
+            Responses
+          </button>
+
+          <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition">
+            Settings
+          </button>
+        </nav>
+
+        <div className="p-4 border-t border-slate-800">
+          <button
+            onClick={handleLogout}
+            className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 transition font-semibold"
+          >
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <div className="flex-1 flex flex-col">
+        <header className="h-20 bg-white border-b px-8 flex items-center justify-end shadow-sm">
+          <UserMenu name={user.role} email={user.email} />
+        </header>
+
+        <main className="flex-1 p-8 overflow-auto">{children}</main>
+      </div>
+    </div>
+  );
+}

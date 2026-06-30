@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
 import { CreateUserAdminDto } from './dto/create-user-admin.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -13,10 +14,13 @@ export class UsersService {
   ) {}
 
   async findMe(id: number) {
+    return this.findById(id);
+  }
+
+  async findById(id: number) {
     const user = await this.userRepository.findOne({
       where: { id },
     });
-    
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -34,8 +38,8 @@ export class UsersService {
     if (search) {
       // Use ILIKE for case-insensitive search on PostgreSQL
       queryBuilder.where(
-        'user.name ILIKE :search OR user.email ILIKE :search',
-        { search: `%${search}%` }
+        'user.username ILIKE :search OR user.firstName ILIKE :search OR user.lastName ILIKE :search OR user.email ILIKE :search',
+        { search: `%${search}%` },
       );
     }
 
@@ -44,7 +48,9 @@ export class UsersService {
       'user.id',
       'user.email',
       'user.role',
-      'user.name',
+      'user.username',
+      'user.firstName',
+      'user.lastName',
       'user.isActive',
     ]);
 
@@ -71,17 +77,28 @@ export class UsersService {
     }
 
     const existingUser = await this.userRepository.findOne({
-      where: { email: dto.email.toLowerCase() },
+      where: [
+        { email: dto.email.toLowerCase() },
+        { username: dto.username }
+      ],
     });
 
     if (existingUser) {
-      throw new ConflictException('Email already registered.');
+      if (existingUser.email === dto.email.toLowerCase()) {
+        throw new ConflictException('Email already registered.');
+      }
+      if (existingUser.username === dto.username) {
+        throw new ConflictException('Username already registered.');
+      }
+      throw new ConflictException('User already exists.');
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const newUser = this.userRepository.create({
-      name: dto.name,
+      username: dto.username,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
       email: dto.email.toLowerCase(),
       password: hashedPassword,
       role: dto.role.toUpperCase(),
@@ -114,6 +131,42 @@ export class UsersService {
     user.isActive = true;
     await this.userRepository.save(user);
     
+    const { password, ...result } = user;
+    return result;
+  }
+
+  async updateUser(id: number, dto: UpdateUserDto) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (dto.email && dto.email.toLowerCase() !== user.email) {
+      const existingEmail = await this.userRepository.findOne({
+        where: { email: dto.email.toLowerCase() },
+      });
+      if (existingEmail) {
+        throw new ConflictException('Email already registered.');
+      }
+      user.email = dto.email.toLowerCase();
+    }
+
+    if (dto.username && dto.username !== user.username) {
+      const existingUsername = await this.userRepository.findOne({
+        where: { username: dto.username },
+      });
+      if (existingUsername) {
+        throw new ConflictException('Username already registered.');
+      }
+      user.username = dto.username;
+    }
+
+    if (dto.firstName !== undefined) user.firstName = dto.firstName;
+    if (dto.lastName !== undefined) user.lastName = dto.lastName;
+    if (dto.role) user.role = dto.role.toUpperCase();
+
+    await this.userRepository.save(user);
+
     const { password, ...result } = user;
     return result;
   }

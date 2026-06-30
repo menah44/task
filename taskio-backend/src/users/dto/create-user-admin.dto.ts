@@ -1,18 +1,22 @@
-import { IsEmail, IsNotEmpty, IsEnum, IsOptional, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsEnum, MinLength, IsOptional } from 'class-validator';
 
 export class CreateUserAdminDto {
-  @IsOptional()
-  name?: string;
-
-  @IsEmail({}, { message: 'Please enter a valid email address.' })
-  @IsNotEmpty({ message: 'Email is required.' })
+  @IsEmail()
+  @IsNotEmpty()
   email!: string;
 
-  @MinLength(6, { message: 'Password must be at least 6 characters long.' })
-  @IsNotEmpty({ message: 'Password is required.' })
+  @IsNotEmpty()
+  username!: string;
+
+  @IsNotEmpty()
+  firstName!: string;
+
+  @IsNotEmpty()
+  lastName!: string;
+
+  @MinLength(6)
   password!: string;
 
-  @IsEnum(['ADMIN', 'USER'], { message: 'Role must be either ADMIN or USER.' })
-  @IsNotEmpty({ message: 'Role is required.' })
+  @IsEnum(['ADMIN', 'USER'])
   role!: 'ADMIN' | 'USER';
 }

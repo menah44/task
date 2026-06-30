@@ -19,13 +19,13 @@ const apiClient = axios.create({
 // Request Interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    // Get latest token from the Zustand store
+    // Get latest token from the Zustand store or localStorage
     const token = useAuthStore.getState().accessToken || (typeof window !== "undefined" ? localStorage.getItem("accessToken") : null);
 
     console.log(`[Axios Outgoing Request] URL: ${config.url} | Token Present: ${!!token}`);
 
-    if (token && config.headers) {
-      config.headers["Authorization"] = `Bearer ${token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;

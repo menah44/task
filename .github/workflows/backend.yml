@@ -54,5 +54,6 @@ jobs:
             docker run -d \
               --name taskio-backend \
               --restart always \
-              -p 5000:5000 \
+              --network taskio-net \
+              -p 5000:3002 \
               ${{ secrets.DOCKER_USERNAME }}/taskio-backend:v1

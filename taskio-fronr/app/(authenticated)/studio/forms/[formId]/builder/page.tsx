@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
 import {
   DndContext,
   closestCenter,
@@ -63,8 +66,6 @@ const QUESTION_TYPES: { type: QuestionType; label: string; icon: string }[] = [
 ];
 
 // ======================== Mapping: builder type -> AnswerField type ========================
-// The builder uses its own internal type names; AnswerField expects the
-// canonical API-facing type names. This keeps both systems decoupled.
 function toAnswerType(type: QuestionType): AnswerQuestionType {
   switch (type) {
     case "text":
@@ -206,7 +207,6 @@ function PreviewModal({
   sections: Section[];
   onClose: () => void;
 }) {
-  // local answer state, only used inside the preview so admins can "try" the form
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [showValidation, setShowValidation] = useState(false);
 
@@ -280,6 +280,7 @@ export default function FormBuilderPage({
 }: {
   params: { formId: string };
 }) {
+  const pathname = usePathname();
   const [sections, setSections] = useState<Section[]>(INITIAL_SECTIONS);
   const [selectedSectionId, setSelectedSectionId] = useState<string>(
     INITIAL_SECTIONS[0].id,
@@ -292,7 +293,6 @@ export default function FormBuilderPage({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [savedFieldFlash, setSavedFieldFlash] = useState<string | null>(null);
-  // ✅ NEW: controls whether the Preview modal is open
   const [showPreview, setShowPreview] = useState(false);
 
   const sensors = useSensors(
@@ -526,14 +526,35 @@ export default function FormBuilderPage({
 
       {/* ════ CENTER PANEL: Question Canvas ════ */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
+        {/* Top Bar with Tabs */}
         <div className="bg-[#161b22] border-b border-[#30363d] px-6 py-3 flex items-center justify-between">
           <div>
-            <h1 className="text-sm font-semibold text-white">Form Builder</h1>
-            <p className="text-xs text-gray-500">Form ID: {params.formId}</p>
+            {/* Tabs */}
+            <div className="flex items-center gap-4">
+              <Link
+                href={`/studio/forms/${params.formId}/builder`}
+                className={`text-sm font-medium transition-colors ${
+                  pathname?.includes("/builder")
+                    ? "text-white border-b-2 border-blue-500 pb-1"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}>
+                Builder
+              </Link>
+              <Link
+                href={`/studio/forms/${params.formId}/settings`}
+                className={`text-sm font-medium transition-colors ${
+                  pathname?.includes("/settings")
+                    ? "text-white border-b-2 border-blue-500 pb-1"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}>
+                Settings
+              </Link>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Form ID: {params.formId}
+            </p>
           </div>
           <div className="flex items-center gap-2">
-            {/* ✅ NEW: Preview button */}
             <button
               onClick={() => setShowPreview(true)}
               className="px-4 py-1.5 bg-[#21262d] hover:bg-[#2d333b] border border-[#30363d] text-gray-200 text-sm font-medium rounded-lg transition-colors">
@@ -783,7 +804,6 @@ export default function FormBuilderPage({
         )}
       </aside>
 
-      {/* ✅ NEW: Preview Modal (renders using AnswerField) */}
       {showPreview && (
         <PreviewModal
           sections={sections}

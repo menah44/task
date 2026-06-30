@@ -1,0 +1,304 @@
+"use client";
+
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+
+interface FormSettings {
+  startDate: string;
+  endDate: string;
+  maxResponses: number | "";
+  allowAnonymous: boolean;
+  requireLogin: boolean;
+  showProgress: boolean;
+}
+
+// Mock data for development (remove when API is ready)
+const MOCK_SETTINGS: FormSettings = {
+  startDate: "2026-01-01",
+  endDate: "2026-12-31",
+  maxResponses: 100,
+  allowAnonymous: true,
+  requireLogin: false,
+  showProgress: true,
+};
+
+export default function SettingsPage() {
+  const { formId } = useParams<{ formId: string }>();
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const [settings, setSettings] = useState<FormSettings>({
+    startDate: "",
+    endDate: "",
+    maxResponses: "",
+    allowAnonymous: false,
+    requireLogin: false,
+    showProgress: false,
+  });
+
+  // Fetch settings – fallback to mock if API fails
+  useEffect(() => {
+    if (!formId) return;
+
+    const fetchForm = async () => {
+      try {
+        console.log(`📡 Fetching settings for formId: ${formId}`);
+        const res = await fetch(`/api/forms/${formId}`);
+        console.log(`📡 Response status: ${res.status}`);
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.warn(`⚠️ API returned ${res.status}:`, text.slice(0, 200));
+          // Fallback to mock
+          console.log("🔄 Using mock data");
+          setSettings(MOCK_SETTINGS);
+          setError(null);
+          return;
+        }
+
+        const data = await res.json();
+        setSettings({
+          startDate: data.startDate?.split("T")[0] || "",
+          endDate: data.endDate?.split("T")[0] || "",
+          maxResponses: data.maxResponses ?? "",
+          allowAnonymous: data.allowAnonymous ?? false,
+          requireLogin: data.requireLogin ?? false,
+          showProgress: data.showProgress ?? false,
+        });
+        setError(null);
+      } catch (err: unknown) {
+        console.error("❌ Fetch error:", err);
+        setSettings(MOCK_SETTINGS);
+        setError(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchForm();
+  }, [formId]);
+
+  // Handle input changes
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+
+    setSettings((prev) => ({
+      ...prev,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : type === "number"
+            ? value === ""
+              ? ""
+              : Number(value)
+            : value,
+    }));
+  };
+
+  // Validate dates
+  const validateDates = (): boolean => {
+    if (settings.startDate && settings.endDate) {
+      if (new Date(settings.endDate) <= new Date(settings.startDate)) {
+        setError("End date must be after start date.");
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Submit settings – with robust error handling
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
+
+    if (!validateDates()) return;
+    if (!formId) {
+      setError("Form ID is missing");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = {
+        startDate: settings.startDate || null,
+        endDate: settings.endDate || null,
+        maxResponses: settings.maxResponses || null,
+        allowAnonymous: settings.allowAnonymous,
+        requireLogin: settings.requireLogin,
+        showProgress: settings.showProgress,
+      };
+
+      const res = await fetch(`/api/forms/${formId}/settings`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      // Check if response is JSON
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await res.text();
+        console.error("❌ Non‑JSON response:", text.slice(0, 500));
+        throw new Error(
+          `Server returned ${res.status} (not JSON). Please check your API route.`,
+        );
+      }
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Failed to save settings");
+      }
+
+      setSuccess(true);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong";
+      setError(message);
+      console.error("❌ Save error:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading)
+    return <div className="p-6 text-gray-300">Loading settings…</div>;
+
+  return (
+    <div className="min-h-screen bg-[#0d1117] text-[#c9d1d9] p-6">
+      <div className="max-w-2xl mx-auto">
+        <Link
+          href={`/studio/forms/${formId}/builder`}
+          className="inline-flex items-center text-blue-400 hover:text-blue-300 mb-6 text-sm">
+          ← Back to Builder
+        </Link>
+
+        <h1 className="text-2xl font-bold mb-6">Form Settings</h1>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded text-red-300">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mb-4 p-3 bg-green-900/50 border border-green-700 rounded text-green-300">
+            Settings saved successfully!
+          </div>
+        )}
+
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-5 bg-[#161b22] border border-[#30363d] rounded-lg p-6">
+          <div>
+            <label
+              htmlFor="startDate"
+              className="block font-medium mb-1 text-sm">
+              Start Date
+            </label>
+            <input
+              type="date"
+              id="startDate"
+              name="startDate"
+              value={settings.startDate}
+              onChange={handleChange}
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="endDate" className="block font-medium mb-1 text-sm">
+              End Date
+            </label>
+            <input
+              type="date"
+              id="endDate"
+              name="endDate"
+              value={settings.endDate}
+              onChange={handleChange}
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {settings.startDate && settings.endDate && (
+              <p
+                className={`text-sm mt-1 ${
+                  new Date(settings.endDate) > new Date(settings.startDate)
+                    ? "text-green-400"
+                    : "text-red-400"
+                }`}>
+                {new Date(settings.endDate) > new Date(settings.startDate)
+                  ? "✓ Valid range"
+                  : "End date must be after start date"}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="maxResponses"
+              className="block font-medium mb-1 text-sm">
+              Max Responses (optional)
+            </label>
+            <input
+              type="number"
+              id="maxResponses"
+              name="maxResponses"
+              value={settings.maxResponses}
+              onChange={handleChange}
+              min="1"
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Leave empty for unlimited"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="flex items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                name="allowAnonymous"
+                checked={settings.allowAnonymous}
+                onChange={handleChange}
+                className="accent-blue-500"
+              />
+              Allow Anonymous Submissions
+            </label>
+
+            <label className="flex items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                name="requireLogin"
+                checked={settings.requireLogin}
+                onChange={handleChange}
+                className="accent-blue-500"
+              />
+              Require Login to Submit
+            </label>
+
+            <label className="flex items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                name="showProgress"
+                checked={settings.showProgress}
+                onChange={handleChange}
+                className="accent-blue-500"
+              />
+              Show Progress Bar
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors disabled:opacity-50">
+            {saving ? "Saving…" : "Save Settings"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}

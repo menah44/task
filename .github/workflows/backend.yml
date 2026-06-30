@@ -55,5 +55,5 @@ jobs:
               --name taskio-backend \
               --restart always \
               --network taskio-net \
-              -p 5000:3002 \
+              -p 3000:3002 \
               ${{ secrets.DOCKER_USERNAME }}/taskio-backend:v1

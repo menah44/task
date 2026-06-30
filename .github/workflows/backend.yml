@@ -55,5 +55,4 @@ jobs:
               --name taskio-backend \
               --restart always \
               -p 5000:5000 \
-              --env-file /home/${{ secrets.SERVER_USER }}/taskio-backend/.env \
               ${{ secrets.DOCKER_USERNAME }}/taskio-backend:v1

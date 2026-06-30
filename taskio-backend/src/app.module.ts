@@ -10,7 +10,7 @@ import { UsersModule } from './users/users.module';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
+      host: 'taskio-postgres',
       port: 5432,
       username: 'postgres',
       password: '1234',

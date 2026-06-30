@@ -18,6 +18,11 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import AnswerField, {
+  AnswerQuestion,
+  AnswerValue,
+  QuestionType as AnswerQuestionType,
+} from "@/components/AnswerField";
 
 // ======================== Types ========================
 type QuestionType =
@@ -56,6 +61,40 @@ const QUESTION_TYPES: { type: QuestionType; label: string; icon: string }[] = [
   { type: "number", label: "Number", icon: "🔢" },
   { type: "email", label: "Email", icon: "📧" },
 ];
+
+// ======================== Mapping: builder type -> AnswerField type ========================
+// The builder uses its own internal type names; AnswerField expects the
+// canonical API-facing type names. This keeps both systems decoupled.
+function toAnswerType(type: QuestionType): AnswerQuestionType {
+  switch (type) {
+    case "text":
+    case "textarea":
+    case "email":
+      return "TEXT";
+    case "number":
+      return "NUMBER";
+    case "date":
+      return "DATE";
+    case "radio":
+    case "select":
+      return "SINGLE_CHOICE";
+    case "checkbox":
+      return "MULTI_CHOICE";
+    default:
+      return "TEXT";
+  }
+}
+
+function toAnswerQuestion(q: Question): AnswerQuestion {
+  return {
+    id: q.id,
+    type: toAnswerType(q.type),
+    label: q.label,
+    required: q.required,
+    placeholder: q.placeholder,
+    options: q.options,
+  };
+}
 
 // ======================== Mock Initial Data ========================
 const INITIAL_SECTIONS: Section[] = [
@@ -159,6 +198,82 @@ function SortableQuestion({
   );
 }
 
+// ======================== Preview Modal ========================
+function PreviewModal({
+  sections,
+  onClose,
+}: {
+  sections: Section[];
+  onClose: () => void;
+}) {
+  // local answer state, only used inside the preview so admins can "try" the form
+  const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
+  const [showValidation, setShowValidation] = useState(false);
+
+  const setAnswer = (questionId: string, value: AnswerValue) => {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#30363d]">
+          <div>
+            <h2 className="text-lg font-bold text-white">Form Preview</h2>
+            <p className="text-xs text-gray-500">
+              This is how the form will look to end users.
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-2xl leading-none transition-colors">
+            ×
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-8">
+          {sections.map((sec) => (
+            <div key={sec.id} className="space-y-4">
+              <h3 className="text-base font-bold text-white border-b border-[#30363d] pb-2">
+                {sec.title}
+              </h3>
+              {sec.questions.map((q) => (
+                <AnswerField
+                  key={q.id}
+                  question={toAnswerQuestion(q)}
+                  value={answers[q.id] ?? null}
+                  onChange={(val) => setAnswer(q.id, val)}
+                  mode="fill"
+                  showValidation={showValidation}
+                />
+              ))}
+              {sec.questions.length === 0 && (
+                <p className="text-xs text-gray-500 italic">
+                  No questions in this section yet.
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-[#30363d] flex items-center justify-between">
+          <p className="text-xs text-gray-500">
+            Preview only — answers here are not saved.
+          </p>
+          <button
+            onClick={() => setShowValidation(true)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+            Test Submit (Check Validation)
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ======================== Main Builder Page ========================
 export default function FormBuilderPage({
   params,
@@ -177,6 +292,8 @@ export default function FormBuilderPage({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [savedFieldFlash, setSavedFieldFlash] = useState<string | null>(null);
+  // ✅ NEW: controls whether the Preview modal is open
+  const [showPreview, setShowPreview] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -415,12 +532,20 @@ export default function FormBuilderPage({
             <h1 className="text-sm font-semibold text-white">Form Builder</h1>
             <p className="text-xs text-gray-500">Form ID: {params.formId}</p>
           </div>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60">
-            {isSaving ? "Saving..." : "Save"}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* ✅ NEW: Preview button */}
+            <button
+              onClick={() => setShowPreview(true)}
+              className="px-4 py-1.5 bg-[#21262d] hover:bg-[#2d333b] border border-[#30363d] text-gray-200 text-sm font-medium rounded-lg transition-colors">
+              👁 Preview
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60">
+              {isSaving ? "Saving..." : "Save"}
+            </button>
+          </div>
         </div>
 
         {/* Canvas */}
@@ -657,6 +782,14 @@ export default function FormBuilderPage({
           </div>
         )}
       </aside>
+
+      {/* ✅ NEW: Preview Modal (renders using AnswerField) */}
+      {showPreview && (
+        <PreviewModal
+          sections={sections}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
     </div>
   );
 }

@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: taskio-postgres
+    restart: always
+    env_file:
+      - .env.production
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - taskio-net
+
+  backend:
+    image: emanabosamra/taskio-backend:latest
+    container_name: taskio-backend
+    restart: always
+    env_file:
+      - .env.production
+    expose:
+      - "5000"
+    depends_on:
+      - postgres
+    networks:
+      - taskio-net
+
+  frontend:
+    image: emanabosamra/taskio-frontend:latest
+    container_name: taskio-frontend
+    restart: always
+    env_file:
+      - .env.production
+    expose:
+      - "3000"
+    depends_on:
+      - backend
+    networks:
+      - taskio-net
+  nginx:
+    image: nginx:latest
+    container_name: taskio-nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - taskio-net
+volumes:
+  postgres_data:
+
+networks:
+  taskio-net:
+    driver: bridge

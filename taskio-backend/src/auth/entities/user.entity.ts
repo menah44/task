@@ -1,4 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToMany, JoinTable } from 'typeorm';
+import { Role } from '../../roles/entities/role.entity';
+import { Group } from '../../groups/entities/group.entity';
 
 @Entity('user')
 export class User {
@@ -28,4 +30,12 @@ export class User {
 
   @CreateDateColumn()
   createdAt!: Date;
+
+  @ManyToMany(() => Role)
+  @JoinTable()
+  roles!: Role[];
+
+  @ManyToMany(() => Group)
+  @JoinTable()
+  groups!: Group[];
 }

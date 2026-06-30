@@ -1,0 +1,76 @@
+import { Controller, Get, Post, Put, Delete, Param, ParseIntPipe, UseGuards, ForbiddenException, Body } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { RolesService } from './roles.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { User } from '../auth/entities/user.entity';
+import { CreateRoleDto } from './dto/create-role.dto';
+import { UpdateRoleDto } from './dto/update-role.dto';
+
+@ApiTags('roles')
+@ApiBearerAuth()
+@Controller('roles')
+@UseGuards(JwtAuthGuard)
+export class RolesController {
+  constructor(private readonly rolesService: RolesService) {}
+
+  @Get()
+  async findAll(@CurrentUser() currentUser: User) {
+    if (currentUser.role?.toUpperCase() !== 'ADMIN') {
+      throw new ForbiddenException('Only administrators can access this resource.');
+    }
+    return this.rolesService.findAll();
+  }
+
+  @Post()
+  async createRole(@CurrentUser() currentUser: User, @Body() dto: CreateRoleDto) {
+    if (currentUser.role?.toUpperCase() !== 'ADMIN') {
+      throw new ForbiddenException('Only administrators can perform this action.');
+    }
+    return this.rolesService.createRole(dto);
+  }
+
+  @Delete(':id')
+  async deleteRole(@CurrentUser() currentUser: User, @Param('id', ParseIntPipe) id: number) {
+    if (currentUser.role?.toUpperCase() !== 'ADMIN') {
+      throw new ForbiddenException('Only administrators can perform this action.');
+    }
+    return this.rolesService.deleteRole(id);
+  }
+
+  @Put(':id')
+  async updateRole(
+    @CurrentUser() currentUser: User, 
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateRoleDto
+  ) {
+    if (currentUser.role?.toUpperCase() !== 'ADMIN') {
+      throw new ForbiddenException('Only administrators can perform this action.');
+    }
+    return this.rolesService.updateRole(id, dto);
+  }
+
+  @Post(':roleId/users/:userId')
+  async assignRole(
+    @CurrentUser() currentUser: User,
+    @Param('roleId', ParseIntPipe) roleId: number,
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
+    if (currentUser.role?.toUpperCase() !== 'ADMIN') {
+      throw new ForbiddenException('Only administrators can perform this action.');
+    }
+    return this.rolesService.assignUserToRole(roleId, userId);
+  }
+
+  @Delete(':roleId/users/:userId')
+  async removeRole(
+    @CurrentUser() currentUser: User,
+    @Param('roleId', ParseIntPipe) roleId: number,
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
+    if (currentUser.role?.toUpperCase() !== 'ADMIN') {
+      throw new ForbiddenException('Only administrators can perform this action.');
+    }
+    return this.rolesService.removeUserFromRole(roleId, userId);
+  }
+}

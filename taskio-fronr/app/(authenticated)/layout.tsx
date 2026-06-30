@@ -12,7 +12,8 @@ import {
   User, 
   LogOut, 
   Loader2,
-  Menu
+  Menu,
+  Shield
 } from "lucide-react";
 
 export default function AuthenticatedLayout({
@@ -184,6 +185,16 @@ export default function AuthenticatedLayout({
                 >
                   <Users className="w-5 h-5 text-gray-400 group-hover:text-amber-500 transition-colors" />
                   <span>User Management</span>
+                </Link>
+
+                <Link
+                  href="/admin/roles"
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
+                    pathname?.startsWith("/admin/roles") ? "bg-rose-600/10 text-rose-400 border border-rose-600/20" : "border border-transparent"
+                  }`}
+                >
+                  <Shield className="w-5 h-5 text-gray-400 group-hover:text-rose-500 transition-colors" />
+                  <span>Roles</span>
                 </Link>
               </>
             ) : (

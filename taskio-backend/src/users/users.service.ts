@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ConflictException, BadRequestException }
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
+import { Role } from '../roles/entities/role.entity';
 import { CreateUserAdminDto } from './dto/create-user-admin.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -11,6 +12,8 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
   ) {}
 
   async findMe(id: number) {
@@ -26,8 +29,40 @@ export class UsersService {
     }
 
     // Exclude password field
-    const { password, ...result } = user;
+    const { password: _password, ...result } = user;
     return result;
+  }
+
+  async getUserRoles(id: number) {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['roles'],
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.roles.length === 0 && user.role) {
+      const existingRole = await this.roleRepository.findOne({ where: { name: user.role } });
+      if (existingRole) {
+        user.roles.push(existingRole);
+        await this.userRepository.save(user);
+        return [existingRole];
+      }
+    }
+
+    return user.roles;
+  }
+
+  async getUserGroups(id: number) {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['groups'],
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user.groups;
   }
 
   async findAll(page = 1, limit = 10, search = '') {
@@ -93,6 +128,12 @@ export class UsersService {
       throw new ConflictException('User already exists.');
     }
 
+    const roleName = dto.role.toUpperCase();
+    const existingRole = await this.roleRepository.findOne({ where: { name: roleName } });
+    if (!existingRole) {
+      throw new BadRequestException("Role does not exist");
+    }
+
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const newUser = this.userRepository.create({
@@ -107,7 +148,7 @@ export class UsersService {
 
     await this.userRepository.save(newUser);
 
-    const { password, ...result } = newUser;
+    const { password: _password, ...result } = newUser;
     return result;
   }
 
@@ -119,7 +160,7 @@ export class UsersService {
     user.isActive = false;
     await this.userRepository.save(user);
     
-    const { password, ...result } = user;
+    const { password: _password, ...result } = user;
     return result;
   }
 
@@ -131,7 +172,7 @@ export class UsersService {
     user.isActive = true;
     await this.userRepository.save(user);
     
-    const { password, ...result } = user;
+    const { password: _password, ...result } = user;
     return result;
   }
 
@@ -163,11 +204,18 @@ export class UsersService {
 
     if (dto.firstName !== undefined) user.firstName = dto.firstName;
     if (dto.lastName !== undefined) user.lastName = dto.lastName;
-    if (dto.role) user.role = dto.role.toUpperCase();
+    if (dto.role) {
+      const roleName = dto.role.toUpperCase();
+      const existingRole = await this.roleRepository.findOne({ where: { name: roleName } });
+      if (!existingRole) {
+        throw new BadRequestException("Role does not exist");
+      }
+      user.role = roleName;
+    }
 
     await this.userRepository.save(user);
 
-    const { password, ...result } = user;
+    const { password: _password, ...result } = user;
     return result;
   }
 }

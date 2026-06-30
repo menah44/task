@@ -13,7 +13,7 @@ interface UserItem {
   lastName?: string;
   username?: string;
   email: string;
-  role: "ADMIN" | "USER";
+  role: string;
   isActive: boolean;
   joinedDate?: string;
 }
@@ -232,15 +232,13 @@ export default function UserManagementPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {user.role === "ADMIN" ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
-                              <ShieldAlert className="w-3 h-3" /> Admin
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                              <ShieldCheck className="w-3 h-3" /> User
-                            </span>
-                          )}
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                            user.role === "ADMIN" 
+                              ? "bg-red-500/10 text-red-400 border border-red-500/20" 
+                              : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                          }`}>
+                            {user.role === "ADMIN" ? <ShieldAlert className="w-3 h-3" /> : <ShieldCheck className="w-3 h-3" />} {user.role || "N/A"}
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
@@ -254,26 +252,34 @@ export default function UserManagementPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right whitespace-nowrap">
-                          {/* Safeguard: never show action buttons for the logged-in admin's own row */}
-                          {user.id === currentUserId ? (
-                            <span className="text-xs text-gray-600 italic px-3 py-1">
-                              You
-                            </span>
-                          ) : user.isActive ? (
+                          <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => handleDeactivate(user.id, displayName)}
-                              className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 transition-all"
+                              onClick={() => router.push(`/admin/users/${user.id}`)}
+                              className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-blue-400 border border-blue-500/10 bg-blue-500/5 hover:bg-blue-500/10 transition-all"
                             >
-                              Disable Account
+                              View Details
                             </button>
-                          ) : (
-                            <button
-                              onClick={() => handleActivate(user.id, displayName)}
-                              className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-green-400 border border-green-500/10 bg-green-500/5 hover:bg-green-500/10 transition-all"
-                            >
-                              Enable Account
-                            </button>
-                          )}
+                            {/* Safeguard: never show action buttons for the logged-in admin's own row */}
+                            {user.id === currentUserId ? (
+                              <span className="text-xs text-gray-600 italic px-3 py-1">
+                                You
+                              </span>
+                            ) : user.isActive ? (
+                              <button
+                                onClick={() => handleDeactivate(user.id, displayName)}
+                                className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 transition-all"
+                              >
+                                Disable Account
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleActivate(user.id, displayName)}
+                                className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-green-400 border border-green-500/10 bg-green-500/5 hover:bg-green-500/10 transition-all"
+                              >
+                                Enable Account
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

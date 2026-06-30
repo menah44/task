@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api/client";
 import Link from "next/link";
@@ -20,6 +20,22 @@ export default function CreateUserPage() {
   });
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [roles, setRoles] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const res = await apiClient.get('/roles');
+        setRoles(res.data);
+        if (res.data.length > 0) {
+          setFormData(prev => ({ ...prev, role: res.data[0].name }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch roles", err);
+      }
+    };
+    fetchRoles();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -53,9 +69,10 @@ export default function CreateUserPage() {
         alert("User created successfully");
         router.push(`/admin/users/${response.data.id}`);
       }
-    } catch (err: any) {
-      if (err.response?.status === 409) { // Conflict
-        const msg = err.response.data?.message;
+    } catch (err: unknown) {
+      const error = err as any;
+      if (error.response?.status === 409) { // Conflict
+        const msg = error.response.data?.message;
         if (msg?.includes("Username")) {
           setFieldErrors({ username: msg });
         } else if (msg?.includes("Email")) {
@@ -63,8 +80,8 @@ export default function CreateUserPage() {
         } else {
           setApiError(msg || "Conflict error");
         }
-      } else if (err.response?.status === 422 || err.response?.status === 400) {
-        const errors = err.response.data?.errors || err.response.data?.message;
+      } else if (error.response?.status === 422 || error.response?.status === 400) {
+        const errors = error.response.data?.errors || error.response.data?.message;
         
         // Handle common validation error response formats
         if (typeof errors === 'object' && !Array.isArray(errors) && errors !== null) {
@@ -81,10 +98,10 @@ export default function CreateUserPage() {
            });
            setFieldErrors(newErrors);
         } else {
-          setApiError(err.response.data?.message || "Validation failed. Please check your inputs.");
+          setApiError(error.response.data?.message || "Validation failed. Please check your inputs.");
         }
       } else {
-        setApiError(err.response?.data?.message || "An unexpected error occurred. Please try again.");
+        setApiError(error.response?.data?.message || "An unexpected error occurred. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -233,10 +250,11 @@ export default function CreateUserPage() {
                 required
                 className={`w-full bg-[#0d1117] border ${
                   fieldErrors.role ? "border-red-500" : "border-[#30363d]"
-                } rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all appearance-none`}
+                } rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all appearance-none uppercase`}
               >
-                <option value="USER">User</option>
-                <option value="ADMIN">Admin</option>
+                {roles.map(r => (
+                  <option key={r.id} value={r.name}>{r.name}</option>
+                ))}
               </select>
               {fieldErrors.role && (
                 <p className="mt-1 text-sm text-red-400">{fieldErrors.role}</p>

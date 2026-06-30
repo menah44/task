@@ -45,6 +45,28 @@ export class UsersController {
     return this.usersService.findById(id);
   }
 
+  @Get(':id/roles')
+  async getUserRoles(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    if (user.role?.toUpperCase() !== 'ADMIN') {
+      throw new ForbiddenException('Only administrators can access this resource.');
+    }
+    return this.usersService.getUserRoles(id);
+  }
+
+  @Get(':id/groups')
+  async getUserGroups(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    if (user.role?.toUpperCase() !== 'ADMIN') {
+      throw new ForbiddenException('Only administrators can access this resource.');
+    }
+    return this.usersService.getUserGroups(id);
+  }
+
   @Post()
   async createUser(
     @CurrentUser() user: User,

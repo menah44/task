@@ -30,9 +30,10 @@ jobs:
 
       - name: Build frontend image
         run: |
-          --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.SERVER_IP }}/api \
-          -t ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }} \
-          ./taskio-fronr
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.SERVER_IP }}/api \
+            -t ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }} \
+            ./taskio-fronr
       - name: Push frontend image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }}

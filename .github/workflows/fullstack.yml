@@ -22,19 +22,19 @@ jobs:
 
       - name: Build backend image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/taskio-backend:latest ./taskio-backend
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }} ./taskio-backend
 
       - name: Push backend image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/taskio-backend:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }}
 
       - name: Build frontend image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:latest ./taskio-fronr
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }} ./taskio-fronr
 
       - name: Push frontend image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }}
 
       - name: Deploy to Production Server
         uses: appleboy/ssh-action@v1.0.3
@@ -44,6 +44,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd ~/task
-            docker compose pull
-            docker compose down --remove-orphans
-            docker compose up -d
+            echo "IMAGE_TAG=${{ github.sha }}" > .env.deploy
+            docker compose --env-file .env.deploy pull
+            docker compose --env-file .env.deploy down --remove-orphans
+            docker compose --env-file .env.deploy up -d

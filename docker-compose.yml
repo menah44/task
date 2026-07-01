@@ -9,22 +9,32 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - taskio-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
   backend:
-    image: emanabosamra/taskio-backend:latest
+    image: emanabosamra/taskio-backend:${IMAGE_TAG}
     container_name: taskio-backend
     restart: always
     env_file:
       - .env.production
     expose:
       - "5000"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     depends_on:
       - postgres
     networks:
       - taskio-net
 
   frontend:
-    image: emanabosamra/taskio-frontend:latest
+    image: emanabosamra/taskio-frontend:${IMAGE_TAG}
     container_name: taskio-frontend
     restart: always
     env_file:

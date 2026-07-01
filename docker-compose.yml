@@ -24,7 +24,7 @@ services:
     expose:
       - "5000"
     healthcheck:
-      test: ["CMD", "wget", "--spider", "http://localhost:5000"]
+      test: ["CMD", "wget", "--spider", "http://localhost:5000/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -62,5 +62,5 @@ volumes:
   postgres_data:
 
 networks:
-  taskio-net:
+  form-net:
     driver: bridge

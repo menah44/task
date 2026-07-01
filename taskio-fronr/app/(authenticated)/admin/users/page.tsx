@@ -6,6 +6,9 @@ import Link from "next/link";
 import apiClient from "@/lib/api/client";
 import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
+import SkeletonTable from "@/components/SkeletonTable";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface UserItem {
   id: number;
@@ -30,6 +33,23 @@ export default function UserManagementPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Confirm Dialog State
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  }>({
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
+
+  const triggerConfirm = (title: string, description: string, onConfirm: () => void) => {
+    setConfirmConfig({ title, description, onConfirm });
+    setConfirmOpen(true);
+  };
 
  
   
@@ -82,36 +102,38 @@ export default function UserManagementPage() {
 
   // 3. User Deactivation Handler
   const handleDeactivate = async (id: number, name: string) => {
-    const isConfirmed = window.confirm(
-      `Are you sure you want to deactivate ${name}'s account? This user will no longer be able to log in.`
+    triggerConfirm(
+      "Deactivate User",
+      `Are you sure you want to deactivate ${name}'s account? This user will no longer be able to log in.`,
+      async () => {
+        try {
+          await apiClient.patch(`/users/${id}/deactivate`);
+          toast.success("Account deactivated successfully");
+          fetchUsers(); // Refresh the list
+        } catch (err: unknown) {
+          console.error("Deactivation failed:", err);
+          toast.error("Failed to deactivate account.");
+        }
+      }
     );
-    
-    if (!isConfirmed) return;
-
-    try {
-      await apiClient.patch(`/users/${id}/deactivate`);
-      fetchUsers(); // Refresh the list
-    } catch (err: unknown) {
-      console.error("Deactivation failed:", err);
-      alert("Failed to deactivate account. Please check user permissions.");
-    }
   };
 
   // 3b. User Activation Handler
   const handleActivate = async (id: number, name: string) => {
-    const isConfirmed = window.confirm(
-      `Are you sure you want to enable ${name}'s account? This user will be able to log in again.`
+    triggerConfirm(
+      "Activate User",
+      `Are you sure you want to enable ${name}'s account? This user will be able to log in again.`,
+      async () => {
+        try {
+          await apiClient.patch(`/users/${id}/activate`);
+          toast.success("Account activated successfully");
+          fetchUsers(); // Refresh the list
+        } catch (err: unknown) {
+          console.error("Activation failed:", err);
+          toast.error("Failed to enable account.");
+        }
+      }
     );
-    
-    if (!isConfirmed) return;
-
-    try {
-      await apiClient.patch(`/users/${id}/activate`);
-      fetchUsers(); // Refresh the list
-    } catch (err: unknown) {
-      console.error("Activation failed:", err);
-      alert("Failed to enable account. Please check user permissions.");
-    }
   };
 
   
@@ -171,41 +193,32 @@ export default function UserManagementPage() {
       </div>
 
       {/* Users Table */}
-      <div className="bg-[#161b22] border border-[#30363d] rounded-3xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-[#30363d] bg-[#161b22]/50 text-gray-400 text-xs font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">Email</th>
-                <th className="px-6 py-4">Role</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#30363d] text-sm">
-              {isLoading ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-12 text-center text-gray-500"
-                  >
-                    <div className="flex justify-center items-center gap-2">
-                      <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-                      <span>Loading users data...</span>
-                    </div>
-                  </td>
+      {isLoading ? (
+        <SkeletonTable />
+      ) : (
+        <div className="bg-[#161b22] border border-[#30363d] rounded-3xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-[#30363d] bg-[#161b22]/50 text-gray-400 text-xs font-bold uppercase tracking-wider">
+                  <th className="px-6 py-4">Name</th>
+                  <th className="px-6 py-4">Email</th>
+                  <th className="px-6 py-4">Role</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-12 text-center text-gray-500"
-                  >
-                    No users found matching your search criteria.
-                  </td>
-                </tr>
-              ) : (
+              </thead>
+              <tbody className="divide-y divide-[#30363d] text-sm">
+                {users.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
+                      No users found matching your search criteria.
+                    </td>
+                  </tr>
+                ) : (
                 users
                   // Hide the currently logged-in admin's own row from the table
                   .filter((user) => user.id !== currentUserId)
@@ -289,6 +302,7 @@ export default function UserManagementPage() {
           </table>
         </div>
       </div>
+      )}
 
       {/* Pagination Controls */}
       {!isLoading && totalPages > 1 && (
@@ -315,7 +329,16 @@ export default function UserManagementPage() {
         </div>
       )}
 
-     
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        title={confirmConfig.title}
+        description={confirmConfig.description}
+        onConfirm={() => {
+          confirmConfig.onConfirm();
+          setConfirmOpen(false);
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </main>
   );
 }

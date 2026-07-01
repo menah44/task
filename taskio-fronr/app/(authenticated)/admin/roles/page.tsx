@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/api/client";
 import { toast } from "react-hot-toast";
+import SkeletonTable from "@/components/SkeletonTable";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface Role {
   id: number;
@@ -24,6 +26,23 @@ export default function RolesPage() {
   const [editRoleName, setEditRoleName] = useState("");
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+
+  // Confirm Dialog State
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  }>({
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
+
+  const triggerConfirm = (title: string, description: string, onConfirm: () => void) => {
+    setConfirmConfig({ title, description, onConfirm });
+    setConfirmOpen(true);
+  };
 
   const fetchRoles = async () => {
     try {
@@ -61,19 +80,23 @@ export default function RolesPage() {
   };
 
   const handleDeleteRole = async (roleId: number, roleName: string) => {
-    if (!window.confirm(`Are you sure you want to delete role '${roleName}'?`)) return;
-    
-    setLoading(true);
-    setError(null);
-    try {
-      await apiClient.delete(`/roles/${roleId}`);
-      toast.success("Role deleted successfully");
-      await fetchRoles();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to delete role");
-    } finally {
-      setLoading(false);
-    }
+    triggerConfirm(
+      "Delete Role",
+      `Are you sure you want to delete role '${roleName}'? This action cannot be undone.`,
+      async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          await apiClient.delete(`/roles/${roleId}`);
+          toast.success("Role deleted successfully");
+          await fetchRoles();
+        } catch (err: any) {
+          toast.error(err.response?.data?.message || "Failed to delete role");
+        } finally {
+          setLoading(false);
+        }
+      }
+    );
   };
 
   const handleEditRole = async (e?: React.FormEvent | React.MouseEvent) => {
@@ -101,18 +124,13 @@ export default function RolesPage() {
           <h1 className="text-3xl font-bold text-white">Roles Management</h1>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-medium transition-colors"
+            className="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-xl text-sm font-medium transition-colors"
           >
             Add Role
           </button>
         </div>
         
-        {loading && (
-          <div className="animate-pulse">
-            <div className="h-4 bg-[#30363d] rounded w-1/4 mb-4"></div>
-            <div className="h-10 bg-[#30363d] rounded w-full"></div>
-          </div>
-        )}
+        {loading && <SkeletonTable />}
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6">
@@ -276,7 +294,7 @@ export default function RolesPage() {
                 type="submit"
                 form="addRoleForm"
                 disabled={addLoading || !newRoleName.trim()}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-5 py-2.5 bg-primary hover:bg-primary/80 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {addLoading && (
                   <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
@@ -287,6 +305,17 @@ export default function RolesPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        title={confirmConfig.title}
+        description={confirmConfig.description}
+        onConfirm={() => {
+          confirmConfig.onConfirm();
+          setConfirmOpen(false);
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
 
       {/* Edit Modal has been refactored to inline edit rows */}
     </main>

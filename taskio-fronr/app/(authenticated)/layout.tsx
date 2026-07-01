@@ -2,20 +2,10 @@
 
 import { useEffect } from "react";
 import { useAuthStore, parseJwt } from "@/lib/auth-store";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  PlusCircle, 
-  ClipboardList, 
-  Users, 
-  User, 
-  LogOut, 
-  Loader2,
-  Menu,
-  Shield,
-  Folder
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
+import Sidebar from "@/components/Sidebar";
+import TopBar from "@/components/TopBar";
 
 export default function AuthenticatedLayout({
   children,
@@ -130,146 +120,13 @@ export default function AuthenticatedLayout({
 
   return (
     <div dir="ltr" className="min-h-screen bg-[#0d1117] text-[#c9d1d9] flex">
-      {/* Sidebar (on the left in LTR) */}
-      <aside className="w-72 bg-[#161b22] border-r border-[#30363d] flex flex-col justify-between hidden md:flex">
-        <div className="p-6">
-          {/* Logo Section */}
-          <div className="text-xl font-bold text-white mb-8 flex items-center justify-between border-b border-[#30363d] pb-4">
-            <span className="tracking-tight flex items-center gap-2">
-              <span className="text-blue-500 text-2xl font-black">■</span> Form
-            </span>
-            <span className="text-[10px] tracking-wider uppercase font-extrabold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md">
-              {userRole === "ADMIN" ? "Admin" : "User"}
-            </span>
-          </div>
-
-          {/* Navigation Links based on user roles */}
-          <nav className="space-y-1">
-            {userRole === "ADMIN" ? (
-              // ADMIN sidebar links
-              <>
-                <Link
-                  href="/admin"
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
-                    pathname === "/admin" ? "bg-blue-600/10 text-blue-400 border border-blue-600/20" : "border border-transparent"
-                  }`}
-                >
-                  <LayoutDashboard className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                  <span>Dashboard</span>
-                </Link>
-
-                <Link
-                  href="/studio/forms/new"
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
-                    pathname === "/studio/forms/new" ? "bg-green-600/10 text-green-400 border border-green-600/20" : "border border-transparent"
-                  }`}
-                >
-                  <PlusCircle className="w-5 h-5 text-gray-400 group-hover:text-green-500 transition-colors" />
-                  <span>Create Form</span>
-                </Link>
-
-                <Link
-                  href="/studio/forms"
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
-                    pathname === "/studio/forms" ? "bg-purple-600/10 text-purple-400 border border-purple-600/20" : "border border-transparent"
-                  }`}
-                >
-                  <ClipboardList className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
-                  <span>Responses</span>
-                </Link>
-
-                <Link
-                  href="/admin/users"
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
-                    pathname?.startsWith("/admin/users") ? "bg-amber-600/10 text-amber-400 border border-amber-600/20" : "border border-transparent"
-                  }`}
-                >
-                  <Users className="w-5 h-5 text-gray-400 group-hover:text-amber-500 transition-colors" />
-                  <span>User Management</span>
-                </Link>
-
-                <Link
-                  href="/admin/roles"
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
-                    pathname?.startsWith("/admin/roles") ? "bg-rose-600/10 text-rose-400 border border-rose-600/20" : "border border-transparent"
-                  }`}
-                >
-                  <Shield className="w-5 h-5 text-gray-400 group-hover:text-rose-500 transition-colors" />
-                  <span>Roles</span>
-                </Link>
-
-                <Link
-                  href="/admin/groups"
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
-                    pathname?.startsWith("/admin/groups") ? "bg-indigo-600/10 text-indigo-400 border border-indigo-600/20" : "border border-transparent"
-                  }`}
-                >
-                  <Folder className="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors" />
-                  <span>Groups</span>
-                </Link>
-              </>
-            ) : (
-              // USER sidebar links
-              <>
-                <Link
-                  href="/userForms"
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
-                    pathname === "/userForms" ? "bg-blue-600/10 text-blue-400 border border-blue-600/20" : "border border-transparent"
-                  }`}
-                >
-                  <ClipboardList className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                  <span>My Forms</span>
-                </Link>
-
-                <Link
-                  href="/profile"
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
-                    pathname === "/profile" ? "bg-amber-600/10 text-amber-400 border border-amber-600/20" : "border border-transparent"
-                  }`}
-                >
-                  <User className="w-5 h-5 text-gray-400 group-hover:text-amber-500 transition-colors" />
-                  <span>Profile</span>
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-
-        {/* Logout Section */}
-        <div className="p-4 border-t border-[#30363d] bg-[#161b22]/50">
-          <button
-            onClick={logout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all font-medium text-sm text-left"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Logout</span>
-          </button>
-        </div>
-      </aside>
+      {/* Reusable Sidebar */}
+      <Sidebar userRole={userRole} pathname={pathname} logout={logout} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-[#161b22] border-b border-[#30363d] flex items-center justify-between px-6 shadow-sm">
-          <div className="flex items-center gap-3">
-            {/* Mobile menu toggle */}
-            <button className="md:hidden text-gray-400 hover:text-white">
-              <Menu className="w-6 h-6" />
-            </button>
-            <h2 className="text-sm font-semibold text-white">
-              Welcome back, {currentUser.name || currentUser.email}
-            </h2>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* User Profile Badge */}
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md border border-white/10">
-              {currentUser.email ? (
-                currentUser.email[0].toUpperCase()
-              ) : (
-                <User className="w-4 h-4" />
-              )}
-            </div>
-          </div>
-        </header>
+        {/* Reusable TopBar */}
+        <TopBar name={currentUser.name || ""} email={currentUser.email || ""} />
 
         <main className="flex-1 p-6 overflow-y-auto bg-[#0d1117]">
           <div className="max-w-7xl mx-auto">{children}</div>

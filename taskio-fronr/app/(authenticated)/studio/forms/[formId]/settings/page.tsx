@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import SkeletonCard from "@/components/SkeletonCard";
 
 interface FormSettings {
   startDate: string;
@@ -168,8 +169,13 @@ export default function SettingsPage() {
     }
   };
 
-  if (loading)
-    return <div className="p-6 text-gray-300">Loading settings…</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0d1117] p-6 flex justify-center items-center">
+        <SkeletonCard />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-[#c9d1d9] p-6">

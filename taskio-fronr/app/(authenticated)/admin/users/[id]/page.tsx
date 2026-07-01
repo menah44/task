@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import apiClient from "@/lib/api/client";
 import { toast } from "react-hot-toast";
+import SkeletonCard from "@/components/SkeletonCard";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface UserDetail {
   id: number;
@@ -29,6 +31,23 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   const [activeTab, setActiveTab] = useState("Profile");
   const [addRoleLoading, setAddRoleLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+
+  // Confirm Dialog State
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  }>({
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
+
+  const triggerConfirm = (title: string, description: string, onConfirm: () => void) => {
+    setConfirmConfig({ title, description, onConfirm });
+    setConfirmOpen(true);
+  };
 
   // Form states
   const [editFormData, setEditFormData] = useState({
@@ -215,12 +234,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   if (loading) {
     return (
       <main className="min-h-screen bg-[#0d1117] text-[#c9d1d9] py-10 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
-        <div className="w-full max-w-3xl">
-          <div className="animate-pulse flex flex-col gap-6">
-            <div className="h-8 bg-[#30363d] rounded w-1/4 mb-4"></div>
-            <div className="bg-[#161b22] rounded-3xl p-8 border border-[#30363d] h-64"></div>
-          </div>
-        </div>
+        <SkeletonCard />
       </main>
     );
   }
@@ -232,8 +246,15 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
           <div className="mb-6">
             <button
               onClick={() => {
-                if (hasUnsavedChanges && !window.confirm("You have unsaved changes. Leave without saving?")) return;
-                router.push('/admin/users');
+                if (hasUnsavedChanges) {
+                  triggerConfirm(
+                    "Unsaved Changes",
+                    "You have unsaved changes. Leave without saving?",
+                    () => router.push('/admin/users')
+                  );
+                } else {
+                  router.push('/admin/users');
+                }
               }}
               className="text-gray-400 hover:text-white transition-colors text-sm font-medium flex items-center gap-2"
             >
@@ -270,8 +291,15 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
           <div>
             <button
               onClick={() => {
-                if (hasUnsavedChanges && !window.confirm("You have unsaved changes. Leave without saving?")) return;
-                router.push('/admin/users');
+                if (hasUnsavedChanges) {
+                  triggerConfirm(
+                    "Unsaved Changes",
+                    "You have unsaved changes. Leave without saving?",
+                    () => router.push('/admin/users')
+                  );
+                } else {
+                  router.push('/admin/users');
+                }
               }}
               className="text-gray-400 hover:text-white transition-colors text-sm font-medium flex items-center gap-2 mb-4"
             >
@@ -288,8 +316,8 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
               disabled={actionLoading}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 border ${
                 user.isActive 
-                  ? "bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/20" 
-                  : "bg-green-500/10 hover:bg-green-500/20 text-green-400 border-green-500/20"
+                  ? "bg-error/10 hover:bg-error/20 text-error border-error/20" 
+                  : "bg-success/10 hover:bg-success/20 text-success border-success/20"
               } disabled:opacity-50`}
             >
               {actionLoading && (
@@ -307,23 +335,30 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
               key={tab}
               onClick={() => {
                 if (hasUnsavedChanges) {
-                  if (!window.confirm("You have unsaved changes. Leave without saving?")) return;
-                  if (user) {
-                    setEditFormData({
-                      email: user.email || "",
-                      username: user.username || "",
-                      firstName: user.firstName || "",
-                      lastName: user.lastName || "",
-                    });
-                    setSelectedRole(user.role || "");
-                  }
-                  setIsDirty(false);
+                  triggerConfirm(
+                    "Unsaved Changes",
+                    "You have unsaved changes. Leave without saving?",
+                    () => {
+                      if (user) {
+                        setEditFormData({
+                          email: user.email || "",
+                          username: user.username || "",
+                          firstName: user.firstName || "",
+                          lastName: user.lastName || "",
+                        });
+                        setSelectedRole(user.role || "");
+                      }
+                      setIsDirty(false);
+                      setActiveTab(tab);
+                    }
+                  );
+                } else {
+                  setActiveTab(tab);
                 }
-                setActiveTab(tab);
               }}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab
-                  ? "border-blue-500 text-white"
+                  ? "border-primary text-white"
                   : "border-transparent text-gray-400 hover:text-gray-200 hover:border-[#30363d]"
               }`}
             >
@@ -447,7 +482,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                 <button
                   onClick={handleRoleChangeSubmit}
                   disabled={!selectedRole || addRoleLoading || selectedRole === user.role}
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-2.5 bg-primary hover:bg-primary/80 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {addRoleLoading && (
                     <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
@@ -479,6 +514,16 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         )}
       </div>
 
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        title={confirmConfig.title}
+        description={confirmConfig.description}
+        onConfirm={() => {
+          confirmConfig.onConfirm();
+          setConfirmOpen(false);
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </main>
   );
 }

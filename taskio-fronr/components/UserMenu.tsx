@@ -4,17 +4,17 @@ interface UserMenuProps {
 }
 
 export default function UserMenu({ name, email }: UserMenuProps) {
-  const firstLetter = name?.charAt(0).toUpperCase() || "U";
+  const firstLetter = name?.charAt(0).toUpperCase() || email?.charAt(0).toUpperCase() || "U";
 
   return (
-    <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border shadow-sm">
-      <div className="w-11 h-11 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-lg">
+    <div className="flex items-center gap-3 bg-[#21262d] px-3.5 py-1.5 rounded-xl border border-[#30363d] shadow-sm">
+      <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
         {firstLetter}
       </div>
 
-      <div>
-        <p className="font-semibold text-sm text-slate-800">{name}</p>
-        <p className="text-xs text-slate-500">{email}</p>
+      <div className="hidden sm:block text-left">
+        <p className="font-semibold text-xs text-white">{name || email.split("@")[0]}</p>
+        <p className="text-[10px] text-gray-400">{email}</p>
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 export default function OrgBadge() {
   return (
-    <div className="px-4 py-3 rounded-xl bg-blue-50 border border-blue-100">
-      <p className="text-xs text-slate-500">Organization</p>
-      <p className="font-semibold text-[#2563EB]">Form</p>
+    <div className="px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-left">
+      <p className="text-[10px] text-gray-400 leading-none">Organization</p>
+      <p className="font-semibold text-xs text-primary leading-tight mt-0.5">Form</p>
     </div>
   );
 }

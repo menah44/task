@@ -41,6 +41,11 @@ services:
       - .env.production
     expose:
       - "3000"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     depends_on:
       - backend
     networks:

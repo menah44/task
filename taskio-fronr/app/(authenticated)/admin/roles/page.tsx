@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/api/client";
+import { toast } from "react-hot-toast";
 
 interface Role {
   id: number;
@@ -60,16 +61,20 @@ export default function RolesPage() {
   };
 
   const handleDeleteRole = async (roleId: number, roleName: string) => {
-    if (!confirm(`Are you sure you want to delete the role ${roleName}?`)) return;
+    if (!window.confirm(`Are you sure you want to delete role '${roleName}'?`)) return;
+    
+    setLoading(true);
+    setError(null);
     try {
       await apiClient.delete(`/roles/${roleId}`);
+      toast.success("Role deleted successfully");
       await fetchRoles();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to delete role");
+      toast.error(err.response?.data?.message || "Failed to delete role");
+    } finally {
+      setLoading(false);
     }
   };
-
-
 
   const handleEditRole = async (e?: React.FormEvent | React.MouseEvent) => {
     e?.preventDefault();

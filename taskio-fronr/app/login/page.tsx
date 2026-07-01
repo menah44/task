@@ -48,12 +48,12 @@ export default function LoginPage() {
         return;
       }
 
-      // Save tokens in localStorage
-      localStorage.setItem("accessToken", token);
-
-      if (result.refreshToken) {
-        localStorage.setItem("refreshToken", result.refreshToken);
-      }
+      // Save tokens in Zustand immediately
+      useAuthStore.setState({
+        accessToken: token,
+        refreshToken: result.refreshToken || null,
+        isAuthenticated: true,
+      });
 
       // Fetch full user state
       await fetchCurrentUser();

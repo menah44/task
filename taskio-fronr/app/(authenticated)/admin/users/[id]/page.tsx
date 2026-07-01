@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import apiClient from "@/lib/api/client";
+import { toast } from "react-hot-toast";
 
 interface UserDetail {
   id: number;
@@ -123,10 +124,10 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
       await apiClient.put(`/users/${params.id}`, { role: selectedRole });
       await fetchUser();
       router.refresh();
-      alert("Role updated successfully");
+      toast.success("Role updated successfully");
     } catch (err: any) {
       console.error("Failed to update role", err);
-      alert(err.response?.data?.message || "Failed to update role");
+      toast.error(err.response?.data?.message || "Failed to update role");
     } finally {
       setAddRoleLoading(false);
     }
@@ -143,10 +144,10 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         
       await apiClient.patch(endpoint);
       
-      alert(`User account ${user.isActive ? "disabled" : "enabled"} successfully`);
+      toast.success(`User account ${user.isActive ? "disabled" : "enabled"} successfully`);
       await fetchUser();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to update user status");
+      toast.error(err.response?.data?.message || "Failed to update user status");
     } finally {
       setActionLoading(false);
     }
@@ -174,7 +175,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
     try {
       await apiClient.put(`/users/${params.id}`, editFormData);
-      alert("User updated successfully");
+      toast.success("User updated successfully");
       setIsDirty(false);
       await fetchUser();
     } catch (err: any) {

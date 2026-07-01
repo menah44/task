@@ -29,6 +29,7 @@ export default function AuthenticatedLayout({
     fetchCurrentUser,
     refreshAccessToken,
     logout,
+    accessToken,
   } = useAuthStore();
 
   const pathname = usePathname();
@@ -37,17 +38,17 @@ export default function AuthenticatedLayout({
   // 1. Fetch current user if token exists but no user is loaded
   useEffect(() => {
     if (hasHydrated) {
-      const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+      const token = accessToken;
       if (token && !currentUser && !isLoading) {
         fetchCurrentUser();
       }
     }
-  }, [hasHydrated, currentUser, isLoading, fetchCurrentUser]);
+  }, [hasHydrated, currentUser, isLoading, fetchCurrentUser, accessToken]);
 
   // 2. Role-based routing and access protection
   useEffect(() => {
     if (hasHydrated && !isLoading) {
-      const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+      const token = accessToken;
       
       if (!token) {
         router.replace("/login");
@@ -67,14 +68,14 @@ export default function AuthenticatedLayout({
         }
       }
     }
-  }, [hasHydrated, isLoading, currentUser, pathname, router]);
+  }, [hasHydrated, isLoading, currentUser, pathname, router, accessToken]);
 
   // 3. Background Silent Refresh check
   useEffect(() => {
     if (!currentUser) return;
 
     const checkAndRefresh = async () => {
-      const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+      const token = accessToken;
       if (!token) return;
 
       try {
@@ -86,7 +87,6 @@ export default function AuthenticatedLayout({
 
         // If token expires in 60 seconds or less, refresh silently
         if (timeLeft <= 60) {
-          console.log("🔄 JWT is close to expiry. Performing silent refresh...");
           await refreshAccessToken();
         }
       } catch (error) {
@@ -101,10 +101,10 @@ export default function AuthenticatedLayout({
     const interval = setInterval(checkAndRefresh, 15000);
 
     return () => clearInterval(interval);
-  }, [currentUser, refreshAccessToken]);
+  }, [currentUser, refreshAccessToken, accessToken]);
 
   // 4. Determine if we are in a loading/checking state
-  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+  const token = accessToken;
   const isChecking = !hasHydrated || (token && !currentUser && isLoading);
 
   if (isChecking) {

@@ -1,58 +1,49 @@
 "use client";
 
 import { useEffect } from "react";
-import axios from "axios";
+import apiClient from "../api/client";
 import { useAuthStore, parseJwt } from "@/lib/auth-store";
-
-// قراءة الـ URL بتاع الباكيند من ملف البيئة أو الـ المضافة افتراضياً
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
 
 export function useAuthRefresh() {
   const logout = useAuthStore((state) => state.logout);
 
   useEffect(() => {
     const checkAndRefresh = async () => {
-      // 1. نجيب الـ Access Token الحالي من الـ localStorage
-      const accessToken = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+      // 1. Get Access Token from the Zustand store
+      const accessToken = useAuthStore.getState().accessToken;
       if (!accessToken) return;
 
-      // 2. نفك تشفير التوكن عشان نقرأ منه وقت الانتهاء (exp)
+      // 2. Decode JWT to read expiration (exp)
       const payload = parseJwt(accessToken);
       if (!payload || !payload.exp) return;
 
-      // 3. نحسب الوقت الحالي والوقت المتبقي بالثواني
+      // 3. Calculate remaining seconds
       const currentTime = Math.floor(Date.now() / 1000);
       const timeLeft = payload.exp - currentTime;
 
-      // 4. تلبية للشرط: لو متبقي 60 ثانية أو أقل على انتهاء الصلاحية، نفذ الـ Silent Refresh فوراً
+      // 4. Silent refresh if time left is <= 60 seconds
       if (timeLeft <= 60) {
         try {
-          const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refreshToken") : null;
+          const refreshToken = useAuthStore.getState().refreshToken;
           if (!refreshToken) return;
 
-          // نضرب على الـ Endpoint المطلوبة (POST /auth/refresh)
-          const res = await axios.post(`${baseURL}/auth/refresh`, {
+          const res = await apiClient.post("/auth/refresh", {
             refreshToken,
           });
 
-          // 5. لو التجديد تم بنجاح، نخزن التوكنز الجديدة
+          // 5. Store new tokens in Zustand immediately upon success
           if (res.status === 200) {
             const { accessToken: newAccess, refreshToken: newRefresh } = res.data;
             
-            if (typeof window !== "undefined") {
-              localStorage.setItem("accessToken", newAccess);
-              if (newRefresh) {
-                localStorage.setItem("refreshToken", newRefresh);
-              }
-            }
-            console.log(
-              "🔄 تم تجديد الـ JWT تلقائياً بنجاح قبل 60 ثانية من انتهائه."
-            );
+            useAuthStore.setState({
+              accessToken: newAccess,
+              refreshToken: newRefresh || refreshToken,
+              isAuthenticated: true,
+            });
           }
         } catch (error) {
-          // لو الـ Refresh Token كمان منتهي أو فيه مشكلة، بنخرجه فوراً لصفحة اللوجين
           console.error(
-            "❌ فشل التجديد التلقائي، جاري تنظيف الجلسة والتحويل للـ login...",
+            "❌ Automated silent refresh failed, logging out...",
             error
           );
           logout();
@@ -60,13 +51,11 @@ export function useAuthRefresh() {
       }
     };
 
-    // تشغيل الفحص فوراً عند فتح التطبيق / عمل mount
     checkAndRefresh();
 
-    // تشغيل تايمر يفحص التوكن تلقائياً كل 15 ثانية في الخلفية
+    // Check every 15 seconds in the background
     const interval = setInterval(checkAndRefresh, 15000);
 
-    // تنظيف التايمر عند الـ unmount
     return () => clearInterval(interval);
   }, [logout]);
 }

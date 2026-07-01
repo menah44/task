@@ -1,8 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import axios from "axios";
-
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
+import apiClient from "./api/client";
 
 // Module-level variable to store the silent refresh timeout ID
 let refreshTimeoutId: NodeJS.Timeout | null = null;
@@ -37,6 +35,7 @@ interface AuthState {
   currentUser: UserType | null;
   isAuthenticated: boolean;
   accessToken: string | null;
+  refreshToken: string | null;
   isLoading: boolean;
   hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
@@ -53,6 +52,7 @@ export const useAuthStore = create<AuthState>()(
       currentUser: null,
       isAuthenticated: false,
       accessToken: null,
+      refreshToken: null,
       isLoading: true,
       hasHydrated: false,
 
@@ -72,24 +72,21 @@ export const useAuthStore = create<AuthState>()(
       fetchCurrentUser: async () => {
         set({ isLoading: true });
 
-        const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+        const token = get().accessToken;
 
         if (!token) {
           set({
             currentUser: null,
             isAuthenticated: false,
             accessToken: null,
+            refreshToken: null,
             isLoading: false,
           });
           return;
         }
 
         try {
-          const res = await axios.get(`${baseURL}/users/me`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const res = await apiClient.get("/users/me");
 
           set({
             currentUser: res.data,
@@ -102,16 +99,11 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           console.error("Failed to fetch current user:", error);
 
-          // If validation fails (e.g. 401 or 404), clean up local tokens immediately
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-          }
-
           set({
             currentUser: null,
             isAuthenticated: false,
             accessToken: null,
+            refreshToken: null,
             isLoading: false,
           });
         }
@@ -119,29 +111,23 @@ export const useAuthStore = create<AuthState>()(
 
       refreshAccessToken: async () => {
         try {
-          const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refreshToken") : null;
+          const refreshToken = get().refreshToken;
 
           if (!refreshToken) {
             await get().logout();
-            return;
+            throw new Error("No refresh token available");
           }
 
-          const res = await axios.post(`${baseURL}/auth/refresh`, {
+          const res = await apiClient.post("/auth/refresh", {
             refreshToken,
           });
 
           const newAccessToken = res.data.accessToken;
           const newRefreshToken = res.data.refreshToken;
 
-          if (typeof window !== "undefined") {
-            localStorage.setItem("accessToken", newAccessToken);
-            if (newRefreshToken) {
-              localStorage.setItem("refreshToken", newRefreshToken);
-            }
-          }
-
           set({
             accessToken: newAccessToken,
+            refreshToken: newRefreshToken || refreshToken,
             isAuthenticated: true,
           });
 
@@ -149,11 +135,12 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           console.error("Token refresh failed, logging out:", error);
           await get().logout();
+          throw error; // Reject the promise
         }
       },
 
       startAutoRefresh: () => {
-        const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : get().accessToken;
+        const token = get().accessToken;
 
         if (!token) return;
 
@@ -184,18 +171,10 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: async () => {
-        const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+        const token = get().accessToken;
         try {
           if (token) {
-            await axios.post(
-              `${baseURL}/auth/logout`,
-              {},
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
+            await apiClient.post("/auth/logout", {});
           }
         } catch (error) {
           console.error("Server logout failed:", error);
@@ -205,7 +184,7 @@ export const useAuthStore = create<AuthState>()(
             refreshTimeoutId = null;
           }
 
-          // Clear local and session storage
+          // Clear storage keys as a fail-safe
           if (typeof window !== "undefined") {
             localStorage.clear();
             sessionStorage.clear();
@@ -222,6 +201,7 @@ export const useAuthStore = create<AuthState>()(
             currentUser: null,
             isAuthenticated: false,
             accessToken: null,
+            refreshToken: null,
             isLoading: false,
           });
 
@@ -233,7 +213,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },
@@ -243,6 +223,7 @@ export const useAuthStore = create<AuthState>()(
           currentUser: state.currentUser,
           isAuthenticated: state.isAuthenticated,
           accessToken: state.accessToken,
+          refreshToken: state.refreshToken,
         };
       },
     }

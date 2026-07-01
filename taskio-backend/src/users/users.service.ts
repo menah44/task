@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
 import { Role } from '../roles/entities/role.entity';
+import { Group } from '../groups/entities/group.entity';
 import { CreateUserAdminDto } from './dto/create-user-admin.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -14,6 +15,8 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    @InjectRepository(Group)
+    private readonly groupRepository: Repository<Group>,
   ) {}
 
   async findMe(id: number) {
@@ -136,6 +139,15 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
+    let userGroups: Group[] = [];
+    if (dto.groupId) {
+      const group = await this.groupRepository.findOne({ where: { id: dto.groupId } });
+      if (!group) {
+        throw new BadRequestException('Group does not exist');
+      }
+      userGroups.push(group);
+    }
+
     const newUser = this.userRepository.create({
       username: dto.username,
       firstName: dto.firstName,
@@ -144,6 +156,7 @@ export class UsersService {
       password: hashedPassword,
       role: dto.role.toUpperCase(),
       isActive: true,
+      groups: userGroups,
     });
 
     await this.userRepository.save(newUser);
@@ -177,7 +190,10 @@ export class UsersService {
   }
 
   async updateUser(id: number, dto: UpdateUserDto) {
-    const user = await this.userRepository.findOne({ where: { id } });
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['roles'],
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -211,6 +227,7 @@ export class UsersService {
         throw new BadRequestException("Role does not exist");
       }
       user.role = roleName;
+      user.roles = [existingRole];
     }
 
     await this.userRepository.save(user);

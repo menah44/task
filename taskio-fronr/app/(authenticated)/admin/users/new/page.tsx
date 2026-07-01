@@ -17,24 +17,30 @@ export default function CreateUserPage() {
     lastName: "",
     password: "",
     role: "USER",
+    groupId: "",
   });
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [roles, setRoles] = useState<{ id: number; name: string }[]>([]);
+  const [groups, setGroups] = useState<{ id: number; name: string }[]>([]);
 
   useEffect(() => {
-    const fetchRoles = async () => {
+    const fetchData = async () => {
       try {
-        const res = await apiClient.get('/roles');
-        setRoles(res.data);
-        if (res.data.length > 0) {
-          setFormData(prev => ({ ...prev, role: res.data[0].name }));
+        const [rolesRes, groupsRes] = await Promise.all([
+          apiClient.get('/roles'),
+          apiClient.get('/groups')
+        ]);
+        setRoles(rolesRes.data);
+        setGroups(groupsRes.data);
+        if (rolesRes.data.length > 0) {
+          setFormData(prev => ({ ...prev, role: rolesRes.data[0].name }));
         }
       } catch (err) {
-        console.error("Failed to fetch roles", err);
+        console.error("Failed to fetch roles or groups", err);
       }
     };
-    fetchRoles();
+    fetchData();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -64,7 +70,12 @@ export default function CreateUserPage() {
 
     setLoading(true);
     try {
-      const response = await apiClient.post("/users", formData);
+      const { groupId, ...rest } = formData;
+      const submitData = {
+        ...rest,
+        groupId: groupId ? Number(groupId) : undefined,
+      };
+      const response = await apiClient.post("/users", submitData);
       if (response.status === 201) {
         alert("User created successfully");
         router.push(`/admin/users/${response.data.id}`);
@@ -259,6 +270,23 @@ export default function CreateUserPage() {
               {fieldErrors.role && (
                 <p className="mt-1 text-sm text-red-400">{fieldErrors.role}</p>
               )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Group
+              </label>
+              <select
+                name="groupId"
+                value={formData.groupId}
+                onChange={handleChange}
+                className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all appearance-none"
+              >
+                <option value="">Select a group (optional)...</option>
+                {groups.map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
             </div>
 
             <div className="pt-4 border-t border-[#30363d]">

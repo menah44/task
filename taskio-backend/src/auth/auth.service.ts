@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
@@ -37,5 +38,47 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  async updateRefreshToken(userId: number, refreshToken: string) {
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.userRepository.update(userId, {
+      hashedRefreshToken,
+    });
+  }
+
+  async refreshTokens(userId: number, refreshToken: string) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user || !user.hashedRefreshToken) {
+      throw new UnauthorizedException('Access Denied');
+    }
+
+    const refreshTokenMatches = await bcrypt.compare(
+      refreshToken,
+      user.hashedRefreshToken,
+    );
+    if (!refreshTokenMatches) {
+      throw new UnauthorizedException('Access Denied');
+    }
+
+    const tokens = this.generateTokens(user);
+    await this.updateRefreshToken(user.id, tokens.refreshToken);
+    return tokens;
+  }
+
+  async validateAndRefreshTokens(refreshToken: string) {
+    let payload;
+    try {
+      payload = this.jwtService.verify(refreshToken);
+    } catch (e) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+    return this.refreshTokens(payload.sub, refreshToken);
+  }
+
+  async logout(userId: number) {
+    await this.userRepository.update(userId, {
+      hashedRefreshToken: null,
+    });
   }
 }

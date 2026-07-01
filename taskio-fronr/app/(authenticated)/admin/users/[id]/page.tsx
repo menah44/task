@@ -23,8 +23,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [roles, setRoles] = useState<{ id: number; name: string }[]>([]);
-  const [assignedRole, setAssignedRole] = useState<{ id: number; name: string } | null>(null);
-  const [selectedRole, setSelectedRole] = useState<number | "">("");
+  const [selectedRole, setSelectedRole] = useState<string>("");
   const [userGroups, setUserGroups] = useState<{ id: number; name: string }[]>([]);
   const [activeTab, setActiveTab] = useState("Profile");
   const [addRoleLoading, setAddRoleLoading] = useState(false);
@@ -53,6 +52,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         firstName: res.data.firstName || "",
         lastName: res.data.lastName || "",
       });
+      setSelectedRole(res.data.role || "");
       setIsDirty(false);
     } catch (err: any) {
       if (err.response?.status === 404) {
@@ -73,24 +73,21 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     if (activeTab === "Roles") {
-      const fetchAllAndUserRoles = async () => {
+      const fetchAllRoles = async () => {
         try {
-          const [rolesRes, userRolesRes] = await Promise.all([
-            apiClient.get('/roles'),
-            apiClient.get(`/users/${params.id}/roles`)
-          ]);
-          setRoles(rolesRes.data);
-          
-          setAssignedRole(userRolesRes.data[0] || null);
-          setSelectedRole(userRolesRes.data[0]?.id || "");
+          const res = await apiClient.get('/roles');
+          setRoles(res.data);
+          if (user) {
+            setSelectedRole(user.role || "");
+          }
         } catch (err) {
           console.error("Failed to fetch roles", err);
         }
       };
 
-      fetchAllAndUserRoles();
+      fetchAllRoles();
     }
-  }, [activeTab, params.id]);
+  }, [activeTab, user]);
 
   useEffect(() => {
     if (activeTab === "Groups") {
@@ -106,37 +103,29 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     }
   }, [activeTab, params.id]);
 
+  const hasUnsavedChanges = isDirty || (selectedRole !== "" && selectedRole !== (user?.role || ""));
+
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
+      if (hasUnsavedChanges) {
         e.preventDefault();
         e.returnValue = "You have unsaved changes. Leave without saving?";
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isDirty]);
+  }, [hasUnsavedChanges]);
 
   const handleRoleChangeSubmit = async () => {
     if (!selectedRole) return;
     setAddRoleLoading(true);
     try {
-      if (assignedRole && assignedRole.id !== selectedRole) {
-        await apiClient.delete(`/roles/${assignedRole.id}/users/${params.id}`);
-      }
-      if (assignedRole?.id !== selectedRole) {
-        await apiClient.post(`/roles/${selectedRole}/users/${params.id}`);
-      }
-      
-      const res = await apiClient.get(`/users/${params.id}/roles`);
-      setAssignedRole(res.data[0] || null);
-      setSelectedRole(res.data[0]?.id || "");
-      
+      await apiClient.put(`/users/${params.id}`, { role: selectedRole });
       await fetchUser();
       router.refresh();
       alert("Role updated successfully");
     } catch (err: any) {
-      console.error("Failed to assign role", err);
+      console.error("Failed to update role", err);
       alert(err.response?.data?.message || "Failed to update role");
     } finally {
       setAddRoleLoading(false);
@@ -242,7 +231,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
           <div className="mb-6">
             <button
               onClick={() => {
-                if (isDirty && !window.confirm("You have unsaved changes. Leave without saving?")) return;
+                if (hasUnsavedChanges && !window.confirm("You have unsaved changes. Leave without saving?")) return;
                 router.push('/admin/users');
               }}
               className="text-gray-400 hover:text-white transition-colors text-sm font-medium flex items-center gap-2"
@@ -280,7 +269,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
           <div>
             <button
               onClick={() => {
-                if (isDirty && !window.confirm("You have unsaved changes. Leave without saving?")) return;
+                if (hasUnsavedChanges && !window.confirm("You have unsaved changes. Leave without saving?")) return;
                 router.push('/admin/users');
               }}
               className="text-gray-400 hover:text-white transition-colors text-sm font-medium flex items-center gap-2 mb-4"
@@ -316,8 +305,17 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
             <button
               key={tab}
               onClick={() => {
-                if (activeTab === "Profile" && tab !== "Profile" && isDirty) {
+                if (hasUnsavedChanges) {
                   if (!window.confirm("You have unsaved changes. Leave without saving?")) return;
+                  if (user) {
+                    setEditFormData({
+                      email: user.email || "",
+                      username: user.username || "",
+                      firstName: user.firstName || "",
+                      lastName: user.lastName || "",
+                    });
+                    setSelectedRole(user.role || "");
+                  }
                   setIsDirty(false);
                 }
                 setActiveTab(tab);
@@ -415,11 +413,17 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
         {activeTab === "Roles" && (
           <div className="bg-[#161b22] rounded-3xl shadow-sm border border-[#30363d] p-6 sm:p-8">
-            <h3 className="text-xl font-bold text-white mb-6">User Roles</h3>
+            <h3 className="text-xl font-bold text-white mb-6">User Role</h3>
             <div className="flex flex-wrap gap-3 mb-8">
-              {assignedRole ? (
-                <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  {assignedRole.name}
+              {user.role ? (
+                <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium border ${
+                  user.role.toUpperCase() === "ADMIN"
+                    ? "bg-red-500/10 text-red-400 border-red-500/20"
+                    : user.role.toUpperCase() === "USER"
+                    ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                    : "bg-gray-500/10 text-gray-400 border-gray-500/20"
+                }`}>
+                  {user.role}
                 </span>
               ) : (
                 <p className="text-gray-400 text-sm">No role assigned.</p>
@@ -431,17 +435,17 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <select
                   value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value ? Number(e.target.value) : "")}
+                  onChange={(e) => setSelectedRole(e.target.value)}
                   className="bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors flex-1 w-full sm:max-w-xs appearance-none"
                 >
                   <option value="">Select a role...</option>
                   {roles.map(r => (
-                    <option key={r.id} value={r.id}>{r.name}</option>
+                    <option key={r.id} value={r.name}>{r.name}</option>
                   ))}
                 </select>
                 <button
                   onClick={handleRoleChangeSubmit}
-                  disabled={!selectedRole || addRoleLoading || selectedRole === assignedRole?.id}
+                  disabled={!selectedRole || addRoleLoading || selectedRole === user.role}
                   className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {addRoleLoading && (

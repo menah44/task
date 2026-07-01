@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToMany } from 'typeorm';
+import { User } from '../../auth/entities/user.entity';
 
 @Entity('group')
 export class Group {
@@ -7,4 +8,13 @@ export class Group {
 
   @Column({ unique: true })
   name!: string;
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
+
+  @ManyToMany(() => User, (user) => user.groups)
+  users!: User[];
 }

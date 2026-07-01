@@ -13,6 +13,9 @@ export class User {
   @Column()
   password!: string;
 
+  @Column({ nullable: true, type: 'varchar' })
+  hashedRefreshToken?: string | null;
+
   @Column({ default: 'USER' })
   role!: string;
 
@@ -35,7 +38,7 @@ export class User {
   @JoinTable()
   roles!: Role[];
 
-  @ManyToMany(() => Group)
+  @ManyToMany(() => Group, (group) => group.users)
   @JoinTable()
   groups!: Group[];
 }

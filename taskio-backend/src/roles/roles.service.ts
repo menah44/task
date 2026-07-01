@@ -15,9 +15,20 @@ export class RolesService {
   ) {}
 
   async findAll() {
-    return this.roleRepository.find({
-      select: ['id', 'name'],
+    const roles = await this.roleRepository.find({
+      order: { id: 'ASC' }
     });
+    const results: any[] = [];
+    for (const role of roles) {
+      const usersCount = await this.userRepository.count({
+        where: { role: role.name }
+      });
+      results.push({
+        ...role,
+        usersCount,
+      });
+    }
+    return results;
   }
 
   async createRole(dto: CreateRoleDto) {
@@ -35,6 +46,15 @@ export class RolesService {
     if (!role) {
       throw new NotFoundException('Role not found');
     }
+
+    // Block deletion if any users are assigned to this role
+    const usersCount = await this.userRepository.count({
+      where: { role: role.name }
+    });
+    if (usersCount > 0) {
+      throw new ConflictException(`Cannot delete role '${role.name}' because it has ${usersCount} user(s) assigned to it.`);
+    }
+
     await this.roleRepository.remove(role);
     return { success: true, message: 'Role deleted successfully' };
   }
@@ -89,5 +109,17 @@ export class RolesService {
     await this.userRepository.save(user);
 
     return { success: true, message: 'Role removed successfully' };
+  }
+
+  async getUsersForRole(roleId: number) {
+    const role = await this.roleRepository.findOne({ where: { id: roleId } });
+    if (!role) {
+      throw new NotFoundException('Role not found');
+    }
+
+    return this.userRepository.find({
+      where: { role: role.name },
+      select: ['id', 'email', 'username', 'firstName', 'lastName', 'isActive', 'createdAt'],
+    });
   }
 }

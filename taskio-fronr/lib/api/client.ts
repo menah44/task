@@ -1,8 +1,8 @@
 import axios from "axios";
 import { useAuthStore } from "@/lib/auth-store";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://20.79.190.41:5000";
-
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
+console.log("BASE URL =", baseURL);
 function showToast(message: string) {
   if (typeof window !== "undefined") {
     alert(message);

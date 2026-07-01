@@ -73,4 +73,15 @@ export class RolesController {
     }
     return this.rolesService.removeUserFromRole(roleId, userId);
   }
+
+  @Get(':roleId/users')
+  async getUsersForRole(
+    @CurrentUser() currentUser: User,
+    @Param('roleId', ParseIntPipe) roleId: number,
+  ) {
+    if (currentUser.role?.toUpperCase() !== 'ADMIN') {
+      throw new ForbiddenException('Only administrators can access this resource.');
+    }
+    return this.rolesService.getUsersForRole(roleId);
+  }
 }

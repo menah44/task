@@ -13,7 +13,8 @@ import {
   LogOut, 
   Loader2,
   Menu,
-  Shield
+  Shield,
+  Folder
 } from "lucide-react";
 
 export default function AuthenticatedLayout({
@@ -195,6 +196,16 @@ export default function AuthenticatedLayout({
                 >
                   <Shield className="w-5 h-5 text-gray-400 group-hover:text-rose-500 transition-colors" />
                   <span>Roles</span>
+                </Link>
+
+                <Link
+                  href="/admin/groups"
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
+                    pathname?.startsWith("/admin/groups") ? "bg-indigo-600/10 text-indigo-400 border border-indigo-600/20" : "border border-transparent"
+                  }`}
+                >
+                  <Folder className="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors" />
+                  <span>Groups</span>
                 </Link>
               </>
             ) : (

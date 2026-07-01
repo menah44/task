@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional, IsNumber } from 'class-validator';
 
 export class CreateUserAdminDto {
   @IsEmail()
@@ -19,4 +19,8 @@ export class CreateUserAdminDto {
 
   @IsString()
   role!: string;
+
+  @IsOptional()
+  @IsNumber()
+  groupId?: number;
 }

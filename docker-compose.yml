@@ -4,7 +4,7 @@ services:
     container_name: taskio-postgres
     restart: always
     env_file:
-      - .env.production
+      - .env.deploy
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -20,7 +20,7 @@ services:
     container_name: taskio-backend
     restart: always
     env_file:
-      - .env.production
+      - .env.deploy
     expose:
       - "3002"
     healthcheck:
@@ -38,7 +38,7 @@ services:
     container_name: taskio-frontend
     restart: always
     env_file:
-      - .env.production
+      - .env.deploy
     expose:
       - "3000"
     healthcheck:

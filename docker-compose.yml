@@ -62,5 +62,5 @@ volumes:
   postgres_data:
 
 networks:
-  form-net:
+  taskio-net:
     driver: bridge

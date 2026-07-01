@@ -19,9 +19,9 @@ services:
     container_name: taskio-backend
     restart: always
     env_file:
-      - .env.production
+      - .env
     expose:
-      - "3002"
+      - "5000"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3002/ || exit 1"]
       interval: 30s
@@ -37,7 +37,7 @@ services:
     container_name: taskio-frontend
     restart: always
     env_file:
-      - .env.production
+      - .env
     expose:
       - "3000"
     healthcheck:

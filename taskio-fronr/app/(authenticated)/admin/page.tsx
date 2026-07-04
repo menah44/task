@@ -66,8 +66,6 @@ export default function AdminDashboard() {
             Manage and monitor all active forms and submissions received.
           </p>
         </div>
-
-        {/* ✅ NEW: Create Form button → goes to /studio/forms/new */}
         <Link
           href="/studio/forms/new"
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors">
@@ -81,14 +79,12 @@ export default function AdminDashboard() {
           <p className="text-gray-400 text-sm font-medium">Total Forms</p>
           <h3 className="text-3xl font-bold mt-2 text-white">{forms.length}</h3>
         </div>
-
         <div className="bg-[#161b22] rounded-2xl p-6 shadow-sm border border-[#30363d]">
           <p className="text-gray-400 text-sm font-medium">Published Forms</p>
           <h3 className="text-3xl font-bold mt-2 text-green-400">
             {forms.filter((f) => f.status === "Published").length}
           </h3>
         </div>
-
         <div className="bg-[#161b22] rounded-2xl p-6 shadow-sm border border-[#30363d]">
           <p className="text-gray-400 text-sm font-medium">Total Submissions</p>
           <h3 className="text-3xl font-bold mt-2 text-blue-400">
@@ -119,13 +115,11 @@ export default function AdminDashboard() {
                 className="border border-[#30363d] rounded-2xl p-5 hover:border-blue-500/50 hover:bg-[#1f242c] transition-all bg-[#0d1117] flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-start gap-4">
-                    {/* ✅ NEW: title itself links to the builder */}
                     <Link
                       href={`/studio/forms/${form.id}/builder`}
                       className="font-semibold text-lg text-white hover:text-blue-400 transition-colors cursor-pointer">
                       {form.title}
                     </Link>
-
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
                         form.status === "Published"
@@ -145,15 +139,20 @@ export default function AdminDashboard() {
                   </p>
                 </div>
 
-                {/* ✅ NEW: two actions — Open Builder + View Details */}
-                <div className="mt-5 pt-3 border-t border-[#30363d]/50 flex justify-end gap-4">
+                {/* ✅ Actions: Open Builder + Versions + View Details */}
+                <div className="mt-5 pt-3 border-t border-[#30363d]/50 flex justify-end gap-4 flex-wrap">
                   <Link
                     href={`/studio/forms/${form.id}/builder`}
-                    className="text-purple-400 font-medium text-sm hover:text-purple-300 transition-colors flex items-center gap-1">
+                    className="text-purple-400 font-medium text-sm hover:text-purple-300 transition-colors">
                     Open Builder →
                   </Link>
-                  <button className="text-blue-400 font-medium text-sm hover:text-blue-300 transition-colors flex items-center gap-1">
-                    View Details & Reports →
+                  <Link
+                    href={`/studio/forms/${form.id}/versions`}
+                    className="text-yellow-400 font-medium text-sm hover:text-yellow-300 transition-colors">
+                    Versions →
+                  </Link>
+                  <button className="text-blue-400 font-medium text-sm hover:text-blue-300 transition-colors">
+                    View Details →
                   </button>
                 </div>
               </div>

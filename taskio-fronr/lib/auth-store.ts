@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import apiClient from "./api/client";
 
 // Module-level variable to store the silent refresh timeout ID
-let refreshTimeoutId: NodeJS.Timeout | null = null;
+let refreshTimeoutId: any = null;
 
 // Unicode-safe JWT decoder helper
 export function parseJwt(token: string) {
@@ -39,7 +39,7 @@ interface AuthState {
   isLoading: boolean;
   hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
-  login: (user: UserType, token: string) => void;
+  login: (user: UserType, token: string, refreshToken?: string | null) => void;
   logout: () => Promise<void>;
   fetchCurrentUser: () => Promise<void>;
   refreshAccessToken: () => Promise<void>;
@@ -60,11 +60,12 @@ export const useAuthStore = create<AuthState>()(
         set({ hasHydrated: state });
       },
 
-      login: (user, token) => {
+      login: (user, token, refreshToken = null) => {
         set({
           currentUser: user,
           isAuthenticated: true,
           accessToken: token,
+          refreshToken: refreshToken,
           isLoading: false,
         });
       },
@@ -216,6 +217,7 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
+        state?.startAutoRefresh();
       },
       partialize: (state) => {
         // Explicitly return only the serializable persistent fields

@@ -2,7 +2,7 @@ import axios from "axios";
 import { useAuthStore } from "@/lib/auth-store";
 import { toast } from "react-hot-toast";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://20.79.190.41/api";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
 
 const apiClient = axios.create({
   baseURL,
@@ -36,8 +36,8 @@ apiClient.interceptors.response.use(
     const responseStatus = error.response?.status;
     const requestUrl = originalRequest?.url || "";
 
-    // Prevent token refresh request itself or login request from retrying (prevents infinite loops)
-    const isAuthEndpoint = requestUrl.includes("/auth/refresh") || requestUrl.includes("/auth/login");
+    // Prevent token refresh request itself, login, or logout from retrying (prevents infinite loops)
+    const isAuthEndpoint = requestUrl.includes("/auth/refresh") || requestUrl.includes("/auth/login") || requestUrl.includes("/auth/logout");
 
     // 401 Unauthorized check for automatic token refresh retry
     if (responseStatus === 401 && !isAuthEndpoint && !originalRequest._retry) {

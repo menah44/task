@@ -5,10 +5,12 @@ import { AppService } from './app.service';
 import { User } from './auth/entities/user.entity';
 import { Role } from './roles/entities/role.entity';
 import { Group } from './groups/entities/group.entity';
+import { AuditLog } from './audit/entities/audit-log.entity';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { GroupsModule } from './groups/groups.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -19,13 +21,14 @@ import { GroupsModule } from './groups/groups.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [User, Role, Group],
+      entities: [User, Role, Group, AuditLog],
       synchronize: true,
     }),
     AuthModule,
     UsersModule,
     RolesModule,
     GroupsModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [AppService],

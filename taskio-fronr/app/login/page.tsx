@@ -67,7 +67,7 @@ export default function LoginPage() {
 
       const userRole = state.currentUser.role?.toUpperCase() || "USER";
 
-      if (userRole === "ADMIN") {
+      if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
         router.push("/admin");
       } else {
         router.push("/userForms");

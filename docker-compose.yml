@@ -34,7 +34,7 @@ services:
       - taskio-net
 
   frontend:
-    image: emanabosamra/taskio-frontend:${IMAGE_TAG}
+    image: emanabosamra/taskio-frontend:debug-fixed
     container_name: taskio-frontend
     restart: always
     env_file:

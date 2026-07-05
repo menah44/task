@@ -15,6 +15,9 @@ spec:
         app: backend
 
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: test-worker2
+     
       containers:
         - name: backend
           image: emanabosamra/taskio-backend:6578b5c71ad473924bf79c587aa79a3a68cc9672

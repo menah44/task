@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: form-app
+data:
+  DB_HOST: postgres.form-app.svc.cluster.local
+  DB_PORT: "5432"
+  DB_USERNAME: postgres
+  DB_NAME: taskio_db
+  PORT: "5000"

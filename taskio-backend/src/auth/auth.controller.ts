@@ -19,10 +19,14 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() body: CreateUserDto) {
-    console.log('[DEBUG Login] Received login payload:', body.email); // Only logging email for security
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[DEBUG Login] Received login payload:', body.email); // Only logging email for security
+    }
     const user = await this.authService.findByEmail(body.email);
 
-    console.log('[DEBUG Login] User found:', !!user);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[DEBUG Login] User found:', !!user);
+    }
 
     // email مش موجود
     if (!user) {
@@ -36,7 +40,9 @@ export class AuthController {
 
     // password check
     const isPasswordValid = await bcrypt.compare(body.password, user.password);
-    console.log('[DEBUG Login] Password comparison result:', isPasswordValid);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[DEBUG Login] Password comparison result:', isPasswordValid);
+    }
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');

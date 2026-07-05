@@ -7,6 +7,11 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
+  if (!process.env.JWT_SECRET) {
+    console.error('❌ FATAL ERROR: JWT_SECRET environment variable is missing.');
+    process.exit(1);
+  }
+
   const app = await NestFactory.create(AppModule);
 
   console.log('DB_HOST:', process.env.DB_HOST);
@@ -31,13 +36,20 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   // Enable CORS
+  let allowedOrigins: string[];
+  if (process.env.CORS_ORIGINS) {
+    allowedOrigins = process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim());
+  } else {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('❌ FATAL ERROR: CORS_ORIGINS environment variable is required in production.');
+      process.exit(1);
+    }
+    console.warn('⚠️ WARNING: CORS_ORIGINS environment variable is missing. Defaulting to local development origins: http://localhost:3000, http://localhost:3001');
+    allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+  }
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://20.79.190.41:3000',
-      'http://20.79.190.41',
-    ],
+    origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

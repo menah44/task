@@ -29,11 +29,11 @@ export default function AuthenticatedLayout({
   useEffect(() => {
     if (hasHydrated) {
       const token = accessToken;
-      if (token && !currentUser && !isLoading) {
+      if (token && !currentUser) {
         fetchCurrentUser();
       }
     }
-  }, [hasHydrated, currentUser, isLoading, fetchCurrentUser, accessToken]);
+  }, [hasHydrated, currentUser, fetchCurrentUser, accessToken]);
 
   // 2. Role-based routing and access protection
   useEffect(() => {

@@ -11,6 +11,9 @@ import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { GroupsModule } from './groups/groups.module';
 import { AuditModule } from './audit/audit.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { OrganizationsModule } from './organizations/organizations.module';
+import { Organization } from './organizations/entities/organization.entity';
 
 @Module({
   imports: [
@@ -21,7 +24,7 @@ import { AuditModule } from './audit/audit.module';
       username: process.env.DB_USERNAME || 'postgres',
       password: process.env.DB_PASSWORD || '1234',
       database: process.env.DB_NAME,
-      entities: [User, Role, Group, AuditLog],
+      entities: [User, Role, Group, AuditLog, Organization],
       synchronize: true,
     }),
     AuthModule,
@@ -29,6 +32,8 @@ import { AuditModule } from './audit/audit.module';
     RolesModule,
     GroupsModule,
     AuditModule,
+    EventEmitterModule.forRoot(),
+    OrganizationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

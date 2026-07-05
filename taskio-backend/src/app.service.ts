@@ -1,15 +1,28 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { User } from './auth/entities/user.entity';
+import { Role } from './roles/entities/role.entity';
 
 @Injectable()
 export class AppService implements OnModuleInit {
   constructor(private dataSource: DataSource) {}
 
   async onModuleInit() {
+    const roleRepository = this.dataSource.getRepository(Role);
     const userRepository = this.dataSource.getRepository(User);
 
-    // التأكد إذا كان هناك مستخدمين أم لا
+    // Seed default roles
+    const rolesToSeed = ['ADMIN', 'USER', 'SUPER_ADMIN'];
+    for (const roleName of rolesToSeed) {
+      const exists = await roleRepository.findOne({ where: { name: roleName } });
+      if (!exists) {
+        const newRole = roleRepository.create({ name: roleName });
+        await roleRepository.save(newRole);
+        console.log(`✅ Role seeded: ${roleName}`);
+      }
+    }
+
+    // Seed default admin
     const adminExists = await userRepository.findOne({
       where: { email: 'admin@taskio.com' },
     });
@@ -17,9 +30,9 @@ export class AppService implements OnModuleInit {
     if (!adminExists) {
       const defaultAdmin = userRepository.create({
         email: 'admin@taskio.com',
-        // الباسورد المتشفر لـ 123456
+        // Correct bcrypt hash of '123456'
         password:
-          '$2a$10$X7mBLCgfS.eT69Bv67VpleLzV9LIdrWz8XpExfJskG2X8tY00GvOG',
+          '$2b$10$qCVz09lo4SwOYUmkxEdf.unz.CEmw6yZDOcKiJ2c.rDtmxcJ6clD.',
         role: 'ADMIN',
       });
       await userRepository.save(defaultAdmin);

@@ -3,32 +3,33 @@ services:
     image: postgres:16
     restart: always
     env_file:
-      - .env.deploy
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - taskio-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 30s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   backend:
     image: emanabosamra/taskio-backend:${IMAGE_TAG}
     container_name: taskio-backend
     restart: always
     env_file:
-      - .env.deploy
+      - .env
     expose:
-      - "3002"
+      - "5000"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3002/ || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5000/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - taskio-net
 
@@ -37,7 +38,7 @@ services:
     container_name: taskio-frontend
     restart: always
     env_file:
-      - .env.deploy
+      - .env
     expose:
       - "3000"
     healthcheck:

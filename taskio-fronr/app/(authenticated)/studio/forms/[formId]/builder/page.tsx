@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams } from "next/navigation";
 import {
   DndContext,
   closestCenter,
@@ -26,9 +24,12 @@ import AnswerField, {
   AnswerValue,
   QuestionType as AnswerQuestionType,
 } from "@/components/AnswerField";
+import BuilderTopNav from "@/components/builder/BuilderTopNav";
 
-// ======================== Types ========================
-type QuestionType =
+// ============================================================
+// TYPES (متطابقة مع الـ API المطلوب)
+// ============================================================
+export type QuestionType =
   | "text"
   | "textarea"
   | "radio"
@@ -38,7 +39,7 @@ type QuestionType =
   | "number"
   | "email";
 
-interface Question {
+export interface Question {
   id: string;
   type: QuestionType;
   label: string;
@@ -47,25 +48,15 @@ interface Question {
   options?: string[];
 }
 
-interface Section {
+export interface Section {
   id: string;
   title: string;
   questions: Question[];
 }
 
-// ======================== Question Types ========================
-const QUESTION_TYPES: { type: QuestionType; label: string; icon: string }[] = [
-  { type: "text", label: "Short Text", icon: "📝" },
-  { type: "textarea", label: "Long Text", icon: "📄" },
-  { type: "radio", label: "Multiple Choice", icon: "🔘" },
-  { type: "checkbox", label: "Checkboxes", icon: "☑️" },
-  { type: "select", label: "Dropdown", icon: "🔽" },
-  { type: "date", label: "Date", icon: "📅" },
-  { type: "number", label: "Number", icon: "🔢" },
-  { type: "email", label: "Email", icon: "📧" },
-];
-
-// ======================== Mapping: builder type -> AnswerField type ========================
+// ============================================================
+// HELPERS: تحويل لأنواع AnswerField
+// ============================================================
 function toAnswerType(type: QuestionType): AnswerQuestionType {
   switch (type) {
     case "text":
@@ -97,51 +88,23 @@ function toAnswerQuestion(q: Question): AnswerQuestion {
   };
 }
 
-// ======================== Mock Initial Data ========================
-const INITIAL_SECTIONS: Section[] = [
-  {
-    id: "sec-1",
-    title: "Personal Information",
-    questions: [
-      {
-        id: "q-1",
-        type: "text",
-        label: "Full Name",
-        required: true,
-        placeholder: "Enter your name",
-      },
-      {
-        id: "q-2",
-        type: "email",
-        label: "Email Address",
-        required: true,
-        placeholder: "you@example.com",
-      },
-    ],
-  },
-  {
-    id: "sec-2",
-    title: "Feedback",
-    questions: [
-      {
-        id: "q-3",
-        type: "radio",
-        label: "How did you hear about us?",
-        required: false,
-        options: ["Social Media", "Friend", "Google", "Other"],
-      },
-      {
-        id: "q-4",
-        type: "textarea",
-        label: "Additional Comments",
-        required: false,
-        placeholder: "Your feedback...",
-      },
-    ],
-  },
+// ============================================================
+// UI CONSTANTS (أنواع الأسئلة المعروضة)
+// ============================================================
+const QUESTION_TYPES: { type: QuestionType; label: string; icon: string }[] = [
+  { type: "text", label: "Short Text", icon: "📝" },
+  { type: "textarea", label: "Long Text", icon: "📄" },
+  { type: "radio", label: "Multiple Choice", icon: "🔘" },
+  { type: "checkbox", label: "Checkboxes", icon: "☑️" },
+  { type: "select", label: "Dropdown", icon: "🔽" },
+  { type: "date", label: "Date", icon: "📅" },
+  { type: "number", label: "Number", icon: "🔢" },
+  { type: "email", label: "Email", icon: "📧" },
 ];
 
-// ======================== Sortable Question Item ========================
+// ============================================================
+// COMPONENT: سؤال قابل للسحب (Sortable)
+// ============================================================
 function SortableQuestion({
   question,
   isSelected,
@@ -199,7 +162,78 @@ function SortableQuestion({
   );
 }
 
-// ======================== Preview Modal ========================
+// ============================================================
+// COMPONENT: قسم قابل للسحب (Sortable)
+// ============================================================
+function SortableSection({
+  section,
+  index,
+  isSelected,
+  onClick,
+  onDelete,
+}: {
+  section: Section;
+  index: number;
+  isSelected: boolean;
+  onClick: () => void;
+  onDelete: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={onClick}
+      className={`group flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer text-sm transition-all border ${
+        isSelected
+          ? "bg-blue-600/10 text-blue-400 border-blue-600/20"
+          : "text-gray-300 hover:bg-[#21262d] hover:text-white border-transparent"
+      }`}>
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <button
+          {...attributes}
+          {...listeners}
+          className="text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing text-lg leading-none"
+          onClick={(e) => e.stopPropagation()}>
+          ⠿
+        </button>
+        <span className="truncate">
+          {index + 1}. {section.title}
+        </span>
+      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+        className={`opacity-0 group-hover:opacity-100 text-xs ml-1 transition-opacity ${
+          isSelected
+            ? "text-blue-300 hover:text-white"
+            : "text-gray-500 hover:text-red-400"
+        }`}>
+        ✕
+      </button>
+    </div>
+  );
+}
+
+// ============================================================
+// COMPONENT: معاينة النموذج (Preview Modal)
+// ============================================================
 function PreviewModal({
   sections,
   onClose,
@@ -217,7 +251,6 @@ function PreviewModal({
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
       <div className="bg-[#161b22] border border-[#30363d] rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#30363d]">
           <div>
             <h2 className="text-lg font-bold text-white">Form Preview</h2>
@@ -232,7 +265,6 @@ function PreviewModal({
           </button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-8">
           {sections.map((sec) => (
             <div key={sec.id} className="space-y-4">
@@ -258,7 +290,6 @@ function PreviewModal({
           ))}
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-4 border-t border-[#30363d] flex items-center justify-between">
           <p className="text-xs text-gray-500">
             Preview only — answers here are not saved.
@@ -274,16 +305,63 @@ function PreviewModal({
   );
 }
 
-// ======================== Main Builder Page ========================
-export default function FormBuilderPage({
-  params,
-}: {
-  params: { formId: string };
-}) {
-  const pathname = usePathname();
-  const [sections, setSections] = useState<Section[]>(INITIAL_SECTIONS);
-  const [selectedSectionId, setSelectedSectionId] = useState<string>(
-    INITIAL_SECTIONS[0].id,
+// ============================================================
+// DATA INITIAL (بيانات افتراضية)
+// ============================================================
+const DEFAULT_SECTIONS: Section[] = [
+  {
+    id: "sec-1",
+    title: "Personal Information",
+    questions: [
+      {
+        id: "q-1",
+        type: "text",
+        label: "Full Name",
+        required: true,
+        placeholder: "Enter your full name",
+      },
+      {
+        id: "q-2",
+        type: "email",
+        label: "Email Address",
+        required: true,
+        placeholder: "you@example.com",
+      },
+    ],
+  },
+  {
+    id: "sec-2",
+    title: "Feedback",
+    questions: [
+      {
+        id: "q-3",
+        type: "radio",
+        label: "How did you hear about us?",
+        required: false,
+        options: ["Social Media", "Friend", "Google", "Other"],
+      },
+      {
+        id: "q-4",
+        type: "textarea",
+        label: "Additional Comments",
+        required: false,
+        placeholder: "Your feedback...",
+      },
+    ],
+  },
+];
+
+// ============================================================
+// MAIN PAGE
+// ============================================================
+export default function FormBuilderPage() {
+  const params = useParams<{ formId: string }>();
+  const formId = params?.formId;
+
+  // ===== STATE =====
+  const [sections, setSections] = useState<Section[]>([]);
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(
+    null,
   );
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(
     null,
@@ -291,10 +369,13 @@ export default function FormBuilderPage({
   const [showTypePickerFor, setShowTypePickerFor] = useState<string | null>(
     null,
   );
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [savedFieldFlash, setSavedFieldFlash] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
+  // ===== SENSORS for Drag & Drop =====
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -302,74 +383,76 @@ export default function FormBuilderPage({
     }),
   );
 
+  // ===== LOAD DATA (من localStorage أو البيانات الافتراضية) =====
+  useEffect(() => {
+    if (!formId) {
+      setError("Form ID is missing.");
+      setIsLoading(false);
+      return;
+    }
+
+    // محاولة استرجاع البيانات المخزنة محليًا
+    const stored = localStorage.getItem(`form-${formId}`);
+    let initialData: Section[];
+
+    if (stored) {
+      try {
+        initialData = JSON.parse(stored);
+      } catch {
+        initialData = DEFAULT_SECTIONS;
+      }
+    } else {
+      initialData = DEFAULT_SECTIONS;
+    }
+
+    setSections(initialData);
+    if (initialData.length > 0) {
+      setSelectedSectionId(initialData[0].id);
+    }
+    setIsLoading(false);
+  }, [formId]);
+
+  // ===== HELPERS =====
   const selectedSection = sections.find((s) => s.id === selectedSectionId);
   const selectedQuestion =
     selectedSection?.questions.find((q) => q.id === selectedQuestionId) ?? null;
 
-  // ── Drag End (reorder questions) ──
-  const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
+  // ===== حفظ البيانات في localStorage (محاكاة الـ Save) =====
+  const persistToLocalStorage = useCallback(() => {
+    if (formId) {
+      localStorage.setItem(`form-${formId}`, JSON.stringify(sections));
+    }
+  }, [formId, sections]);
 
-      setSections((prev) =>
-        prev.map((sec) => {
-          if (sec.id !== selectedSectionId) return sec;
-          const oldIndex = sec.questions.findIndex((q) => q.id === active.id);
-          const newIndex = sec.questions.findIndex((q) => q.id === over.id);
-          const reordered = arrayMove(sec.questions, oldIndex, newIndex);
-
-          fetch(
-            `/api/forms/${params.formId}/sections/${sec.id}/questions/reorder`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ order: reordered.map((q) => q.id) }),
-            },
-          ).catch(() => {});
-
-          return { ...sec, questions: reordered };
-        }),
-      );
-    },
-    [selectedSectionId, params.formId],
-  );
-
-  // ── Add Section ──
-  const handleAddSection = async () => {
+  // ===== ADD SECTION =====
+  const handleAddSection = () => {
     const newSection: Section = {
       id: `sec-${Date.now()}`,
       title: "New Section",
       questions: [],
     };
-    try {
-      await fetch(`/api/forms/${params.formId}/sections`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newSection.title }),
-      });
-    } catch {}
     setSections((prev) => [...prev, newSection]);
     setSelectedSectionId(newSection.id);
     setSelectedQuestionId(null);
+    persistToLocalStorage();
   };
 
-  // ── Delete Section ──
-  const handleDeleteSection = async (sectionId: string) => {
-    try {
-      await fetch(`/api/forms/${params.formId}/sections/${sectionId}`, {
-        method: "DELETE",
-      });
-    } catch {}
+  // ===== DELETE SECTION =====
+  const handleDeleteSection = (sectionId: string) => {
+    if (sections.length <= 1) {
+      setError("You must have at least one section.");
+      return;
+    }
     setSections((prev) => prev.filter((s) => s.id !== sectionId));
     if (selectedSectionId === sectionId) {
-      setSelectedSectionId(sections[0]?.id ?? "");
+      setSelectedSectionId(sections[0]?.id ?? null);
       setSelectedQuestionId(null);
     }
+    persistToLocalStorage();
   };
 
-  // ── Add Question ──
-  const handleAddQuestion = async (type: QuestionType) => {
+  // ===== ADD QUESTION =====
+  const handleAddQuestion = (type: QuestionType) => {
     if (!selectedSectionId) return;
     const newQ: Question = {
       id: `q-${Date.now()}`,
@@ -377,16 +460,6 @@ export default function FormBuilderPage({
       label: `New ${QUESTION_TYPES.find((t) => t.type === type)?.label ?? "Question"}`,
       required: false,
     };
-    try {
-      await fetch(
-        `/api/forms/${params.formId}/sections/${selectedSectionId}/questions`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newQ),
-        },
-      );
-    } catch {}
     setSections((prev) =>
       prev.map((s) =>
         s.id === selectedSectionId
@@ -396,20 +469,12 @@ export default function FormBuilderPage({
     );
     setSelectedQuestionId(newQ.id);
     setShowTypePickerFor(null);
+    persistToLocalStorage();
   };
 
-  // ── Delete Question ──
-  const handleDeleteQuestion = async (questionId: string) => {
-    const sec = sections.find((s) => s.id === selectedSectionId);
-    if (!sec) return;
-    try {
-      await fetch(
-        `/api/forms/${params.formId}/sections/${selectedSectionId}/questions/${questionId}`,
-        {
-          method: "DELETE",
-        },
-      );
-    } catch {}
+  // ===== DELETE QUESTION =====
+  const handleDeleteQuestion = (questionId: string) => {
+    if (!selectedSectionId) return;
     setSections((prev) =>
       prev.map((s) =>
         s.id === selectedSectionId
@@ -418,14 +483,15 @@ export default function FormBuilderPage({
       ),
     );
     if (selectedQuestionId === questionId) setSelectedQuestionId(null);
+    persistToLocalStorage();
   };
 
-  // ── Update Question Property LOCALLY ──
+  // ===== UPDATE QUESTION PROPERTY =====
   const updateQuestion = (
     field: keyof Question,
     value: string | boolean | string[],
   ) => {
-    if (!selectedQuestionId) return;
+    if (!selectedSectionId || !selectedQuestionId) return;
     setSections((prev) =>
       prev.map((s) =>
         s.id === selectedSectionId
@@ -438,46 +504,99 @@ export default function FormBuilderPage({
           : s,
       ),
     );
+    persistToLocalStorage();
   };
 
-  // ── Persist a single property to the server (onBlur) ──
-  const savePropertyToServer = async (
-    field: keyof Question,
-    value: string | boolean | string[],
-  ) => {
-    if (!selectedSectionId || !selectedQuestionId) return;
-    try {
-      await fetch(
-        `/api/forms/${params.formId}/sections/${selectedSectionId}/questions/${selectedQuestionId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ [field]: value }),
-        },
-      );
-      setSavedFieldFlash(field as string);
-      setTimeout(() => setSavedFieldFlash(null), 900);
-    } catch {}
-  };
-
+  // عند فقدان التركيز: نحاكي حفظ الخصائص (فلاش أخضر)
   const handleFieldBlur = (
     field: keyof Question,
     value: string | boolean | string[],
   ) => {
-    savePropertyToServer(field, value);
+    updateQuestion(field, value);
+    setSavedFieldFlash(field as string);
+    setTimeout(() => setSavedFieldFlash(null), 900);
   };
 
-  // ── Save (manual save button for the whole form) ──
-  const handleSave = async () => {
+  // ===== UPDATE SECTION TITLE =====
+  const handleSectionTitleBlur = (sectionId: string, title: string) => {
+    setSections((prev) =>
+      prev.map((s) => (s.id === sectionId ? { ...s, title } : s)),
+    );
+    persistToLocalStorage();
+  };
+
+  // ===== REORDER SECTIONS =====
+  const handleReorderSections = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const oldIndex = sections.findIndex((s) => s.id === active.id);
+      const newIndex = sections.findIndex((s) => s.id === over.id);
+      const reordered = arrayMove(sections, oldIndex, newIndex);
+
+      setSections(reordered);
+      persistToLocalStorage();
+    },
+    [sections],
+  );
+
+  // ===== REORDER QUESTIONS =====
+  const handleReorderQuestions = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id || !selectedSectionId) return;
+
+      const section = sections.find((s) => s.id === selectedSectionId);
+      if (!section) return;
+
+      const oldIndex = section.questions.findIndex((q) => q.id === active.id);
+      const newIndex = section.questions.findIndex((q) => q.id === over.id);
+      const reordered = arrayMove(section.questions, oldIndex, newIndex);
+
+      setSections((prev) =>
+        prev.map((s) =>
+          s.id === selectedSectionId ? { ...s, questions: reordered } : s,
+        ),
+      );
+      persistToLocalStorage();
+    },
+    [sections, selectedSectionId],
+  );
+
+  // ===== SAVE BUTTON (حفظ في localStorage + رسالة نجاح) =====
+  const handleSave = () => {
     setIsSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setIsSaving(false);
+    setError(null);
+    try {
+      persistToLocalStorage();
+      setTimeout(() => {
+        setIsSaving(false);
+        alert("✅ Form structure saved successfully!");
+      }, 500);
+    } catch (err) {
+      setError("Failed to save data.");
+      setIsSaving(false);
+    }
   };
 
+  // ===== LOADING STATE =====
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#0d1117] text-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-400">Loading form structure...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ===== RENDER =====
   return (
     <div className="flex h-screen bg-[#0d1117] text-[#c9d1d9] overflow-hidden">
-      {/* ════ LEFT PANEL: Section List ════ */}
-      <aside className="w-56 bg-[#161b22] border-r border-[#30363d] flex flex-col">
+      {/* ═══ LEFT PANEL: Sections List ═══ */}
+      <aside className="w-56 bg-[#161b22] border-r border-[#30363d] flex flex-col shrink-0">
         <div className="px-4 py-3 border-b border-[#30363d] flex items-center justify-between">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
             Sections
@@ -490,84 +609,68 @@ export default function FormBuilderPage({
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {sections.map((sec, idx) => (
-            <div
-              key={sec.id}
-              onClick={() => {
-                setSelectedSectionId(sec.id);
-                setSelectedQuestionId(null);
-              }}
-              className={`group flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer text-sm transition-all border ${
-                selectedSectionId === sec.id
-                  ? "bg-blue-600/10 text-blue-400 border-blue-600/20"
-                  : "text-gray-300 hover:bg-[#21262d] hover:text-white border-transparent"
-              }`}>
-              <span className="truncate">
-                {idx + 1}. {sec.title}
-              </span>
-              {sections.length > 1 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteSection(sec.id);
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleReorderSections}>
+            <SortableContext
+              items={sections.map((s) => s.id)}
+              strategy={verticalListSortingStrategy}>
+              {sections.map((sec, idx) => (
+                <SortableSection
+                  key={sec.id}
+                  section={sec}
+                  index={idx}
+                  isSelected={selectedSectionId === sec.id}
+                  onClick={() => {
+                    setSelectedSectionId(sec.id);
+                    setSelectedQuestionId(null);
                   }}
-                  className={`opacity-0 group-hover:opacity-100 text-xs ml-1 transition-opacity ${
-                    selectedSectionId === sec.id
-                      ? "text-blue-300 hover:text-white"
-                      : "text-gray-500 hover:text-red-400"
-                  }`}>
-                  ✕
-                </button>
-              )}
-            </div>
-          ))}
+                  onDelete={() => handleDeleteSection(sec.id)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+          {sections.length === 0 && (
+            <p className="text-xs text-gray-500 text-center py-4">
+              No sections yet. Click + to add.
+            </p>
+          )}
         </div>
       </aside>
 
-      {/* ════ CENTER PANEL: Question Canvas ════ */}
+      {/* ═══ CENTER PANEL: Canvas ═══ */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar with Tabs */}
-        <div className="bg-[#161b22] border-b border-[#30363d] px-6 py-3 flex items-center justify-between">
-          <div>
-            {/* Tabs */}
-            <div className="flex items-center gap-4">
-              <Link
-                href={`/studio/forms/${params.formId}/builder`}
-                className={`text-sm font-medium transition-colors ${
-                  pathname?.includes("/builder")
-                    ? "text-white border-b-2 border-blue-500 pb-1"
-                    : "text-gray-400 hover:text-gray-200"
-                }`}>
-                Builder
-              </Link>
-              <Link
-                href={`/studio/forms/${params.formId}/settings`}
-                className={`text-sm font-medium transition-colors ${
-                  pathname?.includes("/settings")
-                    ? "text-white border-b-2 border-blue-500 pb-1"
-                    : "text-gray-400 hover:text-gray-200"
-                }`}>
-                Settings
-              </Link>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Form ID: {params.formId}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowPreview(true)}
-              className="px-4 py-1.5 bg-[#21262d] hover:bg-[#2d333b] border border-[#30363d] text-gray-200 text-sm font-medium rounded-lg transition-colors">
-              👁 Preview
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60">
-              {isSaving ? "Saving..." : "Save"}
+        {/* Shared top nav — Builder / Map / Settings tabs stay in sync across all form pages */}
+        <BuilderTopNav
+          formId={formId}
+          subtitle={`Form ID: ${formId} — ${sections.length} sections`}
+          actions={
+            <>
+              <button
+                onClick={() => setShowPreview(true)}
+                className="px-4 py-1.5 bg-[#21262d] hover:bg-[#2d333b] border border-[#30363d] text-gray-200 text-sm font-medium rounded-lg transition-colors">
+                👁 Preview
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60">
+                {isSaving ? "Saving..." : " Save Form"}
+              </button>
+            </>
+          }
+        />
+
+        {/* Error Banner */}
+        {error && (
+          <div className="px-6 py-2 bg-yellow-500/10 border-b border-yellow-500/20 text-yellow-500 text-xs flex items-center justify-between">
+            <span>⚠️ {error}</span>
+            <button onClick={() => setError(null)} className="hover:text-white">
+              ✕
             </button>
           </div>
-        </div>
+        )}
 
         {/* Canvas */}
         <div className="flex-1 overflow-y-auto p-6 bg-[#0d1117]">
@@ -576,33 +679,26 @@ export default function FormBuilderPage({
               {/* Section Title */}
               <input
                 value={selectedSection.title}
-                onChange={(e) =>
+                onChange={(e) => {
                   setSections((prev) =>
                     prev.map((s) =>
                       s.id === selectedSectionId
                         ? { ...s, title: e.target.value }
                         : s,
                     ),
-                  )
-                }
-                onBlur={(e) => {
-                  fetch(
-                    `/api/forms/${params.formId}/sections/${selectedSectionId}`,
-                    {
-                      method: "PUT",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ title: e.target.value }),
-                    },
-                  ).catch(() => {});
+                  );
                 }}
+                onBlur={(e) =>
+                  handleSectionTitleBlur(selectedSection.id, e.target.value)
+                }
                 className="w-full text-xl font-bold text-white bg-transparent border-b-2 border-transparent focus:border-blue-500 focus:outline-none pb-1 transition-colors"
               />
 
-              {/* Questions (Drag & Drop) */}
+              {/* Questions List */}
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}>
+                onDragEnd={handleReorderQuestions}>
                 <SortableContext
                   items={selectedSection.questions.map((q) => q.id)}
                   strategy={verticalListSortingStrategy}>
@@ -625,7 +721,7 @@ export default function FormBuilderPage({
                 </SortableContext>
               </DndContext>
 
-              {/* Add Question Button / Type Picker */}
+              {/* Add Question Button */}
               {showTypePickerFor === selectedSectionId ? (
                 <div className="border border-[#30363d] rounded-xl bg-[#161b22] p-4 shadow-sm">
                   <p className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">
@@ -660,14 +756,16 @@ export default function FormBuilderPage({
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
-              Select a section to start
+              {sections.length === 0
+                ? "Add a section to start building your form."
+                : "Select a section to start"}
             </div>
           )}
         </div>
       </main>
 
-      {/* ════ RIGHT PANEL: Properties ════ */}
-      <aside className="w-64 bg-[#161b22] border-l border-[#30363d] flex flex-col overflow-y-auto">
+      {/* ═══ RIGHT PANEL: Properties ═══ */}
+      <aside className="w-64 bg-[#161b22] border-l border-[#30363d] flex flex-col overflow-y-auto shrink-0">
         <div className="px-4 py-3 border-b border-[#30363d] flex items-center justify-between">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
             Properties
@@ -708,14 +806,11 @@ export default function FormBuilderPage({
                 onChange={(e) => {
                   const newType = e.target.value as QuestionType;
                   updateQuestion("type", newType);
-                  savePropertyToServer("type", newType);
+                  handleFieldBlur("type", newType);
                 }}
                 className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {QUESTION_TYPES.map((qt) => (
-                  <option
-                    key={qt.type}
-                    value={qt.type}
-                    className="bg-[#0d1117]">
+                  <option key={qt.type} value={qt.type}>
                     {qt.icon} {qt.label}
                   </option>
                 ))}
@@ -780,7 +875,7 @@ export default function FormBuilderPage({
                 onClick={() => {
                   const newVal = !selectedQuestion.required;
                   updateQuestion("required", newVal);
-                  savePropertyToServer("required", newVal);
+                  handleFieldBlur("required", newVal);
                 }}
                 className={`relative inline-flex items-center w-11 h-6 rounded-full transition-colors shrink-0 ${
                   selectedQuestion.required ? "bg-blue-600" : "bg-[#30363d]"
@@ -804,6 +899,7 @@ export default function FormBuilderPage({
         )}
       </aside>
 
+      {/* Preview Modal */}
       {showPreview && (
         <PreviewModal
           sections={sections}

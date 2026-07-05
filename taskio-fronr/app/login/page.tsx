@@ -36,6 +36,20 @@ export default function LoginPage() {
     setApiError("");
     setIsLoading(true);
 
+    // 🚧 TEMP BYPASS - للتطوير فقط، امسح الجزء ده قبل الرفع للإنتاج
+    if (process.env.NODE_ENV === "development") {
+      useAuthStore.setState({
+        accessToken: "fake-dev-token",
+        refreshToken: null,
+        isAuthenticated: true,
+        // لو الـ store عندك بيحتاج currentUser في صفحات تانية، فك التعليق ده وعدله حسب الـ type بتاعك
+        // currentUser: { id: "1", email: data.email, role: "USER" },
+      });
+      router.push("/userForms"); // غيرها لـ "/admin" لو عايز تدخل كأدمن
+      return;
+    }
+    // 🚧 END TEMP BYPASS
+
     try {
       const response = await apiClient.post("/auth/login", data);
       const result = response.data;
@@ -74,8 +88,12 @@ export default function LoginPage() {
       }
     } catch (error: unknown) {
       console.error("Login error:", error);
-      const axiosError = error as { response?: { data?: { message?: string } } };
-      const errorMsg = axiosError.response?.data?.message || "Invalid credentials. Please try again.";
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      const errorMsg =
+        axiosError.response?.data?.message ||
+        "Invalid credentials. Please try again.";
       setApiError(errorMsg);
       setIsLoading(false);
     }
@@ -83,7 +101,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0d1117] px-4">
-      <div className="w-full max-w-md bg-[#161b22] p-8 rounded-xl border border-[#30363d] shadow-2xl relative overflow-hidden" dir="ltr">
+      <div
+        className="w-full max-w-md bg-[#161b22] p-8 rounded-xl border border-[#30363d] shadow-2xl relative overflow-hidden"
+        dir="ltr">
         {/* Decorative soft background glow */}
         <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -92,7 +112,9 @@ export default function LoginPage() {
           <div className="w-12 h-12 rounded-lg bg-blue-600/10 border border-blue-500/30 flex items-center justify-center mb-3">
             <Lock className="w-6 h-6 text-blue-500" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Sign In</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Sign In
+          </h1>
           <p className="text-gray-400 text-sm mt-1">Welcome back to Form</p>
         </div>
 
@@ -120,7 +142,9 @@ export default function LoginPage() {
               </div>
             </div>
             {errors.email && (
-              <p className="text-red-400 text-xs mt-1.5">{errors.email.message}</p>
+              <p className="text-red-400 text-xs mt-1.5">
+                {errors.email.message}
+              </p>
             )}
           </div>
 
@@ -141,21 +165,25 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-300 focus:outline-none"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-300 focus:outline-none">
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
               </button>
             </div>
             {errors.password && (
-              <p className="text-red-400 text-xs mt-1.5">{errors.password.message}</p>
+              <p className="text-red-400 text-xs mt-1.5">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2 border border-blue-500/20"
-          >
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2 border border-blue-500/20">
             {isLoading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />

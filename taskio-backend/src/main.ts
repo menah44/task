@@ -4,7 +4,7 @@ dotenv.config();
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, UnprocessableEntityException } from '@nestjs/common';
 
 async function bootstrap() {
   if (!process.env.JWT_SECRET) {
@@ -17,12 +17,20 @@ async function bootstrap() {
   console.log('DB_HOST:', process.env.DB_HOST);
   console.log('DB_NAME:', process.env.DB_NAME);
 
+  // Set global API prefix for all routes
+  app.setGlobalPrefix('api/v1');
+
   // Enable global validation pipe for request validation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+      // Return 422 Unprocessable Entity for validation failures (e.g. invalid slug format)
+      exceptionFactory: (errors) =>
+        new UnprocessableEntityException(
+          errors.map((e) => Object.values(e.constraints ?? {}).join(', ')).join('; '),
+        ),
     }),
   );
 

@@ -52,7 +52,7 @@ export default function AuthenticatedLayout({
         const isAdminPath = pathname?.startsWith("/admin");
         const isStudioPath = pathname?.startsWith("/studio");
 
-        if ((isAdminPath || isStudioPath) && userRole !== "ADMIN") {
+        if ((isAdminPath || isStudioPath) && userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
           console.warn("Unprivileged access attempt blocked. Redirecting to user forms...");
           router.replace("/userForms");
         }

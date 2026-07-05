@@ -17,13 +17,13 @@ export default function Sidebar({ userRole, pathname, logout }: SidebarProps) {
             <span className="text-primary text-2xl font-black">■</span> Form
           </span>
           <span className="text-[10px] tracking-wider uppercase font-extrabold bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded-md">
-            {userRole === "ADMIN" ? "Admin" : "User"}
+            {userRole === "ADMIN" || userRole === "SUPER_ADMIN" ? "Admin" : "User"}
           </span>
         </div>
 
         {/* Navigation Links based on user roles */}
         <nav className="space-y-1">
-          {userRole === "ADMIN" ? (
+          {userRole === "ADMIN" || userRole === "SUPER_ADMIN" ? (
             <>
               <Link
                 href="/admin"

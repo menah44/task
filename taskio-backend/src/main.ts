@@ -29,7 +29,9 @@ async function bootstrap() {
       // Return 422 Unprocessable Entity for validation failures (e.g. invalid slug format)
       exceptionFactory: (errors) =>
         new UnprocessableEntityException(
-          errors.map((e) => Object.values(e.constraints ?? {}).join(', ')).join('; '),
+          errors
+            .map((e) => Object.values(e.constraints ?? {}).join(', '))
+            .join('; '),
         ),
     }),
   );

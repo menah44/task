@@ -3,7 +3,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { toast } from "react-hot-toast";
 
 const baseURL =
-  process.env.NEXT_PUBLIC_API_URL || "http://20.79.190.41/api://:";
+  process.env.NEXT_PUBLIC_API_URL ;
 
 const apiClient = axios.create({
   baseURL,

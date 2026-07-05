@@ -8,7 +8,7 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   if (!process.env.JWT_SECRET) {
-    console.error('❌ FATAL ERROR: JWT_SECRET environment variable is missing.');
+    console.error(' FATAL ERROR: JWT_SECRET environment variable is missing.');
     process.exit(1);
   }
 
@@ -38,13 +38,19 @@ async function bootstrap() {
   // Enable CORS
   let allowedOrigins: string[];
   if (process.env.CORS_ORIGINS) {
-    allowedOrigins = process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim());
+    allowedOrigins = process.env.CORS_ORIGINS.split(',').map((origin) =>
+      origin.trim(),
+    );
   } else {
     if (process.env.NODE_ENV === 'production') {
-      console.error('❌ FATAL ERROR: CORS_ORIGINS environment variable is required in production.');
+      console.error(
+        ' FATAL ERROR: CORS_ORIGINS environment variable is required in production.',
+      );
       process.exit(1);
     }
-    console.warn('⚠️ WARNING: CORS_ORIGINS environment variable is missing. Defaulting to local development origins: http://localhost:3000, http://localhost:3001');
+    console.warn(
+      ' WARNING: CORS_ORIGINS environment variable is missing. Defaulting to local development origins: http://localhost:3000, http://localhost:3001',
+    );
     allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
   }
 

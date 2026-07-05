@@ -36,20 +36,6 @@ export default function LoginPage() {
     setApiError("");
     setIsLoading(true);
 
-    // 🚧 TEMP BYPASS - للتطوير فقط، امسح الجزء ده قبل الرفع للإنتاج
-    if (process.env.NODE_ENV === "development") {
-      useAuthStore.setState({
-        accessToken: "fake-dev-token",
-        refreshToken: null,
-        isAuthenticated: true,
-        // لو الـ store عندك بيحتاج currentUser في صفحات تانية، فك التعليق ده وعدله حسب الـ type بتاعك
-        // currentUser: { id: "1", email: data.email, role: "USER" },
-      });
-      router.push("/userForms"); // غيرها لـ "/admin" لو عايز تدخل كأدمن
-      return;
-    }
-    // 🚧 END TEMP BYPASS
-
     try {
       const response = await apiClient.post("/auth/login", data);
       const result = response.data;

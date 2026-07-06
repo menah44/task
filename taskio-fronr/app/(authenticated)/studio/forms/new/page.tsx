@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Layout, FileText, CheckCircle, HelpCircle } from "lucide-react";
+import apiClient from "@/lib/api/client";
 
 // Types
 interface Template {
@@ -37,19 +38,10 @@ export default function NewFormPage() {
     setIsLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/forms", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: formTitle }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        router.push(`/studio/forms/${data.id}/builder`);
-      } else {
-        router.push(`/studio/forms/new-form/builder`);
-      }
+      const res = await apiClient.post("/forms", { title: formTitle });
+      router.push(`/studio/forms/${res.data.id}/builder`);
     } catch {
-      router.push(`/studio/forms/new-form/builder`);
+      setError("Failed to create form. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -61,19 +53,12 @@ export default function NewFormPage() {
     setIsLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/templates/${selectedTemplate}/create-form`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: formTitle || TEMPLATES.find(t => t.id === selectedTemplate)?.name }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        router.push(`/studio/forms/${data.id}/builder`);
-      } else {
-        router.push(`/studio/forms/new-form/builder`);
-      }
+      const title = formTitle || TEMPLATES.find(t => t.id === selectedTemplate)?.name;
+      const res = await apiClient.post(`/forms`, { title });
+      // In reality you would copy template elements, but for now we just create a blank form with that title.
+      router.push(`/studio/forms/${res.data.id}/builder`);
     } catch {
-      router.push(`/studio/forms/new-form/builder`);
+      setError("Failed to create form from template.");
     } finally {
       setIsLoading(false);
     }

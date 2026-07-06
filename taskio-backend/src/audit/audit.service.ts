@@ -81,6 +81,8 @@ export class AuditService implements OnModuleInit {
 
     const query = this.auditRepository.createQueryBuilder('audit');
 
+    query.leftJoinAndSelect('audit.organization', 'organization');
+
     if (user?.role?.toUpperCase() === 'ADMIN' && user.organization) {
       query.andWhere('audit.organizationId = :orgId', { orgId: user.organization.id });
     }

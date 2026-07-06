@@ -9,8 +9,8 @@ import EmptyState from "@/components/EmptyState";
 interface Form {
   id: number;
   title: string;
-  status: "Published" | "Draft";
-  submissions: number;
+  status: "published" | "draft" | "archived" | "Published" | "Draft";
+  submissions?: number;
 }
 
 export default function AdminDashboard() {
@@ -23,7 +23,7 @@ export default function AdminDashboard() {
     apiClient
       .get("/forms")
       .then((response) => {
-        setForms(response.data);
+        setForms(response.data.items || []);
       })
       .catch((error) => {
         console.warn(
@@ -46,7 +46,7 @@ export default function AdminDashboard() {
           {
             id: 3,
             title: "Customer Satisfaction Survey",
-            status: "Published",
+            status: "published",
             submissions: 86,
           },
         ]);
@@ -82,13 +82,13 @@ export default function AdminDashboard() {
         <div className="bg-[#161b22] rounded-2xl p-6 shadow-sm border border-[#30363d]">
           <p className="text-gray-400 text-sm font-medium">Published Forms</p>
           <h3 className="text-3xl font-bold mt-2 text-green-400">
-            {forms.filter((f) => f.status === "Published").length}
+            {forms.filter((f) => f.status?.toLowerCase() === "published").length}
           </h3>
         </div>
         <div className="bg-[#161b22] rounded-2xl p-6 shadow-sm border border-[#30363d]">
           <p className="text-gray-400 text-sm font-medium">Total Submissions</p>
           <h3 className="text-3xl font-bold mt-2 text-blue-400">
-            {forms.reduce((acc, form) => acc + form.submissions, 0)}
+            {forms.reduce((acc, form) => acc + (form.submissions || 0), 0)}
           </h3>
         </div>
       </div>
@@ -122,18 +122,18 @@ export default function AdminDashboard() {
                     </Link>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-                        form.status === "Published"
+                        form.status?.toLowerCase() === "published"
                           ? "bg-green-500/10 text-green-400 border border-green-500/20"
                           : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
                       }`}>
-                      {form.status === "Published" ? "Published" : "Draft"}
+                      {form.status?.toLowerCase() === "published" ? "Published" : "Draft"}
                     </span>
                   </div>
 
                   <p className="text-gray-400 text-sm mt-3">
                     Submissions:{" "}
                     <span className="text-gray-200 font-medium">
-                      {form.submissions}
+                      {form.submissions || 0}
                     </span>{" "}
                     responses
                   </p>

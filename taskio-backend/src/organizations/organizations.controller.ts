@@ -27,7 +27,10 @@ export class OrganizationsController {
 
   @Post()
   @Roles('SUPER_ADMIN')
-  create(@CurrentUser() user: User, @Body() createOrganizationDto: CreateOrganizationDto) {
+  create(
+    @CurrentUser() user: User,
+    @Body() createOrganizationDto: CreateOrganizationDto,
+  ) {
     return this.organizationsService.create(createOrganizationDto, user);
   }
 
@@ -38,7 +41,11 @@ export class OrganizationsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() createOrganizationAdminDto: CreateOrganizationAdminDto,
   ) {
-    return this.organizationsService.createAdmin(id, createOrganizationAdminDto, user);
+    return this.organizationsService.createAdmin(
+      id,
+      createOrganizationAdminDto,
+      user,
+    );
   }
 
   @Get()

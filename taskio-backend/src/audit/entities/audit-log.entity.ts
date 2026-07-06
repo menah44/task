@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Organization } from '../../organizations/entities/organization.entity';
 
 @Entity('audit_log')
 export class AuditLog {
@@ -34,4 +35,8 @@ export class AuditLog {
 
   @Column({ type: 'int', nullable: true })
   organizationId!: number | null;
+
+  @ManyToOne(() => Organization, { nullable: true })
+  @JoinColumn({ name: 'organizationId' })
+  organization?: Organization;
 }

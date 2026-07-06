@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { ClipboardList, ExternalLink, Play, ShieldAlert, BarChart3, Trash } from "lucide-react";
+import { ClipboardList, ExternalLink, Play, Square, ShieldAlert, BarChart3, Trash } from "lucide-react";
 
 interface FormPermissions {
   canEdit: boolean;
@@ -19,39 +19,16 @@ interface FormItem {
   permissions: FormPermissions;
 }
 
+import apiClient from "@/lib/api/client";
+
 const fetchStudioForms = async (): Promise<FormItem[]> => {
   try {
-    const response = await fetch("/api/accessible-forms");
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch {
-    console.log("Backend API not connected yet, using fallback data.");
+    const response = await apiClient.get("/forms");
+    return response.data.items || [];
+  } catch (error) {
+    console.error("Failed to fetch forms:", error);
+    return [];
   }
-
-  return [
-    {
-      id: "form-101",
-      title: "Customer Feedback Survey",
-      status: "published",
-      updatedAt: "2026-06-28T12:00:00.000Z",
-      permissions: { canEdit: true, canView: true, canDelete: true },
-    },
-    {
-      id: "form-102",
-      title: "Job Application Form",
-      status: "draft",
-      updatedAt: "2026-06-25T09:30:00.000Z",
-      permissions: { canEdit: true, canView: true, canDelete: false },
-    },
-    {
-      id: "form-103",
-      title: "Course Evaluation Quiz",
-      status: "archived",
-      updatedAt: "2026-06-20T15:45:00.000Z",
-      permissions: { canEdit: false, canView: true, canDelete: false },
-    },
-  ];
 };
 
 export default function StudioFormsPage() {
@@ -59,6 +36,21 @@ export default function StudioFormsPage() {
     queryKey: ["accessible-forms"],
     queryFn: fetchStudioForms,
     staleTime: 60 * 1000,
+  });
+
+  const queryClient = useQueryClient();
+
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string | number; status: string }) => {
+      await apiClient.put(`/forms/${id}`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accessible-forms"] });
+    },
+    onError: (err) => {
+      console.error("Failed to update status", err);
+      alert("Failed to update status.");
+    }
   });
 
   if (isLoading) {
@@ -128,13 +120,12 @@ export default function StudioFormsPage() {
                       </span>
                     </td>
 
-                    {/* Updated Date */}
                     <td className="px-6 py-4 whitespace-nowrap text-gray-400">
-                      {new Date(form.updatedAt).toLocaleDateString("en-US", {
+                      {form.updatedAt ? new Date(form.updatedAt).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "short",
                         day: "numeric",
-                      })}
+                      }) : "N/A"}
                     </td>
 
                     {/* Permissions Icons */}
@@ -161,12 +152,23 @@ export default function StudioFormsPage() {
                         <ExternalLink className="w-3.5 h-3.5" /> Builder
                       </Link>
 
-                      <button
-                        onClick={() => alert(`Publishing form: ${form.id}`)}
-                        className="text-green-400 hover:text-green-300 transition-colors inline-flex items-center gap-1 bg-transparent border-none cursor-pointer"
-                      >
-                        <Play className="w-3.5 h-3.5" /> Publish
-                      </button>
+                      {form.status !== "published" ? (
+                        <button
+                          onClick={() => statusMutation.mutate({ id: form.id, status: "published" })}
+                          disabled={statusMutation.isPending}
+                          className="text-green-400 hover:text-green-300 transition-colors inline-flex items-center gap-1 bg-transparent border-none cursor-pointer disabled:opacity-50"
+                        >
+                          <Play className="w-3.5 h-3.5" /> Publish
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => statusMutation.mutate({ id: form.id, status: "draft" })}
+                          disabled={statusMutation.isPending}
+                          className="text-yellow-400 hover:text-yellow-300 transition-colors inline-flex items-center gap-1 bg-transparent border-none cursor-pointer disabled:opacity-50"
+                        >
+                          <Square className="w-3.5 h-3.5" /> Unpublish
+                        </button>
+                      )}
 
                       <Link
                         href={`/studio/forms/${form.id}/permissions`}

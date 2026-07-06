@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import SkeletonCard from "@/components/SkeletonCard";
+import apiClient from "@/lib/api/client";
 
 interface FormSettings {
   startDate: string;
@@ -48,27 +49,16 @@ export default function SettingsPage() {
     const fetchForm = async () => {
       try {
         console.log(`📡 Fetching settings for formId: ${formId}`);
-        const res = await fetch(`/api/forms/${formId}`);
-        console.log(`📡 Response status: ${res.status}`);
-
-        if (!res.ok) {
-          const text = await res.text();
-          console.warn(`⚠️ API returned ${res.status}:`, text.slice(0, 200));
-          // Fallback to mock
-          console.log("🔄 Using mock data");
-          setSettings(MOCK_SETTINGS);
-          setError(null);
-          return;
-        }
-
-        const data = await res.json();
+        const res = await apiClient.get(`/forms/${formId}`);
+        const data = res.data;
+        
         setSettings({
-          startDate: data.startDate?.split("T")[0] || "",
-          endDate: data.endDate?.split("T")[0] || "",
-          maxResponses: data.maxResponses ?? "",
-          allowAnonymous: data.allowAnonymous ?? false,
-          requireLogin: data.requireLogin ?? false,
-          showProgress: data.showProgress ?? false,
+          startDate: data.settings?.startDate?.split("T")[0] || "",
+          endDate: data.settings?.endDate?.split("T")[0] || "",
+          maxResponses: data.settings?.maxResponses ?? "",
+          allowAnonymous: data.settings?.allowAnonymous ?? false,
+          requireLogin: data.settings?.requireLogin ?? false,
+          showProgress: data.settings?.showProgress ?? false,
         });
         setError(null);
       } catch (err: unknown) {
@@ -129,34 +119,17 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       const payload = {
-        startDate: settings.startDate || null,
-        endDate: settings.endDate || null,
-        maxResponses: settings.maxResponses || null,
-        allowAnonymous: settings.allowAnonymous,
-        requireLogin: settings.requireLogin,
-        showProgress: settings.showProgress,
+        settings: {
+          startDate: settings.startDate || null,
+          endDate: settings.endDate || null,
+          maxResponses: settings.maxResponses || null,
+          allowAnonymous: settings.allowAnonymous,
+          requireLogin: settings.requireLogin,
+          showProgress: settings.showProgress,
+        }
       };
 
-      const res = await fetch(`/api/forms/${formId}/settings`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      // Check if response is JSON
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await res.text();
-        console.error("❌ Non‑JSON response:", text.slice(0, 500));
-        throw new Error(
-          `Server returned ${res.status} (not JSON). Please check your API route.`,
-        );
-      }
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to save settings");
-      }
+      await apiClient.put(`/forms/${formId}`, payload);
 
       setSuccess(true);
     } catch (err: unknown) {

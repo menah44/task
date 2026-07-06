@@ -15,8 +15,6 @@ spec:
         app: backend
 
     spec:
-      nodeSelector:
-        kubernetes.io/hostname: test-worker2
      
       containers:
         - name: backend
@@ -40,15 +38,15 @@ spec:
 
             - name: DB_USERNAME
               valueFrom:
-                configMapKeyRef:
-                  name: app-config
-                  key: DB_USERNAME
+                secretKeyRef:
+                  name: postgres-ha-app
+                  key: username
 
             - name: DB_NAME
               valueFrom:
-                configMapKeyRef:
-                  name: app-config
-                  key: DB_NAME
+                secretKeyRef:
+                  name: postgres-ha-app
+                  key: dbname
 
             - name: PORT
               valueFrom:
@@ -59,8 +57,8 @@ spec:
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: secret
-                  key: DB_PASSWORD
+                  name: postgres-ha-app
+                  key: password
           startupProbe:
             httpGet:
               path: /

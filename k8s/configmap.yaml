@@ -4,9 +4,9 @@ metadata:
   name: app-config
   namespace: form-app
 data:
-  DB_HOST: 10.97.235.182
+  DB_HOST: postgres-ha-rw
   DB_PORT: "5432"
-  DB_USERNAME: postgres
+  DB_USERNAME: taskio_user
   DB_NAME: taskio_db
   PORT: "5000"
   NEXT_PUBLIC_API_URL: "http://backend:5000"

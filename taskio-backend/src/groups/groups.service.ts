@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Group } from './entities/group.entity';
@@ -17,8 +17,11 @@ export class GroupsService {
 
   async findAll(user: User) {
     const whereClause: any = {};
-    if (user.role?.toUpperCase() === 'ADMIN' && user.organization) {
-      whereClause.organizationId = user.organization.id;
+    const isAdmin = user.role?.toUpperCase() === 'ADMIN';
+    const orgId = user.organization?.id || user.orgId;
+
+    if (isAdmin && orgId) {
+      whereClause.organizationId = orgId;
     }
 
     const groups = await this.groupRepository.find({
@@ -36,11 +39,14 @@ export class GroupsService {
   }
 
   async create(name: string, parentId?: number | null, user?: User) {
+    const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
+    const orgId = user?.organization?.id || user?.orgId;
+
     const whereClause: any = { name };
-    if (user?.role?.toUpperCase() === 'ADMIN' && user.organization) {
-      whereClause.organizationId = user.organization.id;
+    if (isAdmin && orgId) {
+      whereClause.organizationId = orgId;
     } else {
-      whereClause.organizationId = null; // or handle super admin
+      whereClause.organizationId = null; 
     }
 
     const existing = await this.groupRepository.findOne({ where: whereClause });
@@ -50,7 +56,11 @@ export class GroupsService {
     
     let resolvedParentId: number | null = null;
     if (parentId !== undefined && parentId !== null) {
-      const parent = await this.groupRepository.findOne({ where: { id: parentId } });
+      const parentWhere: any = { id: parentId };
+      if (isAdmin && orgId) {
+        parentWhere.organizationId = orgId;
+      }
+      const parent = await this.groupRepository.findOne({ where: parentWhere });
       if (!parent) {
         throw new NotFoundException('Parent group not found');
       }
@@ -60,7 +70,7 @@ export class GroupsService {
     const newGroup = this.groupRepository.create({ 
       name, 
       parentId: resolvedParentId,
-      ...(user?.role?.toUpperCase() === 'ADMIN' && user.organization ? { organization: user.organization } : {})
+      ...(isAdmin && orgId ? { organizationId: orgId } : {})
     });
     const savedGroup = await this.groupRepository.save(newGroup);
 
@@ -76,11 +86,25 @@ export class GroupsService {
   }
 
   async update(id: number, name: string, parentId?: number | null, currentUser?: User) {
-    const group = await this.groupRepository.findOne({ where: { id } });
+    const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
+    const orgId = currentUser?.organization?.id || currentUser?.orgId;
+
+    const where: any = { id };
+    if (isAdmin && orgId) {
+      where.organizationId = orgId;
+    }
+    const group = await this.groupRepository.findOne({ where });
     if (!group) {
       throw new NotFoundException('Group not found');
     }
-    const existing = await this.groupRepository.findOne({ where: { name } });
+
+    const existingWhere: any = { name };
+    if (isAdmin && orgId) {
+      existingWhere.organizationId = orgId;
+    } else {
+      existingWhere.organizationId = null;
+    }
+    const existing = await this.groupRepository.findOne({ where: existingWhere });
     if (existing && existing.id !== id) {
       throw new ConflictException('Group name already exists');
     }
@@ -91,7 +115,11 @@ export class GroupsService {
         if (parentId === id) {
           throw new BadRequestException('A group cannot be its own parent');
         }
-        const parent = await this.groupRepository.findOne({ where: { id: parentId } });
+        const parentWhere: any = { id: parentId };
+        if (isAdmin && orgId) {
+          parentWhere.organizationId = orgId;
+        }
+        const parent = await this.groupRepository.findOne({ where: parentWhere });
         if (!parent) {
           throw new NotFoundException('Parent group not found');
         }
@@ -117,7 +145,14 @@ export class GroupsService {
   }
 
   async delete(id: number, currentUser?: User) {
-    const group = await this.groupRepository.findOne({ where: { id } });
+    const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
+    const orgId = currentUser?.organization?.id || currentUser?.orgId;
+
+    const where: any = { id };
+    if (isAdmin && orgId) {
+      where.organizationId = orgId;
+    }
+    const group = await this.groupRepository.findOne({ where });
     if (!group) {
       throw new NotFoundException('Group not found');
     }
@@ -134,16 +169,35 @@ export class GroupsService {
     return { success: true };
   }
 
-  async getChildren(id: number) {
-    const group = await this.groupRepository.findOne({ where: { id } });
+  async getChildren(id: number, currentUser?: User) {
+    const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
+    const orgId = currentUser?.organization?.id || currentUser?.orgId;
+
+    const where: any = { id };
+    if (isAdmin && orgId) {
+      where.organizationId = orgId;
+    }
+    const group = await this.groupRepository.findOne({ where });
     if (!group) {
       throw new NotFoundException('Group not found');
     }
-    return this.groupRepository.find({ where: { parentId: id } });
+
+    const childrenWhere: any = { parentId: id };
+    if (isAdmin && orgId) {
+      childrenWhere.organizationId = orgId;
+    }
+    return this.groupRepository.find({ where: childrenWhere });
   }
 
-  async getMembers(id: number) {
-    const group = await this.groupRepository.findOne({ where: { id }, relations: ['users'] });
+  async getMembers(id: number, currentUser?: User) {
+    const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
+    const orgId = currentUser?.organization?.id || currentUser?.orgId;
+
+    const where: any = { id };
+    if (isAdmin && orgId) {
+      where.organizationId = orgId;
+    }
+    const group = await this.groupRepository.findOne({ where, relations: ['users'] });
     if (!group) {
       throw new NotFoundException('Group not found');
     }
@@ -151,8 +205,21 @@ export class GroupsService {
   }
 
   async addMember(id: number, userId: number, currentUser?: User) {
-    const group = await this.groupRepository.findOne({ where: { id }, relations: ['users'] });
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
+    const orgId = currentUser?.organization?.id || currentUser?.orgId;
+
+    const whereGroup: any = { id };
+    if (isAdmin && orgId) {
+      whereGroup.organizationId = orgId;
+    }
+    const group = await this.groupRepository.findOne({ where: whereGroup, relations: ['users'] });
+
+    const whereUser: any = { id: userId };
+    if (isAdmin && orgId) {
+      whereUser.organization = { id: orgId };
+    }
+    const user = await this.userRepository.findOne({ where: whereUser });
+
     if (!group || !user) {
       throw new NotFoundException('Group or User not found');
     }
@@ -172,7 +239,14 @@ export class GroupsService {
   }
 
   async removeMember(id: number, userId: number, currentUser?: User) {
-    const group = await this.groupRepository.findOne({ where: { id }, relations: ['users'] });
+    const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
+    const orgId = currentUser?.organization?.id || currentUser?.orgId;
+
+    const whereGroup: any = { id };
+    if (isAdmin && orgId) {
+      whereGroup.organizationId = orgId;
+    }
+    const group = await this.groupRepository.findOne({ where: whereGroup, relations: ['users'] });
     if (!group) {
       throw new NotFoundException('Group not found');
     }
@@ -191,7 +265,14 @@ export class GroupsService {
   }
 
   async updateParent(id: number, parentId: number | null, currentUser?: User) {
-    const group = await this.groupRepository.findOne({ where: { id } });
+    const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
+    const orgId = currentUser?.organization?.id || currentUser?.orgId;
+
+    const whereGroup: any = { id };
+    if (isAdmin && orgId) {
+      whereGroup.organizationId = orgId;
+    }
+    const group = await this.groupRepository.findOne({ where: whereGroup });
     if (!group) {
       throw new NotFoundException('Group not found');
     }
@@ -199,7 +280,11 @@ export class GroupsService {
       if (parentId === id) {
         throw new BadRequestException('A group cannot be its own parent');
       }
-      const parent = await this.groupRepository.findOne({ where: { id: parentId } });
+      const whereParent: any = { id: parentId };
+      if (isAdmin && orgId) {
+        whereParent.organizationId = orgId;
+      }
+      const parent = await this.groupRepository.findOne({ where: whereParent });
       if (!parent) {
         throw new NotFoundException('Parent group not found');
       }

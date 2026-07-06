@@ -87,7 +87,7 @@ export const useAuthStore = create<AuthState>()(
         }
 
         try {
-          const res = await apiClient.get("/users/me");
+          const res = await apiClient.get(`/users/me?t=${new Date().getTime()}`);
 
           set({
             currentUser: res.data,

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
@@ -27,7 +27,7 @@ export class UsersService {
     return this.findById(id);
   }
 
-  async findById(id: number) {
+  async findById(id: number, currentUser?: User) {
     const user = await this.userRepository.findOne({
       where: { id },
       relations: ['organization'],
@@ -35,19 +35,31 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    if (currentUser && currentUser.role?.toUpperCase() === 'ADMIN') {
+      const orgId = currentUser.organization?.id || currentUser.orgId;
+      if (user.organization?.id !== orgId) {
+        throw new ForbiddenException('Access denied');
+      }
+    }
 
     // Exclude password field
     const { password: _password, ...result } = user;
     return result;
   }
 
-  async getUserRoles(id: number) {
+  async getUserRoles(id: number, currentUser?: User) {
     const user = await this.userRepository.findOne({
       where: { id },
-      relations: ['roles'],
+      relations: ['roles', 'organization'],
     });
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+    if (currentUser && currentUser.role?.toUpperCase() === 'ADMIN') {
+      const orgId = currentUser.organization?.id || currentUser.orgId;
+      if (user.organization?.id !== orgId) {
+        throw new ForbiddenException('Access denied');
+      }
     }
 
     if (user.roles.length === 0 && user.role) {
@@ -62,13 +74,19 @@ export class UsersService {
     return user.roles;
   }
 
-  async getUserGroups(id: number) {
+  async getUserGroups(id: number, currentUser?: User) {
     const user = await this.userRepository.findOne({
       where: { id },
-      relations: ['groups'],
+      relations: ['groups', 'organization'],
     });
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+    if (currentUser && currentUser.role?.toUpperCase() === 'ADMIN') {
+      const orgId = currentUser.organization?.id || currentUser.orgId;
+      if (user.organization?.id !== orgId) {
+        throw new ForbiddenException('Access denied');
+      }
     }
     return user.groups;
   }
@@ -236,9 +254,15 @@ export class UsersService {
   }
 
   async deactivate(id: number, currentUser?: User) {
-    const user = await this.userRepository.findOne({ where: { id } });
+    const user = await this.userRepository.findOne({ where: { id }, relations: ['organization'] });
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+    if (currentUser && currentUser.role?.toUpperCase() === 'ADMIN') {
+      const orgId = currentUser.organization?.id || currentUser.orgId;
+      if (user.organization?.id !== orgId) {
+        throw new ForbiddenException('Access denied');
+      }
     }
     user.isActive = false;
     await this.userRepository.save(user);
@@ -256,9 +280,15 @@ export class UsersService {
   }
 
   async activate(id: number, currentUser?: User) {
-    const user = await this.userRepository.findOne({ where: { id } });
+    const user = await this.userRepository.findOne({ where: { id }, relations: ['organization'] });
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+    if (currentUser && currentUser.role?.toUpperCase() === 'ADMIN') {
+      const orgId = currentUser.organization?.id || currentUser.orgId;
+      if (user.organization?.id !== orgId) {
+        throw new ForbiddenException('Access denied');
+      }
     }
     user.isActive = true;
     await this.userRepository.save(user);
@@ -278,10 +308,16 @@ export class UsersService {
   async updateUser(id: number, dto: UpdateUserDto, currentUser?: User) {
     const user = await this.userRepository.findOne({
       where: { id },
-      relations: ['roles'],
+      relations: ['roles', 'organization'],
     });
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+    if (currentUser && currentUser.role?.toUpperCase() === 'ADMIN') {
+      const orgId = currentUser.organization?.id || currentUser.orgId;
+      if (user.organization?.id !== orgId) {
+        throw new ForbiddenException('Access denied');
+      }
     }
 
     if (dto.email && dto.email.toLowerCase() !== user.email) {

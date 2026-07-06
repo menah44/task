@@ -31,10 +31,15 @@ export class GatewayAuthGuard implements CanActivate {
         secret: process.env.JWT_SECRET || 'super-secret-key',
       });
 
+      console.log('Gateway Role:', payload.role);
+
       // Mutate the request to add X-User-Id and X-Org-Id headers for proxy
       request.headers['x-user-id'] = payload.sub;
       if (payload.orgId) {
         request.headers['x-org-id'] = payload.orgId;
+      }
+      if (payload.role) {
+        request.headers['x-user-role'] = payload.role;
       }
 
       request.user = payload;

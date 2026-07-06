@@ -78,6 +78,9 @@ export default function LoginPage() {
         return;
       }
 
+      console.log('currentUser', state.currentUser);
+      console.log('role', state.currentUser?.role);
+
       const userRole = state.currentUser.role?.toUpperCase() || "USER";
 
       if (userRole === "SUPER_ADMIN") {

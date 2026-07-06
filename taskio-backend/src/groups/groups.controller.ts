@@ -55,13 +55,13 @@ export class GroupsController {
   }
 
   @Get(':id/children')
-  async getChildren(@Param('id', ParseIntPipe) id: number) {
-    return this.groupsService.getChildren(id);
+  async getChildren(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+    return this.groupsService.getChildren(id, user);
   }
 
   @Get(':id/members')
-  async getMembers(@Param('id', ParseIntPipe) id: number) {
-    return this.groupsService.getMembers(id);
+  async getMembers(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+    return this.groupsService.getMembers(id, user);
   }
 
   @Post(':id/members')

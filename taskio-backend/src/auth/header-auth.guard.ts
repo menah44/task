@@ -19,15 +19,20 @@ export class HeaderAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const userId = request.headers['x-user-id'];
     const orgId = request.headers['x-org-id'];
+    const role = request.headers['x-user-role'];
 
     if (!userId) {
       throw new UnauthorizedException('Missing X-User-Id header from Gateway');
     }
 
+    const parsedOrgId = orgId ? parseInt(orgId as string, 10) : undefined;
     // Construct the user object from the injected headers
     request.user = {
-      sub: parseInt(userId, 10),
-      orgId: orgId ? parseInt(orgId, 10) : undefined,
+      id: parseInt(userId as string, 10),
+      sub: parseInt(userId as string, 10),
+      orgId: parsedOrgId,
+      organization: parsedOrgId ? { id: parsedOrgId } : undefined,
+      role: role as string,
     };
 
     return true;

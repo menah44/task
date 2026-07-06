@@ -16,6 +16,7 @@ export class UsersController {
 
   @Get('me')
   async getMe(@CurrentUser() user: User) {
+    console.log('Users Me Role:', user.role);
     return this.usersService.findMe(user.id);
   }
 
@@ -33,8 +34,8 @@ export class UsersController {
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 10;
     
-    // Pass user.organization.id if user is an ADMIN (not SUPER_ADMIN)
-    const orgId = userRole === 'ADMIN' ? user.organization?.id : undefined;
+    // Pass user.organization.id or user.orgId if user is an ADMIN (not SUPER_ADMIN)
+    const orgId = userRole === 'ADMIN' ? (user.organization?.id || user.orgId) : undefined;
     return this.usersService.findAll(pageNum, limitNum, search || '', orgId);
   }
 
@@ -47,7 +48,7 @@ export class UsersController {
     if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can access this resource.');
     }
-    return this.usersService.findById(id);
+    return this.usersService.findById(id, user);
   }
 
   @Get(':id/roles')
@@ -59,7 +60,7 @@ export class UsersController {
     if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can access this resource.');
     }
-    return this.usersService.getUserRoles(id);
+    return this.usersService.getUserRoles(id, user);
   }
 
   @Get(':id/groups')
@@ -71,7 +72,7 @@ export class UsersController {
     if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can access this resource.');
     }
-    return this.usersService.getUserGroups(id);
+    return this.usersService.getUserGroups(id, user);
   }
 
   @Post()
@@ -88,7 +89,7 @@ export class UsersController {
     }
     
     // For ADMIN, we pass their organization to automatically bind the new user to it
-    const org = userRole === 'ADMIN' ? user.organization : undefined;
+    const org = userRole === 'ADMIN' ? (user.organization || { id: user.orgId } as any) : undefined;
     return this.usersService.create(dto, org, user);
   }
 

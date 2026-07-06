@@ -20,6 +20,8 @@ export class User {
   @Column({ default: 'USER' })
   role!: string;
 
+  orgId?: number;
+
   @Column({ unique: true, nullable: true })
   username?: string;
 

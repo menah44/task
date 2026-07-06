@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany, DeleteDateColumn } from 'typeorm';
 import { Organization } from '../../organizations/entities/organization.entity';
 import { User } from '../../auth/entities/user.entity';
+import { Section } from './section.entity';
 
 @Entity('form')
 export class Form {
@@ -15,6 +16,12 @@ export class Form {
 
   @Column({ default: 'draft' })
   status!: string;
+
+  @Column({ default: false })
+  isPublic!: boolean;
+
+  @Column({ default: 1 })
+  version!: number;
 
   @Column({ type: 'jsonb', nullable: true })
   schema?: any;
@@ -41,4 +48,10 @@ export class Form {
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'creatorId' })
   creator?: User;
+
+  @OneToMany(() => Section, (section) => section.form, { cascade: true })
+  sections!: Section[];
+
+  @DeleteDateColumn()
+  deletedAt?: Date;
 }

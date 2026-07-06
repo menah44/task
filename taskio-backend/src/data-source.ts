@@ -5,6 +5,8 @@ import { Role } from './roles/entities/role.entity';
 import { Group } from './groups/entities/group.entity';
 import { AuditLog } from './audit/entities/audit-log.entity';
 import { Form } from './forms/entities/form.entity';
+import { Section } from './forms/entities/section.entity';
+import { Question } from './forms/entities/question.entity';
 import { Organization } from './organizations/entities/organization.entity';
 
 dotenv.config();
@@ -16,7 +18,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || '1234',
   database: process.env.DB_NAME || 'taskio_db',
-  entities: [User, Role, Group, AuditLog, Organization, Form],
+  entities: [User, Role, Group, AuditLog, Organization, Form, Section, Question],
   migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
   synchronize: true,
 });

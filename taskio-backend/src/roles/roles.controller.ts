@@ -134,6 +134,6 @@ export class RolesController {
         'Only administrators can access this resource.',
       );
     }
-    return this.rolesService.getUsersForRole(roleId);
+    return this.rolesService.getUsersForRole(roleId, currentUser);
   }
 }

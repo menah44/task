@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuditLog } from './entities/audit-log.entity';
@@ -83,8 +83,11 @@ export class AuditService implements OnModuleInit {
 
     query.leftJoinAndSelect('audit.organization', 'organization');
 
-    if (user?.role?.toUpperCase() === 'ADMIN' && user.organization) {
-      query.andWhere('audit.organizationId = :orgId', { orgId: user.organization.id });
+    const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
+    const orgId = user?.organization?.id || user?.orgId;
+
+    if (isAdmin && orgId) {
+      query.andWhere('audit.organizationId = :orgId', { orgId });
     }
 
     if (actorId !== undefined) {
@@ -125,8 +128,15 @@ export class AuditService implements OnModuleInit {
     };
   }
 
-  async findOne(id: number) {
-    const log = await this.auditRepository.findOne({ where: { id } });
+  async findOne(id: number, currentUser?: User) {
+    const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
+    const orgId = currentUser?.organization?.id || currentUser?.orgId;
+
+    const where: any = { id };
+    if (isAdmin && orgId) {
+      where.organizationId = orgId;
+    }
+    const log = await this.auditRepository.findOne({ where });
     if (!log) {
       throw new NotFoundException('Audit log not found');
     }
@@ -151,7 +161,7 @@ export class AuditService implements OnModuleInit {
         ipAddress: ipAddress || '127.0.0.1',
         userAgent: 'system',
         details,
-        organizationId: user?.organization?.id || null,
+        organizationId: user?.organization?.id || user?.orgId || null,
         createdAt: new Date(),
       });
       await this.auditRepository.save(log);

@@ -45,6 +45,6 @@ export class AuditController {
     if (user.role?.toUpperCase() !== 'ADMIN' && user.role?.toUpperCase() !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can view audit logs.');
     }
-    return this.auditService.findOne(id);
+    return this.auditService.findOne(id, user);
   }
 }

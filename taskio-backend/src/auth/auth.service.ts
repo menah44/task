@@ -30,6 +30,9 @@ export class AuthService {
       ...(user.organization ? { orgId: user.organization.id } : {}),
     };
 
+    console.log('DB Role:', user.role);
+    console.log('JWT Payload:', payload);
+
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: '15m',
     });

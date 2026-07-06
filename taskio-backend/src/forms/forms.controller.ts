@@ -2,12 +2,12 @@ import { Controller, Get, Post, Body, Put, Param, Delete, UseGuards, Query, Pars
 import { FormsService } from './forms.service';
 import { CreateFormDto } from './dto/create-form.dto';
 import { UpdateFormDto } from './dto/update-form.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { HeaderAuthGuard } from '../auth/header-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { User } from '../auth/entities/user.entity';
 
 @Controller('forms')
-@UseGuards(JwtAuthGuard)
+@UseGuards(HeaderAuthGuard)
 export class FormsController {
   constructor(private readonly formsService: FormsService) {}
 

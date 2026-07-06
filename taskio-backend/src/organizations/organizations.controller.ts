@@ -14,14 +14,14 @@ import { OrganizationsService } from './organizations.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { CreateOrganizationAdminDto } from './dto/create-organization-admin.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { HeaderAuthGuard } from '../auth/header-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { User } from '../auth/entities/user.entity';
 
 @Controller('organizations')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(HeaderAuthGuard, RolesGuard)
 export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}
 

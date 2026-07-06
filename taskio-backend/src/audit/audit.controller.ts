@@ -1,14 +1,14 @@
 import { Controller, UseGuards, Get, Query, Param, ParseIntPipe, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuditService } from './audit.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { HeaderAuthGuard } from '../auth/header-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { User } from '../auth/entities/user.entity';
 
 @ApiTags('audit')
 @ApiBearerAuth()
 @Controller('audit')
-@UseGuards(JwtAuthGuard)
+@UseGuards(HeaderAuthGuard)
 export class AuditController {
   constructor(private readonly auditService: AuditService) {}
 

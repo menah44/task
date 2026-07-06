@@ -1,14 +1,14 @@
 import { Controller, UseGuards, Get, Post, Put, Delete, Body, Param, ParseIntPipe, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { GroupsService } from './groups.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { HeaderAuthGuard } from '../auth/header-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { User } from '../auth/entities/user.entity';
 
 @ApiTags('groups')
 @ApiBearerAuth()
 @Controller('groups')
-@UseGuards(JwtAuthGuard)
+@UseGuards(HeaderAuthGuard)
 export class GroupsController {
   constructor(private readonly groupsService: GroupsService) {}
 

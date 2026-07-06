@@ -27,7 +27,7 @@ export interface UserType {
   id?: string | number;
   name?: string;
   email?: string;
-  role?: "ADMIN" | "USER";
+  role?: "SUPER_ADMIN" | "ADMIN" | "USER";
   [key: string]: unknown;
 }
 

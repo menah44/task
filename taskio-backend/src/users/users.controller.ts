@@ -1,6 +1,6 @@
 import { Controller, Get, Patch, Post, Put, Param, Query, Body, UseGuards, ParseIntPipe, ForbiddenException } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { HeaderAuthGuard } from '../auth/header-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { UsersService } from './users.service';
 import { User } from '../auth/entities/user.entity';
@@ -10,7 +10,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @ApiTags('users')
 @ApiBearerAuth()
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(HeaderAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

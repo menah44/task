@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class AuthService {
@@ -11,11 +12,13 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly auditService: AuditService,
   ) {}
 
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { email },
+      relations: ['organization'],
     });
   }
 
@@ -24,6 +27,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
+      ...(user.organization ? { orgId: user.organization.id } : {}),
     };
 
     const accessToken = this.jwtService.sign(payload, {
@@ -45,10 +49,29 @@ export class AuthService {
     await this.userRepository.update(userId, {
       hashedRefreshToken,
     });
+    
+    // Attempt to log login action
+    try {
+      const user = await this.userRepository.findOne({ where: { id: userId }, relations: ['organization'] });
+      if (user) {
+        await this.auditService.logAction(
+          user,
+          'USER_LOGIN',
+          'USER',
+          String(user.id),
+          { email: user.email }
+        );
+      }
+    } catch (e) {
+      console.error('Failed to log login action:', e);
+    }
   }
 
   async refreshTokens(userId: number, refreshToken: string) {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.userRepository.findOne({ 
+      where: { id: userId },
+      relations: ['organization'],
+    });
     if (!user || !user.hashedRefreshToken) {
       throw new UnauthorizedException('Access Denied');
     }

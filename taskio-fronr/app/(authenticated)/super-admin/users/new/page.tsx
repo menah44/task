@@ -4,11 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api/client";
 import Link from "next/link";
-import { useAuthStore } from "@/lib/auth-store";
 
 export default function CreateUserPage() {
   const router = useRouter();
-  const currentUser = useAuthStore((state) => state.currentUser);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -33,16 +31,10 @@ export default function CreateUserPage() {
           apiClient.get('/roles'),
           apiClient.get('/groups')
         ]);
-        
-        let availableRoles = rolesRes.data;
-        if (currentUser?.role?.toUpperCase() !== 'SUPER_ADMIN') {
-          availableRoles = availableRoles.filter((r: any) => r.name.toUpperCase() !== 'SUPER_ADMIN');
-        }
-
-        setRoles(availableRoles);
+        setRoles(rolesRes.data);
         setGroups(groupsRes.data);
-        if (availableRoles.length > 0) {
-          setFormData(prev => ({ ...prev, role: availableRoles[0].name }));
+        if (rolesRes.data.length > 0) {
+          setFormData(prev => ({ ...prev, role: rolesRes.data[0].name }));
         }
       } catch (err) {
         console.error("Failed to fetch roles or groups", err);
@@ -86,7 +78,7 @@ export default function CreateUserPage() {
       const response = await apiClient.post("/users", submitData);
       if (response.status === 201) {
         alert("User created successfully");
-        router.push(`/admin/users/${response.data.id}`);
+        router.push(`/super-admin/users/${response.data.id}`);
       }
     } catch (err: unknown) {
       const error = err as any;
@@ -136,7 +128,7 @@ export default function CreateUserPage() {
             Create New User
           </h2>
           <Link
-            href="/admin/users"
+            href="/super-admin/users"
             className="text-gray-400 hover:text-white transition-colors text-sm font-medium flex items-center gap-2"
           >
             ← Back to Users

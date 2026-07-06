@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuditLog } from './entities/audit-log.entity';
+import { User } from '../auth/entities/user.entity';
 
 @Injectable()
 export class AuditService implements OnModuleInit {
@@ -74,11 +75,15 @@ export class AuditService implements OnModuleInit {
     resourceType?: string;
     startDate?: string;
     endDate?: string;
-  }) {
+  }, user?: User) {
     const { page, limit, actorId, resourceType, startDate, endDate } = filters;
     const skip = (page - 1) * limit;
 
     const query = this.auditRepository.createQueryBuilder('audit');
+
+    if (user?.role?.toUpperCase() === 'ADMIN' && user.organization) {
+      query.andWhere('audit.organizationId = :orgId', { orgId: user.organization.id });
+    }
 
     if (actorId !== undefined) {
       query.andWhere('audit.actorId = :actorId', { actorId });
@@ -124,5 +129,32 @@ export class AuditService implements OnModuleInit {
       throw new NotFoundException('Audit log not found');
     }
     return log;
+  }
+
+  async logAction(
+    user: User | undefined,
+    action: string,
+    resourceType: string,
+    resourceId: string,
+    details?: any,
+    ipAddress?: string,
+  ) {
+    try {
+      const log = this.auditRepository.create({
+        actorId: user?.id,
+        actorEmail: user?.email || 'system',
+        action,
+        resourceType,
+        resourceId,
+        ipAddress: ipAddress || '127.0.0.1',
+        userAgent: 'system',
+        details,
+        organizationId: user?.organization?.id || null,
+        createdAt: new Date(),
+      });
+      await this.auditRepository.save(log);
+    } catch (error) {
+      console.error('Failed to save audit log:', error);
+    }
   }
 }

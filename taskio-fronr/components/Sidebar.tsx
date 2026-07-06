@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, PlusCircle, ClipboardList, Users, Shield, Folder, User, LogOut } from "lucide-react";
+import { LayoutDashboard, PlusCircle, ClipboardList, Users, Shield, Folder, User, LogOut, Building2, Settings } from "lucide-react";
 
 interface SidebarProps {
   userRole: string;
@@ -23,7 +23,59 @@ export default function Sidebar({ userRole, pathname, logout }: SidebarProps) {
 
         {/* Navigation Links based on user roles */}
         <nav className="space-y-1">
-          {userRole === "ADMIN" || userRole === "SUPER_ADMIN" ? (
+          {userRole === "SUPER_ADMIN" ? (
+            <>
+              <Link
+                href="/super-admin/dashboard"
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
+                  pathname === "/super-admin/dashboard" ? "bg-primary/10 text-primary border border-primary/20" : "border border-transparent"
+                }`}
+              >
+                <LayoutDashboard className="w-5 h-5 text-gray-400 group-hover:text-primary transition-colors" />
+                <span>Dashboard</span>
+              </Link>
+
+              <Link
+                href="/super-admin/organizations"
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
+                  pathname?.startsWith("/super-admin/organizations") ? "bg-success/10 text-success border border-success/20" : "border border-transparent"
+                }`}
+              >
+                <Building2 className="w-5 h-5 text-gray-400 group-hover:text-success transition-colors" />
+                <span>Organizations</span>
+              </Link>
+
+              <Link
+                href="/super-admin/users"
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
+                  pathname?.startsWith("/super-admin/users") ? "bg-warning/10 text-warning border border-warning/20" : "border border-transparent"
+                }`}
+              >
+                <Users className="w-5 h-5 text-gray-400 group-hover:text-warning transition-colors" />
+                <span>Users</span>
+              </Link>
+
+              <Link
+                href="/super-admin/audit"
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
+                  pathname?.startsWith("/super-admin/audit") ? "bg-purple-600/10 text-purple-400 border border-purple-600/20" : "border border-transparent"
+                }`}
+              >
+                <ClipboardList className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
+                <span>Audit Logs</span>
+              </Link>
+
+              <Link
+                href="/super-admin/settings"
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
+                  pathname?.startsWith("/super-admin/settings") ? "bg-gray-600/10 text-gray-400 border border-gray-600/20" : "border border-transparent"
+                }`}
+              >
+                <Settings className="w-5 h-5 text-gray-400 group-hover:text-gray-300 transition-colors" />
+                <span>Settings</span>
+              </Link>
+            </>
+          ) : userRole === "ADMIN" ? (
             <>
               <Link
                 href="/admin"

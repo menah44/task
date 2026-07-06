@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api/client";
 import { useAuthStore } from "@/lib/auth-store";
@@ -18,7 +18,20 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { fetchCurrentUser } = useAuthStore();
+  const { fetchCurrentUser, currentUser, hasHydrated, isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    if (hasHydrated && isAuthenticated && currentUser) {
+      const userRole = currentUser.role?.toUpperCase() || "USER";
+      if (userRole === "SUPER_ADMIN") {
+        router.push("/super-admin/dashboard");
+      } else if (userRole === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/userForms");
+      }
+    }
+  }, [hasHydrated, isAuthenticated, currentUser, router]);
 
   const [apiError, setApiError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -67,7 +80,9 @@ export default function LoginPage() {
 
       const userRole = state.currentUser.role?.toUpperCase() || "USER";
 
-      if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
+      if (userRole === "SUPER_ADMIN") {
+        router.push("/super-admin/dashboard");
+      } else if (userRole === "ADMIN") {
         router.push("/admin");
       } else {
         router.push("/userForms");

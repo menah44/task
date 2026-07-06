@@ -1,12 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToMany, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToMany, ManyToOne, OneToMany, JoinColumn, Unique } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
+import { Organization } from '../../organizations/entities/organization.entity';
 
 @Entity('group')
+@Unique(['name', 'organizationId'])
 export class Group {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ unique: true })
+  @Column()
   name!: string;
 
   @Column({ nullable: true, type: 'int' })
@@ -27,4 +29,11 @@ export class Group {
 
   @ManyToMany(() => User, (user) => user.groups)
   users!: User[];
+
+  @ManyToOne(() => Organization, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'organizationId' })
+  organization!: Organization | null;
+
+  @Column({ type: 'int', nullable: true })
+  organizationId!: number | null;
 }

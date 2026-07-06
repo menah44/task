@@ -22,7 +22,7 @@ export class AuditController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
-    if (user.role?.toUpperCase() !== 'ADMIN') {
+    if (user.role?.toUpperCase() !== 'ADMIN' && user.role?.toUpperCase() !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can view audit logs.');
     }
     const pageNum = page ? parseInt(page, 10) : 1;
@@ -34,7 +34,7 @@ export class AuditController {
       resourceType,
       startDate,
       endDate,
-    });
+    }, user);
   }
 
   @Get(':id')
@@ -42,7 +42,7 @@ export class AuditController {
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    if (user.role?.toUpperCase() !== 'ADMIN') {
+    if (user.role?.toUpperCase() !== 'ADMIN' && user.role?.toUpperCase() !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can view audit logs.');
     }
     return this.auditService.findOne(id);

@@ -1,13 +1,22 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Unique } from 'typeorm';
+import { Organization } from '../../organizations/entities/organization.entity';
 
 @Entity('role')
+@Unique(['name', 'organizationId'])
 export class Role {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ unique: true })
+  @Column()
   name!: string;
 
   @CreateDateColumn()
   createdAt!: Date;
+
+  @ManyToOne(() => Organization, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'organizationId' })
+  organization!: Organization | null;
+
+  @Column({ type: 'int', nullable: true })
+  organizationId!: number | null;
 }

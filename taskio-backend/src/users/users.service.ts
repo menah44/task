@@ -4,9 +4,12 @@ import { Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
 import { Role } from '../roles/entities/role.entity';
 import { Group } from '../groups/entities/group.entity';
+import { Organization } from '../organizations/entities/organization.entity';
 import { CreateUserAdminDto } from './dto/create-user-admin.dto';
+import { CreateOrganizationAdminDto } from '../organizations/dto/create-organization-admin.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class UsersService {
@@ -17,6 +20,7 @@ export class UsersService {
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(Group)
     private readonly groupRepository: Repository<Group>,
+    private readonly auditService: AuditService,
   ) {}
 
   async findMe(id: number) {
@@ -26,6 +30,7 @@ export class UsersService {
   async findById(id: number) {
     const user = await this.userRepository.findOne({
       where: { id },
+      relations: ['organization'],
     });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -68,10 +73,15 @@ export class UsersService {
     return user.groups;
   }
 
-  async findAll(page = 1, limit = 10, search = '') {
+  async findAll(page = 1, limit = 10, search = '', orgId?: number) {
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.userRepository.createQueryBuilder('user');
+
+    if (orgId) {
+      queryBuilder.leftJoin('user.organization', 'organization');
+      queryBuilder.andWhere('organization.id = :orgId', { orgId });
+    }
 
     if (search) {
       // Use ILIKE for case-insensitive search on PostgreSQL
@@ -106,7 +116,7 @@ export class UsersService {
     };
   }
 
-  async create(dto: CreateUserAdminDto) {
+  async create(dto: CreateUserAdminDto, org?: Organization, currentUser?: User) {
     if (!dto.email) {
       throw new BadRequestException('Email address is required.');
     }
@@ -157,15 +167,75 @@ export class UsersService {
       role: dto.role.toUpperCase(),
       isActive: true,
       groups: userGroups,
+      ...(org ? { organization: org } : {}),
     });
 
     await this.userRepository.save(newUser);
+    
+    await this.auditService.logAction(
+      currentUser,
+      'CREATE_USER',
+      'USER',
+      String(newUser.id),
+      { email: newUser.email, role: newUser.role }
+    );
 
     const { password: _password, ...result } = newUser;
     return result;
   }
 
-  async deactivate(id: number) {
+  async createOrganizationAdmin(org: Organization, dto: CreateOrganizationAdminDto) {
+    if (!dto.email) {
+      throw new BadRequestException('Email address is required.');
+    }
+    if (!dto.password) {
+      throw new BadRequestException('Password is required.');
+    }
+
+    const existingUser = await this.userRepository.findOne({
+      where: { email: dto.email.toLowerCase() },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('Email already registered.');
+    }
+
+    const roleName = 'ADMIN';
+    const existingRole = await this.roleRepository.findOne({ where: { name: roleName } });
+    if (!existingRole) {
+      throw new BadRequestException("Role does not exist");
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    const newUser = this.userRepository.create({
+      username: dto.email.toLowerCase(), // fallback username to email if needed
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      email: dto.email.toLowerCase(),
+      password: hashedPassword,
+      role: roleName,
+      isActive: true,
+      groups: [],
+      roles: [existingRole],
+      organization: org,
+    });
+
+    await this.userRepository.save(newUser);
+
+    await this.auditService.logAction(
+      undefined, // System action, but org is known
+      'CREATE_ORGANIZATION_ADMIN',
+      'USER',
+      String(newUser.id),
+      { email: newUser.email, role: newUser.role }
+    );
+
+    const { password: _password, ...result } = newUser;
+    return result;
+  }
+
+  async deactivate(id: number, currentUser?: User) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -173,11 +243,19 @@ export class UsersService {
     user.isActive = false;
     await this.userRepository.save(user);
     
+    await this.auditService.logAction(
+      currentUser,
+      'DEACTIVATE_USER',
+      'USER',
+      String(user.id),
+      { email: user.email }
+    );
+    
     const { password: _password, ...result } = user;
     return result;
   }
 
-  async activate(id: number) {
+  async activate(id: number, currentUser?: User) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -185,11 +263,19 @@ export class UsersService {
     user.isActive = true;
     await this.userRepository.save(user);
     
+    await this.auditService.logAction(
+      currentUser,
+      'ACTIVATE_USER',
+      'USER',
+      String(user.id),
+      { email: user.email }
+    );
+    
     const { password: _password, ...result } = user;
     return result;
   }
 
-  async updateUser(id: number, dto: UpdateUserDto) {
+  async updateUser(id: number, dto: UpdateUserDto, currentUser?: User) {
     const user = await this.userRepository.findOne({
       where: { id },
       relations: ['roles'],
@@ -231,6 +317,14 @@ export class UsersService {
     }
 
     await this.userRepository.save(user);
+
+    await this.auditService.logAction(
+      currentUser,
+      'UPDATE_USER',
+      'USER',
+      String(user.id),
+      { changes: dto }
+    );
 
     const { password: _password, ...result } = user;
     return result;

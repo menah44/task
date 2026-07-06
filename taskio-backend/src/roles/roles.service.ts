@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { Role } from './entities/role.entity';
 import { User } from '../auth/entities/user.entity';
 import { CreateRoleDto } from './dto/create-role.dto';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class RolesService {
@@ -12,10 +13,22 @@ export class RolesService {
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly auditService: AuditService,
   ) {}
 
-  async findAll() {
+  async findAll(user: User) {
+    const whereClause: any[] = [];
+    
+    if (user.role?.toUpperCase() === 'ADMIN' && user.organization) {
+      whereClause.push(
+        { organizationId: user.organization.id }
+      );
+    } else {
+      whereClause.push({});
+    }
+
     const roles = await this.roleRepository.find({
+      where: whereClause.length > 0 ? whereClause : undefined,
       order: { id: 'ASC' }
     });
     const results: any[] = [];
@@ -31,17 +44,40 @@ export class RolesService {
     return results;
   }
 
-  async createRole(dto: CreateRoleDto) {
+  async createRole(dto: CreateRoleDto, user?: User) {
     const roleName = dto.name.toUpperCase();
-    const existing = await this.roleRepository.findOne({ where: { name: roleName } });
+    
+    const whereClause: any[] = [];
+    if (user?.role?.toUpperCase() === 'ADMIN' && user.organization) {
+      whereClause.push(
+        { name: roleName, organizationId: user.organization.id }
+      );
+    } else {
+      whereClause.push({ name: roleName, organizationId: IsNull() });
+    }
+
+    const existing = await this.roleRepository.findOne({ where: whereClause });
     if (existing) {
       throw new ConflictException('Role already exists');
     }
-    const newRole = this.roleRepository.create({ name: roleName });
-    return this.roleRepository.save(newRole);
+    const newRole = this.roleRepository.create({ 
+      name: roleName,
+      ...(user?.role?.toUpperCase() === 'ADMIN' && user.organization ? { organization: user.organization } : {})
+    });
+    const savedRole = await this.roleRepository.save(newRole);
+    
+    await this.auditService.logAction(
+      user,
+      'CREATE_ROLE',
+      'ROLE',
+      String(savedRole.id),
+      { name: savedRole.name }
+    );
+    
+    return savedRole;
   }
 
-  async deleteRole(id: number) {
+  async deleteRole(id: number, currentUser?: User) {
     const role = await this.roleRepository.findOne({ where: { id } });
     if (!role) {
       throw new NotFoundException('Role not found');
@@ -56,10 +92,19 @@ export class RolesService {
     }
 
     await this.roleRepository.remove(role);
+    
+    await this.auditService.logAction(
+      currentUser,
+      'DELETE_ROLE',
+      'ROLE',
+      String(id),
+      { name: role.name }
+    );
+
     return { success: true, message: 'Role deleted successfully' };
   }
 
-  async updateRole(id: number, dto: { name?: string }) {
+  async updateRole(id: number, dto: { name?: string }, currentUser?: User) {
     const role = await this.roleRepository.findOne({ where: { id } });
     if (!role) {
       throw new NotFoundException('Role not found');
@@ -74,10 +119,20 @@ export class RolesService {
         role.name = roleName;
       }
     }
-    return this.roleRepository.save(role);
+    const savedRole = await this.roleRepository.save(role);
+
+    await this.auditService.logAction(
+      currentUser,
+      'UPDATE_ROLE',
+      'ROLE',
+      String(savedRole.id),
+      { changes: dto }
+    );
+
+    return savedRole;
   }
 
-  async assignUserToRole(roleId: number, userId: number) {
+  async assignUserToRole(roleId: number, userId: number, currentUser?: User) {
     const user = await this.userRepository.findOne({
       where: { id: userId },
       relations: ['roles'],
@@ -94,10 +149,18 @@ export class RolesService {
     user.role = role.name.toUpperCase();
     await this.userRepository.save(user);
     
+    await this.auditService.logAction(
+      currentUser,
+      'ASSIGN_ROLE',
+      'ROLE',
+      String(roleId),
+      { userId, roleName: role.name }
+    );
+    
     return { success: true, message: 'Role assigned successfully' };
   }
 
-  async removeUserFromRole(roleId: number, userId: number) {
+  async removeUserFromRole(roleId: number, userId: number, currentUser?: User) {
     const user = await this.userRepository.findOne({
       where: { id: userId },
       relations: ['roles'],
@@ -107,6 +170,14 @@ export class RolesService {
     user.roles = user.roles.filter(r => r.id !== roleId);
     user.role = 'USER';
     await this.userRepository.save(user);
+
+    await this.auditService.logAction(
+      currentUser,
+      'REMOVE_ROLE',
+      'ROLE',
+      String(roleId),
+      { userId }
+    );
 
     return { success: true, message: 'Role removed successfully' };
   }

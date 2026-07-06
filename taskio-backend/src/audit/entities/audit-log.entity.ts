@@ -31,4 +31,7 @@ export class AuditLog {
 
   @CreateDateColumn()
   createdAt!: Date;
+
+  @Column({ type: 'int', nullable: true })
+  organizationId!: number | null;
 }

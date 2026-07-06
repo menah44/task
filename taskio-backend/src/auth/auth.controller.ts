@@ -38,6 +38,11 @@ export class AuthController {
       throw new ForbiddenException('Account deactivated');
     }
 
+    // organization deactivated
+    if (user.organization && !user.organization.isActive) {
+      throw new ForbiddenException('Organization deactivated');
+    }
+
     // password check
     const isPasswordValid = await bcrypt.compare(body.password, user.password);
     if (process.env.NODE_ENV !== 'production') {

@@ -51,8 +51,15 @@ export default function AuthenticatedLayout({
         // ADMIN paths (/admin) and Forms Creation paths (/studio) are restricted to ADMIN only
         const isAdminPath = pathname?.startsWith("/admin");
         const isStudioPath = pathname?.startsWith("/studio");
+        const isSuperAdminPath = pathname?.startsWith("/super-admin");
 
-        if ((isAdminPath || isStudioPath) && userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
+        if (isSuperAdminPath && userRole !== "SUPER_ADMIN") {
+          console.warn("Unprivileged access attempt blocked. Redirecting to user forms...");
+          router.replace("/userForms");
+        } else if (isAdminPath && userRole === "SUPER_ADMIN") {
+          console.warn("Super Admin redirected to their correct dashboard...");
+          router.replace("/super-admin/dashboard");
+        } else if ((isAdminPath || isStudioPath) && userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
           console.warn("Unprivileged access attempt blocked. Redirecting to user forms...");
           router.replace("/userForms");
         }

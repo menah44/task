@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Group } from './entities/group.entity';
 import { User } from '../auth/entities/user.entity';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class GroupsService {
@@ -11,10 +12,17 @@ export class GroupsService {
     private readonly groupRepository: Repository<Group>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly auditService: AuditService,
   ) {}
 
-  async findAll() {
+  async findAll(user: User) {
+    const whereClause: any = {};
+    if (user.role?.toUpperCase() === 'ADMIN' && user.organization) {
+      whereClause.organizationId = user.organization.id;
+    }
+
     const groups = await this.groupRepository.find({
+      where: whereClause,
       relations: ['users'],
     });
     return groups.map(g => ({
@@ -27,10 +35,17 @@ export class GroupsService {
     }));
   }
 
-  async create(name: string, parentId?: number | null) {
-    const existing = await this.groupRepository.findOne({ where: { name } });
+  async create(name: string, parentId?: number | null, user?: User) {
+    const whereClause: any = { name };
+    if (user?.role?.toUpperCase() === 'ADMIN' && user.organization) {
+      whereClause.organizationId = user.organization.id;
+    } else {
+      whereClause.organizationId = null; // or handle super admin
+    }
+
+    const existing = await this.groupRepository.findOne({ where: whereClause });
     if (existing) {
-      throw new ConflictException('Group name already exists');
+      throw new ConflictException('Group name already exists in this organization');
     }
     
     let resolvedParentId: number | null = null;
@@ -42,11 +57,25 @@ export class GroupsService {
       resolvedParentId = parentId;
     }
 
-    const newGroup = this.groupRepository.create({ name, parentId: resolvedParentId });
-    return this.groupRepository.save(newGroup);
+    const newGroup = this.groupRepository.create({ 
+      name, 
+      parentId: resolvedParentId,
+      ...(user?.role?.toUpperCase() === 'ADMIN' && user.organization ? { organization: user.organization } : {})
+    });
+    const savedGroup = await this.groupRepository.save(newGroup);
+
+    await this.auditService.logAction(
+      user,
+      'CREATE_GROUP',
+      'GROUP',
+      String(savedGroup.id),
+      { name: savedGroup.name, parentId: savedGroup.parentId }
+    );
+
+    return savedGroup;
   }
 
-  async update(id: number, name: string, parentId?: number | null) {
+  async update(id: number, name: string, parentId?: number | null, currentUser?: User) {
     const group = await this.groupRepository.findOne({ where: { id } });
     if (!group) {
       throw new NotFoundException('Group not found');
@@ -74,15 +103,34 @@ export class GroupsService {
       group.parentId = parentId;
     }
 
-    return this.groupRepository.save(group);
+    const savedGroup = await this.groupRepository.save(group);
+
+    await this.auditService.logAction(
+      currentUser,
+      'UPDATE_GROUP',
+      'GROUP',
+      String(savedGroup.id),
+      { name, parentId }
+    );
+
+    return savedGroup;
   }
 
-  async delete(id: number) {
+  async delete(id: number, currentUser?: User) {
     const group = await this.groupRepository.findOne({ where: { id } });
     if (!group) {
       throw new NotFoundException('Group not found');
     }
     await this.groupRepository.remove(group);
+
+    await this.auditService.logAction(
+      currentUser,
+      'DELETE_GROUP',
+      'GROUP',
+      String(id),
+      { name: group.name }
+    );
+
     return { success: true };
   }
 
@@ -102,7 +150,7 @@ export class GroupsService {
     return group.users;
   }
 
-  async addMember(id: number, userId: number) {
+  async addMember(id: number, userId: number, currentUser?: User) {
     const group = await this.groupRepository.findOne({ where: { id }, relations: ['users'] });
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!group || !user) {
@@ -111,20 +159,38 @@ export class GroupsService {
     if (!group.users.find(u => u.id === userId)) {
       group.users.push(user);
       await this.groupRepository.save(group);
+
+      await this.auditService.logAction(
+        currentUser,
+        'ADD_MEMBER',
+        'GROUP',
+        String(group.id),
+        { userId, groupName: group.name }
+      );
     }
     return group;
   }
 
-  async removeMember(id: number, userId: number) {
+  async removeMember(id: number, userId: number, currentUser?: User) {
     const group = await this.groupRepository.findOne({ where: { id }, relations: ['users'] });
     if (!group) {
       throw new NotFoundException('Group not found');
     }
     group.users = group.users.filter(user => user.id !== userId);
-    return this.groupRepository.save(group);
+    const savedGroup = await this.groupRepository.save(group);
+
+    await this.auditService.logAction(
+      currentUser,
+      'REMOVE_MEMBER',
+      'GROUP',
+      String(savedGroup.id),
+      { userId, groupName: savedGroup.name }
+    );
+
+    return savedGroup;
   }
 
-  async updateParent(id: number, parentId: number | null) {
+  async updateParent(id: number, parentId: number | null, currentUser?: User) {
     const group = await this.groupRepository.findOne({ where: { id } });
     if (!group) {
       throw new NotFoundException('Group not found');
@@ -143,7 +209,17 @@ export class GroupsService {
       }
     }
     group.parentId = parentId;
-    return this.groupRepository.save(group);
+    const savedGroup = await this.groupRepository.save(group);
+
+    await this.auditService.logAction(
+      currentUser,
+      'UPDATE_GROUP',
+      'GROUP',
+      String(savedGroup.id),
+      { parentId }
+    );
+
+    return savedGroup;
   }
 
   private async isDescendantOf(possibleDescendantId: number, ancestorId: number): Promise<boolean> {

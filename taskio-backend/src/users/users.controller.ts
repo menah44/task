@@ -26,12 +26,16 @@ export class UsersController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
   ) {
-    if (user.role?.toUpperCase() !== 'ADMIN') {
+    const userRole = user.role?.toUpperCase();
+    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can access this resource.');
     }
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 10;
-    return this.usersService.findAll(pageNum, limitNum, search || '');
+    
+    // Pass user.organization.id if user is an ADMIN (not SUPER_ADMIN)
+    const orgId = userRole === 'ADMIN' ? user.organization?.id : undefined;
+    return this.usersService.findAll(pageNum, limitNum, search || '', orgId);
   }
 
   @Get(':id')
@@ -39,7 +43,8 @@ export class UsersController {
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    if (user.role?.toUpperCase() !== 'ADMIN') {
+    const userRole = user.role?.toUpperCase();
+    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can access this resource.');
     }
     return this.usersService.findById(id);
@@ -50,7 +55,8 @@ export class UsersController {
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    if (user.role?.toUpperCase() !== 'ADMIN') {
+    const userRole = user.role?.toUpperCase();
+    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can access this resource.');
     }
     return this.usersService.getUserRoles(id);
@@ -61,7 +67,8 @@ export class UsersController {
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    if (user.role?.toUpperCase() !== 'ADMIN') {
+    const userRole = user.role?.toUpperCase();
+    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can access this resource.');
     }
     return this.usersService.getUserGroups(id);
@@ -72,10 +79,17 @@ export class UsersController {
     @CurrentUser() user: User,
     @Body() dto: CreateUserAdminDto,
   ) {
-    if (user.role?.toUpperCase() !== 'ADMIN') {
+    const userRole = user.role?.toUpperCase();
+    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can perform this action.');
     }
-    return this.usersService.create(dto);
+    if (dto.role?.toUpperCase() === 'SUPER_ADMIN' && userRole !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('You do not have permission to assign the SUPER_ADMIN role.');
+    }
+    
+    // For ADMIN, we pass their organization to automatically bind the new user to it
+    const org = userRole === 'ADMIN' ? user.organization : undefined;
+    return this.usersService.create(dto, org, user);
   }
 
   @Put(':id')
@@ -84,10 +98,14 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateUserDto,
   ) {
-    if (user.role?.toUpperCase() !== 'ADMIN') {
+    const userRole = user.role?.toUpperCase();
+    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can perform this action.');
     }
-    return this.usersService.updateUser(id, dto);
+    if (dto.role?.toUpperCase() === 'SUPER_ADMIN' && userRole !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('You do not have permission to assign the SUPER_ADMIN role.');
+    }
+    return this.usersService.updateUser(id, dto, user);
   }
 
   @Patch(':id/deactivate')
@@ -95,10 +113,11 @@ export class UsersController {
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    if (user.role?.toUpperCase() !== 'ADMIN') {
+    const userRole = user.role?.toUpperCase();
+    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can perform this action.');
     }
-    return this.usersService.deactivate(id);
+    return this.usersService.deactivate(id, user);
   }
 
   @Patch(':id/activate')
@@ -106,9 +125,10 @@ export class UsersController {
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    if (user.role?.toUpperCase() !== 'ADMIN') {
+    const userRole = user.role?.toUpperCase();
+    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
       throw new ForbiddenException('Only administrators can perform this action.');
     }
-    return this.usersService.activate(id);
+    return this.usersService.activate(id, user);
   }
 }

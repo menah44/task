@@ -1,6 +1,7 @@
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToMany, JoinTable } from 'typeorm';
+import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToMany, JoinTable, ManyToOne } from 'typeorm';
 import { Role } from '../../roles/entities/role.entity';
 import { Group } from '../../groups/entities/group.entity';
+import { Organization } from '../../organizations/entities/organization.entity';
 
 @Entity('user')
 export class User {
@@ -41,4 +42,7 @@ export class User {
   @ManyToMany(() => Group, (group) => group.users)
   @JoinTable()
   groups!: Group[];
+
+  @ManyToOne(() => Organization, (org) => org.users, { nullable: true })
+  organization!: Organization;
 }

@@ -35,7 +35,7 @@ export class RolesController {
         'Only administrators can access this resource.',
       );
     }
-    return this.rolesService.findAll();
+    return this.rolesService.findAll(currentUser);
   }
 
   @Post()
@@ -51,7 +51,7 @@ export class RolesController {
         'Only administrators can perform this action.',
       );
     }
-    return this.rolesService.createRole(dto);
+    return this.rolesService.createRole(dto, currentUser);
   }
 
   @Delete(':id')
@@ -67,7 +67,7 @@ export class RolesController {
         'Only administrators can perform this action.',
       );
     }
-    return this.rolesService.deleteRole(id);
+    return this.rolesService.deleteRole(id, currentUser);
   }
 
   @Put(':id')
@@ -84,7 +84,7 @@ export class RolesController {
         'Only administrators can perform this action.',
       );
     }
-    return this.rolesService.updateRole(id, dto);
+    return this.rolesService.updateRole(id, dto, currentUser);
   }
 
   @Post(':roleId/users/:userId')
@@ -101,7 +101,7 @@ export class RolesController {
         'Only administrators can perform this action.',
       );
     }
-    return this.rolesService.assignUserToRole(roleId, userId);
+    return this.rolesService.assignUserToRole(roleId, userId, currentUser);
   }
 
   @Delete(':roleId/users/:userId')
@@ -118,7 +118,7 @@ export class RolesController {
         'Only administrators can perform this action.',
       );
     }
-    return this.rolesService.removeUserFromRole(roleId, userId);
+    return this.rolesService.removeUserFromRole(roleId, userId, currentUser);
   }
 
   @Get(':roleId/users')

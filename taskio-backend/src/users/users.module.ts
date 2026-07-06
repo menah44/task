@@ -6,11 +6,13 @@ import { User } from '../auth/entities/user.entity';
 import { Role } from '../roles/entities/role.entity';
 import { Group } from '../groups/entities/group.entity';
 import { AuthModule } from '../auth/auth.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Role, Group]),
     AuthModule,
+    AuditModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],

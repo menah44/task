@@ -149,7 +149,7 @@ export default function UserManagementPage() {
         <div>
           <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
             <Link
-              href="/admin"
+              href="/super-admin"
               className="hover:text-blue-500 transition-colors flex items-center gap-1"
             >
               Dashboard <ArrowRight className="w-4 h-4 rotate-180" />
@@ -168,7 +168,7 @@ export default function UserManagementPage() {
         </div>
 
         <button
-          onClick={() => router.push("/admin/users/new")}
+          onClick={() => router.push("/super-admin/users/new")}
           className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-semibold shadow-md text-sm border border-blue-500/20"
         >
           <UserPlus className="w-4 h-4" />
@@ -269,7 +269,7 @@ export default function UserManagementPage() {
                         <td className="px-6 py-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => router.push(`/admin/users/${user.id}`)}
+                              onClick={() => router.push(`/super-admin/users/${user.id}`)}
                               className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-blue-400 border border-blue-500/10 bg-blue-500/5 hover:bg-blue-500/10 transition-all"
                             >
                               View Details

@@ -365,6 +365,7 @@ function FormSettingsPopover({
 }
 
 const DEFAULT_FORM: FormStructure = {
+  id: crypto.randomUUID(),
   title: "Untitled Form",
   description: "",
   showProgress: true,

@@ -98,7 +98,7 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 // ======================== Mock Form ========================
 function getMockForm(formId: string): PublicFormDetail {
   return {
-    id: Number(formId),
+    id: formId,
     title: "Customer Satisfaction Survey",
     description: "Help us improve our services. No login required.",
     showProgress: true,
@@ -220,7 +220,7 @@ export default function PublicFormFillPage() {
             Your response has been submitted successfully.
           </p>
           <Link
-            href="/public"
+ً            href="/public"
             className="inline-block mt-4 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors">
             Back to Forms
           </Link>

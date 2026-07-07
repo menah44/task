@@ -1,4 +1,4 @@
-name: Form Fullstack Production CI/CD
+name: Form Fullstack Kubernetes CI/CD
 
 on:
   push:
@@ -8,11 +8,14 @@ on:
 
 jobs:
   build-and-deploy:
+
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout source code
         uses: actions/checkout@v4
+
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -22,31 +25,111 @@ jobs:
 
       - name: Build backend image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }} ./taskio-backend
+          docker build \
+          -t ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }} \
+          ./taskio-backend
+
 
       - name: Push backend image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }}
+          docker push \
+          ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }}
 
       - name: Build frontend image
         run: |
           docker build \
-            --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.SERVER_IP }}/api \
-            -t ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }} \
-            ./taskio-fronr
+          --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.SERVER_IP }}/api \
+          -t ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }} \
+          ./taskio-fronr
+
+
       - name: Push frontend image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }}
+          docker push \
+          ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }}
+  
 
-      - name: Deploy to Production Server
+      - name: Deploy to Kubernetes
         uses: appleboy/ssh-action@v1.0.3
+
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+
           script: |
-            cd ~/task
-            echo "IMAGE_TAG=${{ github.sha }}" > .env.deploy
-            docker compose --env-file .env.deploy pull
-            docker compose --env-file .env.deploy down --remove-orphans
-            docker compose --env-file .env.deploy up -d
+
+            cd ~/task/k8s
+
+
+            echo "Updating backend image..."
+
+            kubectl set image deployment/backend \
+            backend=${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }} \
+            -n form-app
+
+
+
+            echo "Updating frontend image..."
+
+            kubectl set image deployment/frontend \
+            frontend=${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }} \
+            -n form-app
+
+
+
+            echo "Waiting for backend rollout..."
+
+            if ! kubectl rollout status deployment/backend \
+            -n form-app \
+            --timeout=120s
+            then
+
+              echo "Backend deployment failed!"
+              echo "Rolling back backend..."
+
+              kubectl rollout undo deployment/backend \
+              -n form-app
+
+              exit 1
+
+            fi
+
+
+
+            echo "Waiting for frontend rollout..."
+
+            if ! kubectl rollout status deployment/frontend \
+            -n form-app \
+            --timeout=120s
+            then
+
+              echo "Frontend deployment failed!"
+              echo "Rolling back frontend..."
+
+              kubectl rollout undo deployment/frontend \
+              -n form-app
+
+              exit 1
+
+            fi
+
+
+
+            echo "Deployment successful"
+
+
+
+            echo "Backend rollout history:"
+            kubectl rollout history deployment/backend \
+            -n form-app
+
+
+            echo "Frontend rollout history:"
+            kubectl rollout history deployment/frontend \
+            -n form-app
+
+
+
+            echo "Current pods status:"
+            kubectl get pods -n form-app

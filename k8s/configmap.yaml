@@ -9,4 +9,4 @@ data:
   DB_USERNAME: taskio_user
   DB_NAME: taskio_db
   PORT: "5000"
-  NEXT_PUBLIC_API_URL: "http://backend:5000"
+  NEXT_PUBLIC_API_URL: "http://20.79.190.41/api"

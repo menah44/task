@@ -46,19 +46,20 @@ export default function BuilderTopNav({
   const pathname = usePathname();
 
   return (
-    <div className="bg-[#161b22] border-b border-[#30363d] px-6 py-3 flex items-center justify-between shrink-0">
-      <div>
-        <div className="flex items-center gap-4">
+    <div className="bg-[#161b22] border-b border-[#30363d] px-6 h-16 flex items-center justify-between shrink-0 gap-4">
+      {/* Left cluster: segmented tabs + contextual subtitle */}
+      <div className="flex items-center gap-4 min-w-0">
+        <div className="flex items-center gap-0.5 bg-[#0d1117] border border-[#30363d] rounded-lg p-1 shrink-0">
           {TABS.map(({ key, label, href, icon: Icon }) => {
             const isActive = pathname?.includes(`/${key}`);
             return (
               <Link
                 key={key}
                 href={href(formId)}
-                className={`flex items-center gap-1.5 text-sm font-medium transition-colors pb-1 ${
+                className={`flex items-center gap-1.5 text-sm font-medium rounded-md px-3 py-1.5 transition-colors ${
                   isActive
-                    ? "text-white border-b-2 border-blue-500"
-                    : "text-gray-400 hover:text-gray-200 border-b-2 border-transparent"
+                    ? "bg-blue-600/15 text-blue-400"
+                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
                 }`}>
                 <Icon className="w-4 h-4" />
                 {label}
@@ -66,10 +67,19 @@ export default function BuilderTopNav({
             );
           })}
         </div>
-        {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+
+        {subtitle && (
+          <>
+            <div className="w-px h-5 bg-[#30363d] shrink-0" />
+            <p className="text-xs text-gray-500 truncate">{subtitle}</p>
+          </>
+        )}
       </div>
 
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {/* Right cluster: page-level actions, rendered by the parent page */}
+      {actions && (
+        <div className="flex items-center gap-2 shrink-0">{actions}</div>
+      )}
     </div>
   );
 }

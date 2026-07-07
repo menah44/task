@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import FileUploadField, {
+  FileAnswerMetadata,
+} from "@/components/FileUploadField";
 
 // ======================== Types ========================
 export type QuestionType =
@@ -10,7 +13,8 @@ export type QuestionType =
   | "SINGLE_CHOICE"
   | "MULTI_CHOICE"
   | "BOOLEAN"
-  | "GEOPOINT";
+  | "GEOPOINT"
+  | "FILE"; // NEW — file picker / drag-drop upload (FE-T403, A5-01)
 
 export interface GeoPointValue {
   lat: number;
@@ -25,6 +29,7 @@ export type AnswerValue =
   | string[] // MULTI_CHOICE
   | boolean // BOOLEAN
   | GeoPointValue // GEOPOINT
+  | FileAnswerMetadata // FILE — { mediaId, fileName, fileType, fileSize }
   | null;
 
 export interface AnswerQuestion {
@@ -34,6 +39,10 @@ export interface AnswerQuestion {
   required: boolean;
   placeholder?: string;
   options?: string[]; // used by SINGLE_CHOICE / MULTI_CHOICE
+  // NEW — FILE questions only. Falls back to FileUploadField's own
+  // defaults (10MB, image/*+PDF) when omitted.
+  maxSizeBytes?: number;
+  accept?: string;
 }
 
 interface AnswerFieldProps {
@@ -55,6 +64,10 @@ function isEmptyValue(value: AnswerValue): boolean {
     const g = value as GeoPointValue;
     return g.lat === undefined || g.lng === undefined;
   }
+  if (typeof value === "object" && "mediaId" in (value as object)) {
+    const f = value as FileAnswerMetadata;
+    return !f.mediaId;
+  }
   return false;
 }
 
@@ -67,6 +80,26 @@ export default function AnswerField({
   showValidation = false,
 }: AnswerFieldProps) {
   const isInvalid = showValidation && question.required && isEmptyValue(value);
+
+  // FILE questions render their own label + required marker inside
+  // FileUploadField (it needs the label next to the dropzone, not above
+  // an input), so skip the shared label here to avoid a duplicate.
+  if (question.type === "FILE") {
+    return (
+      <div className="space-y-1.5">
+        <FileUploadField
+          questionId={question.id}
+          label={question.label}
+          required={question.required}
+          value={(value as FileAnswerMetadata) ?? null}
+          onChange={(metadata) => onChange(metadata)}
+          showValidation={showValidation}
+          maxSizeBytes={question.maxSizeBytes}
+          accept={question.accept}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-1.5">
@@ -250,6 +283,13 @@ function RendererSwitch({
           isInvalid={isInvalid}
         />
       );
+
+    // NOTE: "FILE" is intercepted earlier in <AnswerField> (before this
+    // switch even runs), since FileUploadField renders its own label.
+    // It's listed here only so TypeScript's exhaustiveness is happy and
+    // to document that it's handled, not falling into `default`.
+    case "FILE":
+      return null;
 
     default:
       return (

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import {
   DndContext,
   closestCenter,
@@ -19,77 +20,33 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import AnswerField, {
-  AnswerQuestion,
-  AnswerValue,
-  QuestionType as AnswerQuestionType,
-} from "@/components/AnswerField";
+import { Settings2, ExternalLink, Eye, Save, Loader2 } from "lucide-react";
+import AnswerField, { AnswerValue } from "@/components/AnswerField";
 import BuilderTopNav from "@/components/builder/BuilderTopNav";
+import {
+  ConditionalRule,
+  FormStructure,
+  Question,
+  QuestionType,
+  Section,
+  readLocalFormStructure,
+  writeLocalFormStructure,
+} from "@/lib/types/form";
+import {
+  toAnswerQuestion,
+  questionOptionValues,
+} from "@/lib/types/forms/answerFieldAdapter";
 
 // ============================================================
-// TYPES (متطابقة مع الـ API المطلوب)
-// ============================================================
-export type QuestionType =
-  | "text"
-  | "textarea"
-  | "radio"
-  | "checkbox"
-  | "select"
-  | "date"
-  | "number"
-  | "email";
-
-export interface Question {
-  id: string;
-  type: QuestionType;
-  label: string;
-  required: boolean;
-  placeholder?: string;
-  options?: string[];
-}
-
-export interface Section {
-  id: string;
-  title: string;
-  questions: Question[];
-}
-
-// ============================================================
-// HELPERS: تحويل لأنواع AnswerField
-// ============================================================
-function toAnswerType(type: QuestionType): AnswerQuestionType {
-  switch (type) {
-    case "text":
-    case "textarea":
-    case "email":
-      return "TEXT";
-    case "number":
-      return "NUMBER";
-    case "date":
-      return "DATE";
-    case "radio":
-    case "select":
-      return "SINGLE_CHOICE";
-    case "checkbox":
-      return "MULTI_CHOICE";
-    default:
-      return "TEXT";
-  }
-}
-
-function toAnswerQuestion(q: Question): AnswerQuestion {
-  return {
-    id: q.id,
-    type: toAnswerType(q.type),
-    label: q.label,
-    required: q.required,
-    placeholder: q.placeholder,
-    options: q.options,
-  };
-}
-
-// ============================================================
-// UI CONSTANTS (أنواع الأسئلة المعروضة)
+// UI CONSTANTS (question types the builder can create)
+// Note: "boolean" / "geopoint" exist in the shared type for
+// backend-provided / system questions, but aren't offered here —
+// GPS is captured automatically via the "Requires GPS" form setting.
+//
+// "file" (FE-T403 / A5-01): file picker + drag-drop question type.
+// At fill-time this renders <FileUploadField /> (see
+// components/AnswerField.tsx), which uploads to POST /files/upload
+// and stores the returned mediaId in answer.metadata.
 // ============================================================
 const QUESTION_TYPES: { type: QuestionType; label: string; icon: string }[] = [
   { type: "text", label: "Short Text", icon: "📝" },
@@ -100,7 +57,16 @@ const QUESTION_TYPES: { type: QuestionType; label: string; icon: string }[] = [
   { type: "date", label: "Date", icon: "📅" },
   { type: "number", label: "Number", icon: "🔢" },
   { type: "email", label: "Email", icon: "📧" },
+  { type: "file", label: "File Upload", icon: "📎" },
 ];
+
+// Defaults applied to every new "file" question. Exposed as constants so
+// the Properties panel and FileUploadField both stay in sync with the
+// acceptance criteria (max 10MB, image/* + PDF).
+const FILE_UPLOAD_DEFAULTS = {
+  maxSizeBytes: 100 * 1024 * 1024,
+  accept: "image/*,application/pdf",
+};
 
 // ============================================================
 // COMPONENT: سؤال قابل للسحب (Sortable)
@@ -155,6 +121,13 @@ function SortableQuestion({
             {question.label}
           </span>
           {question.required && <span className="text-red-400 text-xs">*</span>}
+          {question.conditional && (
+            <span
+              className="text-[10px] text-purple-400 border border-purple-400/30 rounded px-1.5 py-0.5"
+              title={`Shown only when another question = "${question.conditional.showWhen}"`}>
+              conditional
+            </span>
+          )}
         </div>
         <p className="text-xs text-gray-500 mt-0.5">{qType?.label}</p>
       </div>
@@ -255,7 +228,8 @@ function PreviewModal({
           <div>
             <h2 className="text-lg font-bold text-white">Form Preview</h2>
             <p className="text-xs text-gray-500">
-              This is how the form will look to end users.
+              This is how the form will look to end users. Conditional logic is
+              live here too.
             </p>
           </div>
           <button
@@ -266,28 +240,35 @@ function PreviewModal({
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-8">
-          {sections.map((sec) => (
-            <div key={sec.id} className="space-y-4">
-              <h3 className="text-base font-bold text-white border-b border-[#30363d] pb-2">
-                {sec.title}
-              </h3>
-              {sec.questions.map((q) => (
-                <AnswerField
-                  key={q.id}
-                  question={toAnswerQuestion(q)}
-                  value={answers[q.id] ?? null}
-                  onChange={(val) => setAnswer(q.id, val)}
-                  mode="fill"
-                  showValidation={showValidation}
-                />
-              ))}
-              {sec.questions.length === 0 && (
-                <p className="text-xs text-gray-500 italic">
-                  No questions in this section yet.
-                </p>
-              )}
-            </div>
-          ))}
+          {sections.map((sec) => {
+            const visible = sec.questions.filter((q) => {
+              if (!q.conditional) return true;
+              const depVal = answers[q.conditional.dependsOn];
+              return String(depVal ?? "") === q.conditional.showWhen;
+            });
+            return (
+              <div key={sec.id} className="space-y-4">
+                <h3 className="text-base font-bold text-white border-b border-[#30363d] pb-2">
+                  {sec.title}
+                </h3>
+                {visible.map((q) => (
+                  <AnswerField
+                    key={q.id}
+                    question={toAnswerQuestion(q)}
+                    value={answers[q.id] ?? null}
+                    onChange={(val) => setAnswer(q.id, val)}
+                    mode="fill"
+                    showValidation={showValidation}
+                  />
+                ))}
+                {visible.length === 0 && (
+                  <p className="text-xs text-gray-500 italic">
+                    No questions to show in this section yet.
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="px-6 py-4 border-t border-[#30363d] flex items-center justify-between">
@@ -306,50 +287,160 @@ function PreviewModal({
 }
 
 // ============================================================
+// COMPONENT: Form Settings popover (progress bar / GPS boundary)
+// ============================================================
+function FormSettingsPopover({
+  title,
+  description,
+  showProgress,
+  hasBoundary,
+  onChange,
+  onClose,
+}: {
+  title: string;
+  description: string;
+  showProgress: boolean;
+  hasBoundary: boolean;
+  onChange: (
+    patch: Partial<{
+      title: string;
+      description: string;
+      showProgress: boolean;
+      hasBoundary: boolean;
+    }>,
+  ) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="absolute right-0 top-full mt-2 w-80 bg-[#161b22] border border-[#30363d] rounded-xl shadow-xl z-40 p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold text-white">Form Settings</h3>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-white text-lg leading-none">
+          ×
+        </button>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-gray-400 mb-1">
+          Title
+        </label>
+        <input
+          value={title}
+          onChange={(e) => onChange({ title: e.target.value })}
+          className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-gray-400 mb-1">
+          Description
+        </label>
+        <textarea
+          rows={2}
+          value={description}
+          onChange={(e) => onChange({ description: e.target.value })}
+          className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+        />
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-medium text-gray-300">Show progress bar</p>
+          <p className="text-[11px] text-gray-500">
+            Section X of Y + % on the fill page
+          </p>
+        </div>
+        <button
+          onClick={() => onChange({ showProgress: !showProgress })}
+          className={`relative inline-flex items-center w-11 h-6 rounded-full transition-colors shrink-0 ${
+            showProgress ? "bg-blue-600" : "bg-[#30363d]"
+          }`}>
+          <span
+            className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+              showProgress ? "translate-x-5" : "translate-x-0"
+            }`}
+          />
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-medium text-gray-300">
+            Requires GPS location
+          </p>
+          <p className="text-[11px] text-gray-500">
+            Captures respondent's location; attached on submit
+          </p>
+        </div>
+        <button
+          onClick={() => onChange({ hasBoundary: !hasBoundary })}
+          className={`relative inline-flex items-center w-11 h-6 rounded-full transition-colors shrink-0 ${
+            hasBoundary ? "bg-blue-600" : "bg-[#30363d]"
+          }`}>
+          <span
+            className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+              hasBoundary ? "translate-x-5" : "translate-x-0"
+            }`}
+          />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // DATA INITIAL (بيانات افتراضية)
 // ============================================================
-const DEFAULT_SECTIONS: Section[] = [
-  {
-    id: "sec-1",
-    title: "Personal Information",
-    questions: [
-      {
-        id: "q-1",
-        type: "text",
-        label: "Full Name",
-        required: true,
-        placeholder: "Enter your full name",
-      },
-      {
-        id: "q-2",
-        type: "email",
-        label: "Email Address",
-        required: true,
-        placeholder: "you@example.com",
-      },
-    ],
-  },
-  {
-    id: "sec-2",
-    title: "Feedback",
-    questions: [
-      {
-        id: "q-3",
-        type: "radio",
-        label: "How did you hear about us?",
-        required: false,
-        options: ["Social Media", "Friend", "Google", "Other"],
-      },
-      {
-        id: "q-4",
-        type: "textarea",
-        label: "Additional Comments",
-        required: false,
-        placeholder: "Your feedback...",
-      },
-    ],
-  },
-];
+const DEFAULT_FORM: FormStructure = {
+  title: "Untitled Form",
+  description: "",
+  showProgress: true,
+  hasBoundary: false,
+  sections: [
+    {
+      id: "sec-1",
+      title: "Personal Information",
+      questions: [
+        {
+          id: "q-1",
+          type: "text",
+          label: "Full Name",
+          required: true,
+          placeholder: "Enter your full name",
+        },
+        {
+          id: "q-2",
+          type: "email",
+          label: "Email Address",
+          required: true,
+          placeholder: "you@example.com",
+        },
+      ],
+    },
+    {
+      id: "sec-2",
+      title: "Feedback",
+      questions: [
+        {
+          id: "q-3",
+          type: "radio",
+          label: "How did you hear about us?",
+          required: false,
+          options: ["Social Media", "Friend", "Google", "Other"],
+        },
+        {
+          id: "q-4",
+          type: "textarea",
+          label: "Additional Comments",
+          required: false,
+          placeholder: "Your feedback...",
+        },
+      ],
+    },
+  ],
+};
 
 // ============================================================
 // MAIN PAGE
@@ -359,6 +450,12 @@ export default function FormBuilderPage() {
   const formId = params?.formId;
 
   // ===== STATE =====
+  const [title, setTitle] = useState(DEFAULT_FORM.title);
+  const [description, setDescription] = useState(
+    DEFAULT_FORM.description ?? "",
+  );
+  const [showProgress, setShowProgress] = useState(DEFAULT_FORM.showProgress);
+  const [hasBoundary, setHasBoundary] = useState(DEFAULT_FORM.hasBoundary);
   const [sections, setSections] = useState<Section[]>([]);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(
     null,
@@ -374,6 +471,7 @@ export default function FormBuilderPage() {
   const [error, setError] = useState<string | null>(null);
   const [savedFieldFlash, setSavedFieldFlash] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // ===== SENSORS for Drag & Drop =====
   const sensors = useSensors(
@@ -383,7 +481,10 @@ export default function FormBuilderPage() {
     }),
   );
 
-  // ===== LOAD DATA (من localStorage أو البيانات الافتراضية) =====
+  // ===== LOAD DATA =====
+  // Tries local storage first (this is what the /fill page also reads as
+  // its offline fallback). Swap this for a real GET /forms/:id/structure
+  // call once that endpoint (A2-10) is available for the builder too.
   useEffect(() => {
     if (!formId) {
       setError("Form ID is missing.");
@@ -391,38 +492,59 @@ export default function FormBuilderPage() {
       return;
     }
 
-    // محاولة استرجاع البيانات المخزنة محليًا
-    const stored = localStorage.getItem(`form-${formId}`);
-    let initialData: Section[];
+    const stored = readLocalFormStructure(formId);
+    const initial = stored ?? DEFAULT_FORM;
 
-    if (stored) {
-      try {
-        initialData = JSON.parse(stored);
-      } catch {
-        initialData = DEFAULT_SECTIONS;
-      }
-    } else {
-      initialData = DEFAULT_SECTIONS;
-    }
-
-    setSections(initialData);
-    if (initialData.length > 0) {
-      setSelectedSectionId(initialData[0].id);
+    setTitle(initial.title);
+    setDescription(initial.description ?? "");
+    setShowProgress(initial.showProgress);
+    setHasBoundary(initial.hasBoundary);
+    setSections(initial.sections);
+    if (initial.sections.length > 0) {
+      setSelectedSectionId(initial.sections[0].id);
     }
     setIsLoading(false);
   }, [formId]);
+
+  // ===== AUTO-PERSIST whole structure whenever anything changes =====
+  // Fixes a subtle bug from the previous version: calling a save function
+  // right after setSections(prev => ...) captured a stale `sections` value
+  // from the closure. Persisting from an effect always sees fresh state.
+  useEffect(() => {
+    if (!formId || isLoading) return;
+    writeLocalFormStructure(formId, {
+      title,
+      description,
+      showProgress,
+      hasBoundary,
+      sections,
+    });
+  }, [
+    formId,
+    isLoading,
+    title,
+    description,
+    showProgress,
+    hasBoundary,
+    sections,
+  ]);
 
   // ===== HELPERS =====
   const selectedSection = sections.find((s) => s.id === selectedSectionId);
   const selectedQuestion =
     selectedSection?.questions.find((q) => q.id === selectedQuestionId) ?? null;
 
-  // ===== حفظ البيانات في localStorage (محاكاة الـ Save) =====
-  const persistToLocalStorage = useCallback(() => {
-    if (formId) {
-      localStorage.setItem(`form-${formId}`, JSON.stringify(sections));
-    }
-  }, [formId, sections]);
+  const allQuestions = useMemo(
+    () =>
+      sections.flatMap((s) =>
+        s.questions.map((q) => ({ ...q, sectionTitle: s.title })),
+      ),
+    [sections],
+  );
+
+  const conditionalDependsOnQuestion = selectedQuestion?.conditional
+    ? allQuestions.find((q) => q.id === selectedQuestion.conditional!.dependsOn)
+    : undefined;
 
   // ===== ADD SECTION =====
   const handleAddSection = () => {
@@ -434,7 +556,6 @@ export default function FormBuilderPage() {
     setSections((prev) => [...prev, newSection]);
     setSelectedSectionId(newSection.id);
     setSelectedQuestionId(null);
-    persistToLocalStorage();
   };
 
   // ===== DELETE SECTION =====
@@ -445,10 +566,10 @@ export default function FormBuilderPage() {
     }
     setSections((prev) => prev.filter((s) => s.id !== sectionId));
     if (selectedSectionId === sectionId) {
-      setSelectedSectionId(sections[0]?.id ?? null);
+      const remaining = sections.filter((s) => s.id !== sectionId);
+      setSelectedSectionId(remaining[0]?.id ?? null);
       setSelectedQuestionId(null);
     }
-    persistToLocalStorage();
   };
 
   // ===== ADD QUESTION =====
@@ -459,6 +580,15 @@ export default function FormBuilderPage() {
       type,
       label: `New ${QUESTION_TYPES.find((t) => t.type === type)?.label ?? "Question"}`,
       required: false,
+      // "file" questions ship with sane defaults matching the acceptance
+      // criteria (max 10MB, image/* + PDF). Stored on the question itself
+      // so a form owner could later loosen/tighten it per-question.
+      ...(type === "file"
+        ? {
+            maxSizeBytes: FILE_UPLOAD_DEFAULTS.maxSizeBytes,
+            accept: FILE_UPLOAD_DEFAULTS.accept,
+          }
+        : {}),
     };
     setSections((prev) =>
       prev.map((s) =>
@@ -469,7 +599,6 @@ export default function FormBuilderPage() {
     );
     setSelectedQuestionId(newQ.id);
     setShowTypePickerFor(null);
-    persistToLocalStorage();
   };
 
   // ===== DELETE QUESTION =====
@@ -478,18 +607,32 @@ export default function FormBuilderPage() {
     setSections((prev) =>
       prev.map((s) =>
         s.id === selectedSectionId
-          ? { ...s, questions: s.questions.filter((q) => q.id !== questionId) }
+          ? {
+              ...s,
+              // also clear any conditional rules elsewhere that depended on this question
+              questions: s.questions.filter((q) => q.id !== questionId),
+            }
           : s,
       ),
     );
+    // clear dangling references to the deleted question from other questions
+    setSections((prev) =>
+      prev.map((s) => ({
+        ...s,
+        questions: s.questions.map((q) =>
+          q.conditional?.dependsOn === questionId
+            ? { ...q, conditional: undefined }
+            : q,
+        ),
+      })),
+    );
     if (selectedQuestionId === questionId) setSelectedQuestionId(null);
-    persistToLocalStorage();
   };
 
   // ===== UPDATE QUESTION PROPERTY =====
   const updateQuestion = (
     field: keyof Question,
-    value: string | boolean | string[],
+    value: string | boolean | string[] | number | ConditionalRule | undefined,
   ) => {
     if (!selectedSectionId || !selectedQuestionId) return;
     setSections((prev) =>
@@ -504,17 +647,32 @@ export default function FormBuilderPage() {
           : s,
       ),
     );
-    persistToLocalStorage();
   };
 
-  // عند فقدان التركيز: نحاكي حفظ الخصائص (فلاش أخضر)
   const handleFieldBlur = (
     field: keyof Question,
-    value: string | boolean | string[],
+    value: string | boolean | string[] | number,
   ) => {
     updateQuestion(field, value);
     setSavedFieldFlash(field as string);
     setTimeout(() => setSavedFieldFlash(null), 900);
+  };
+
+  // ===== CONDITIONAL LOGIC =====
+  const handleConditionalDependsOnChange = (dependsOn: string) => {
+    if (!dependsOn) {
+      updateQuestion("conditional", undefined);
+      return;
+    }
+    updateQuestion("conditional", { dependsOn, showWhen: "" });
+  };
+
+  const handleConditionalShowWhenChange = (showWhen: string) => {
+    if (!selectedQuestion?.conditional) return;
+    updateQuestion("conditional", {
+      dependsOn: selectedQuestion.conditional.dependsOn,
+      showWhen,
+    });
   };
 
   // ===== UPDATE SECTION TITLE =====
@@ -522,7 +680,6 @@ export default function FormBuilderPage() {
     setSections((prev) =>
       prev.map((s) => (s.id === sectionId ? { ...s, title } : s)),
     );
-    persistToLocalStorage();
   };
 
   // ===== REORDER SECTIONS =====
@@ -530,13 +687,9 @@ export default function FormBuilderPage() {
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-
       const oldIndex = sections.findIndex((s) => s.id === active.id);
       const newIndex = sections.findIndex((s) => s.id === over.id);
-      const reordered = arrayMove(sections, oldIndex, newIndex);
-
-      setSections(reordered);
-      persistToLocalStorage();
+      setSections((prev) => arrayMove(prev, oldIndex, newIndex));
     },
     [sections],
   );
@@ -546,30 +699,38 @@ export default function FormBuilderPage() {
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id || !selectedSectionId) return;
-
       const section = sections.find((s) => s.id === selectedSectionId);
       if (!section) return;
-
       const oldIndex = section.questions.findIndex((q) => q.id === active.id);
       const newIndex = section.questions.findIndex((q) => q.id === over.id);
       const reordered = arrayMove(section.questions, oldIndex, newIndex);
-
       setSections((prev) =>
         prev.map((s) =>
           s.id === selectedSectionId ? { ...s, questions: reordered } : s,
         ),
       );
-      persistToLocalStorage();
     },
     [sections, selectedSectionId],
   );
 
-  // ===== SAVE BUTTON (حفظ في localStorage + رسالة نجاح) =====
+  // ===== SAVE BUTTON =====
+  // Local storage is already kept in sync by the auto-persist effect above.
+  // This button is the natural spot to also call the real "save structure"
+  // endpoint once it exists (e.g. PUT /forms/:id/structure), then confirm.
   const handleSave = () => {
     setIsSaving(true);
     setError(null);
     try {
-      persistToLocalStorage();
+      if (formId) {
+        writeLocalFormStructure(formId, {
+          title,
+          description,
+          showProgress,
+          hasBoundary,
+          sections,
+        });
+      }
+      // TODO: await apiClient.put(`/forms/${formId}/structure`, { title, description, showProgress, hasBoundary, sections });
       setTimeout(() => {
         setIsSaving(false);
         alert("✅ Form structure saved successfully!");
@@ -641,22 +802,80 @@ export default function FormBuilderPage() {
 
       {/* ═══ CENTER PANEL: Canvas ═══ */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Shared top nav — Builder / Map / Settings tabs stay in sync across all form pages */}
         <BuilderTopNav
           formId={formId}
           subtitle={`Form ID: ${formId} — ${sections.length} sections`}
           actions={
             <>
-              <button
-                onClick={() => setShowPreview(true)}
-                className="px-4 py-1.5 bg-[#21262d] hover:bg-[#2d333b] border border-[#30363d] text-gray-200 text-sm font-medium rounded-lg transition-colors">
-                👁 Preview
-              </button>
+              {/* Utility action — icon-only, lowest visual weight */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowSettings((v) => !v)}
+                  title="Form settings"
+                  aria-label="Form settings"
+                  className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors ${
+                    showSettings
+                      ? "bg-[#21262d] border-blue-500/40 text-blue-400"
+                      : "bg-transparent border-[#30363d] text-gray-400 hover:bg-[#21262d] hover:text-gray-200"
+                  }`}>
+                  <Settings2 className="w-4 h-4" />
+                </button>
+                {showSettings && (
+                  <FormSettingsPopover
+                    title={title}
+                    description={description}
+                    showProgress={showProgress}
+                    hasBoundary={hasBoundary}
+                    onChange={(patch) => {
+                      if (patch.title !== undefined) setTitle(patch.title);
+                      if (patch.description !== undefined)
+                        setDescription(patch.description);
+                      if (patch.showProgress !== undefined)
+                        setShowProgress(patch.showProgress);
+                      if (patch.hasBoundary !== undefined)
+                        setHasBoundary(patch.hasBoundary);
+                    }}
+                    onClose={() => setShowSettings(false)}
+                  />
+                )}
+              </div>
+
+              {/* Secondary view actions, grouped */}
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/studio/forms/${formId}/fill`}
+                  target="_blank"
+                  className="flex items-center gap-1.5 h-9 px-3.5 bg-transparent hover:bg-[#21262d] border border-[#30363d] text-gray-300 hover:text-white text-sm font-medium rounded-lg transition-colors">
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Fill Form
+                </Link>
+                <button
+                  onClick={() => setShowPreview(true)}
+                  className="flex items-center gap-1.5 h-9 px-3.5 bg-transparent hover:bg-[#21262d] border border-[#30363d] text-gray-300 hover:text-white text-sm font-medium rounded-lg transition-colors">
+                  <Eye className="w-3.5 h-3.5" />
+                  Preview
+                </button>
+              </div>
+
+              {/* Divider separating view actions from the primary commit action */}
+              <div className="w-px h-6 bg-[#30363d]" />
+
+              {/* Primary action */}
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60">
-                {isSaving ? "Saving..." : " Save Form"}
+                className="flex items-center gap-1.5 h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-3.5 h-3.5" />
+                    Save Form
+                  </>
+                )}
               </button>
             </>
           }
@@ -866,6 +1085,48 @@ export default function FormBuilderPage() {
               </div>
             )}
 
+            {/* File upload settings (max size / accepted types) */}
+            {selectedQuestion.type === "file" && (
+              <div className="space-y-3 pt-1">
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                    Max file size (MB)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={Math.round(
+                      (selectedQuestion.maxSizeBytes ??
+                        FILE_UPLOAD_DEFAULTS.maxSizeBytes) /
+                        (1024 * 1024),
+                    )}
+                    onChange={(e) => {
+                      const mb = Math.min(
+                        100,
+                        Math.max(1, Number(e.target.value) || 1),
+                      );
+                      updateQuestion("maxSizeBytes", mb * 1024 * 1024);
+                    }}
+                    onBlur={(e) => {
+                      const mb = Math.min(
+                        100,
+                        Math.max(1, Number(e.target.value) || 1),
+                      );
+                      handleFieldBlur("maxSizeBytes", mb * 1024 * 1024);
+                    }}
+                    className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Hard cap is 100MB per the platform upload limit.
+                  </p>
+                </div>
+                <p className="text-[11px] text-gray-500">
+                  Accepted file types: images and PDF (fixed).
+                </p>
+              </div>
+            )}
+
             {/* Required */}
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-gray-400">
@@ -888,6 +1149,73 @@ export default function FormBuilderPage() {
                   }`}
                 />
               </button>
+            </div>
+
+            {/* Conditional Logic */}
+            <div className="pt-2 border-t border-[#30363d]">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-gray-400">
+                  Conditional Logic
+                </label>
+                {selectedQuestion.conditional && (
+                  <button
+                    onClick={() => handleConditionalDependsOnChange("")}
+                    className="text-[10px] text-red-400 hover:text-red-300">
+                    Clear
+                  </button>
+                )}
+              </div>
+              <p className="text-[11px] text-gray-500 mb-2">
+                Only show this question when another question has a specific
+                answer.
+              </p>
+
+              <select
+                value={selectedQuestion.conditional?.dependsOn ?? ""}
+                onChange={(e) =>
+                  handleConditionalDependsOnChange(e.target.value)
+                }
+                className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
+                <option value="">Always show</option>
+                {allQuestions
+                  .filter((q) => q.id !== selectedQuestion.id)
+                  .map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.sectionTitle} — {q.label}
+                    </option>
+                  ))}
+              </select>
+
+              {selectedQuestion.conditional?.dependsOn &&
+                (() => {
+                  const optionValues = conditionalDependsOnQuestion
+                    ? questionOptionValues(conditionalDependsOnQuestion)
+                    : null;
+                  return optionValues ? (
+                    <select
+                      value={selectedQuestion.conditional.showWhen}
+                      onChange={(e) =>
+                        handleConditionalShowWhenChange(e.target.value)
+                      }
+                      className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option value="">Select a value…</option>
+                      {optionValues.map((val) => (
+                        <option key={val} value={val}>
+                          {val}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      value={selectedQuestion.conditional.showWhen}
+                      onChange={(e) =>
+                        handleConditionalShowWhenChange(e.target.value)
+                      }
+                      placeholder="Exact answer value…"
+                      className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  );
+                })()}
             </div>
           </div>
         ) : (

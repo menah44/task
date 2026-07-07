@@ -39,7 +39,7 @@ export default function AuthenticatedLayout({
   useEffect(() => {
     if (hasHydrated && !isLoading) {
       const token = accessToken;
-      
+
       if (!token) {
         router.replace("/login");
         return;
@@ -47,20 +47,28 @@ export default function AuthenticatedLayout({
 
       if (currentUser) {
         const userRole = currentUser.role?.toUpperCase() || "USER";
-        
+
         // ADMIN paths (/admin) and Forms Creation paths (/studio) are restricted to ADMIN only
         const isAdminPath = pathname?.startsWith("/admin");
         const isStudioPath = pathname?.startsWith("/studio");
         const isSuperAdminPath = pathname?.startsWith("/super-admin");
 
         if (isSuperAdminPath && userRole !== "SUPER_ADMIN") {
-          console.warn("Unprivileged access attempt blocked. Redirecting to user forms...");
+          console.warn(
+            "Unprivileged access attempt blocked. Redirecting to user forms...",
+          );
           router.replace("/userForms");
         } else if (isAdminPath && userRole === "SUPER_ADMIN") {
           console.warn("Super Admin redirected to their correct dashboard...");
           router.replace("/super-admin/dashboard");
-        } else if ((isAdminPath || isStudioPath) && userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
-          console.warn("Unprivileged access attempt blocked. Redirecting to user forms...");
+        } else if (
+          (isAdminPath || isStudioPath) &&
+          userRole !== "ADMIN" &&
+          userRole !== "SUPER_ADMIN"
+        ) {
+          console.warn(
+            "Unprivileged access attempt blocked. Redirecting to user forms...",
+          );
           router.replace("/userForms");
         }
       }
@@ -106,7 +114,9 @@ export default function AuthenticatedLayout({
 
   if (isChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0d1117] text-white" dir="ltr">
+      <div
+        className="min-h-screen flex items-center justify-center bg-[#0d1117] text-white"
+        dir="ltr">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
           <p className="text-[#c9d1d9] text-sm">Verifying authentication...</p>
@@ -125,6 +135,16 @@ export default function AuthenticatedLayout({
 
   const userRole = currentUser.role?.toUpperCase() || "USER";
 
+  // Full-bleed pages (the form builder and the fill page) are built as
+  // their own h-screen app shells with their own internal scroll areas —
+  // wrapping them in <main>'s p-6 padding + max-w-7xl centering is what
+  // was producing the black gutter around the builder, and was also
+  // squeezing its top nav width (causing the tab/button overlap).
+  // Everything else keeps the normal padded, centered content area.
+  const isFullBleedPage = /^\/studio\/forms\/[^/]+\/(builder|fill)(\/|$)/.test(
+    pathname || "",
+  );
+
   return (
     <div dir="ltr" className="min-h-screen bg-[#0d1117] text-[#c9d1d9] flex">
       {/* Reusable Sidebar */}
@@ -135,9 +155,15 @@ export default function AuthenticatedLayout({
         {/* Reusable TopBar */}
         <TopBar name={currentUser.name || ""} email={currentUser.email || ""} />
 
-        <main className="flex-1 p-6 overflow-y-auto bg-[#0d1117]">
-          <div className="max-w-7xl mx-auto">{children}</div>
-        </main>
+        {isFullBleedPage ? (
+          <main className="flex-1 overflow-hidden bg-[#0d1117]">
+            {children}
+          </main>
+        ) : (
+          <main className="flex-1 p-6 overflow-y-auto bg-[#0d1117]">
+            <div className="max-w-7xl mx-auto">{children}</div>
+          </main>
+        )}
       </div>
     </div>
   );

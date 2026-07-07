@@ -18,6 +18,11 @@ import { Organization } from './organizations/entities/organization.entity';
 import { Form } from './forms/entities/form.entity';
 import { Section } from './forms/entities/section.entity';
 import { Question } from './forms/entities/question.entity';
+import { QuestionType } from './question-types/entities/question-type.entity';
+import { QuestionTypesModule } from './question-types/question-types.module';
+import { TemplatesModule } from './templates/templates.module';
+import { Template } from './forms/entities/template.entity';
+import { FormVersion } from './forms/entities/form-version.entity';
 
 @Module({
   imports: [
@@ -28,7 +33,19 @@ import { Question } from './forms/entities/question.entity';
       username: process.env.DB_USERNAME || 'postgres',
       password: process.env.DB_PASSWORD || '1234',
       database: process.env.DB_NAME,
-      entities: [User, Role, Group, AuditLog, Organization, Form, Section, Question],
+      entities: [
+        User,
+        Role,
+        Group,
+        AuditLog,
+        Organization,
+        Form,
+        Section,
+        Question,
+        QuestionType,
+        FormVersion,
+        Template,
+      ],
       synchronize: true,
     }),
     AuthModule,
@@ -39,6 +56,8 @@ import { Question } from './forms/entities/question.entity';
     FormsModule,
     EventEmitterModule.forRoot(),
     OrganizationsModule,
+    QuestionTypesModule,
+    TemplatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

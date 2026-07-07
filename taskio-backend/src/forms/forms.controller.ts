@@ -58,9 +58,42 @@ export class FormsController {
     );
   }
 
+  @Get(':id/structure')
+  async getStructure(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+    const form = await this.formsService.findOne(id, user);
+    const settings = form.settings || {};
+    return {
+      id: form.id,
+      title: form.title,
+      description: form.description,
+      showProgress: settings.showProgress ?? true,
+      hasBoundary: settings.hasBoundary ?? false,
+      sections: form.sections || [],
+    };
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
     return this.formsService.findOne(id, user);
+  }
+
+  @Post(':id/versions')
+  createVersion(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+    return this.formsService.createVersion(id, user);
+  }
+
+  @Get(':id/versions')
+  getVersions(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+    return this.formsService.getVersions(id, user);
+  }
+
+  @Get(':id/versions/:versionNumber')
+  getVersionSnapshot(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('versionNumber', ParseIntPipe) versionNumber: number,
+    @CurrentUser() user: User
+  ) {
+    return this.formsService.getVersionSnapshot(id, versionNumber, user);
   }
 
   @Put(':id')

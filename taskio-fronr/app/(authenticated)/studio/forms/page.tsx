@@ -53,6 +53,19 @@ export default function StudioFormsPage() {
     }
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string | number) => {
+      await apiClient.delete(`/forms/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accessible-forms"] });
+    },
+    onError: (err) => {
+      console.error("Failed to delete form", err);
+      alert("Failed to delete form.");
+    }
+  });
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -185,8 +198,12 @@ export default function StudioFormsPage() {
                       </Link>
 
                       <button
-                        disabled={!form.permissions?.canDelete}
-                        onClick={() => alert(`Deleting form: ${form.id}`)}
+                        disabled={!form.permissions?.canDelete || deleteMutation.isPending}
+                        onClick={() => {
+                          if (window.confirm("Are you sure you want to delete this form? This action cannot be undone.")) {
+                            deleteMutation.mutate(form.id);
+                          }
+                        }}
                         className={`inline-flex items-center gap-1 transition-colors bg-transparent border-none cursor-pointer ${
                           form.permissions?.canDelete
                             ? "text-red-400 hover:text-red-300"

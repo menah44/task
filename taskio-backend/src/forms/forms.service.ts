@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Form } from './entities/form.entity';
+import { FormVersion } from './entities/form-version.entity';
 import { CreateFormDto } from './dto/create-form.dto';
 import { UpdateFormDto } from './dto/update-form.dto';
 import { User } from '../auth/entities/user.entity';
@@ -13,6 +14,8 @@ export class FormsService {
   constructor(
     @InjectRepository(Form)
     private readonly formRepository: Repository<Form>,
+    @InjectRepository(FormVersion)
+    private readonly formVersionRepository: Repository<FormVersion>,
     private readonly auditService: AuditService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
@@ -154,6 +157,102 @@ export class FormsService {
     }
 
     return form;
+  }
+
+  async createVersion(id: number, user: User): Promise<{ newFormId: number, versionNumber: number }> {
+    const originalForm = await this.findOne(id, user);
+
+    const snapshot = {
+      title: originalForm.title,
+      description: originalForm.description,
+      schema: originalForm.schema,
+      settings: originalForm.settings,
+      sections: originalForm.sections?.map(section => ({
+        title: section.title,
+        questions: section.questions?.map(question => ({
+          type: question.type,
+          label: question.label,
+          required: question.required,
+          placeholder: question.placeholder,
+          options: question.options,
+        }))
+      }))
+    };
+
+    const formVersion = this.formVersionRepository.create({
+      formId: originalForm.id,
+      version: originalForm.version,
+      snapshot,
+      createdById: user.id
+    });
+    await this.formVersionRepository.save(formVersion);
+
+    const newVersionNumber = originalForm.version + 1;
+    let newTitle = `${originalForm.title} (Copy)`;
+    
+    // Ensure title uniqueness just in case
+    let counter = 1;
+    let tempTitle = newTitle;
+    while (await this.formRepository.findOne({ where: { title: tempTitle, organizationId: originalForm.organizationId } })) {
+      tempTitle = `${newTitle} (${counter})`;
+      counter++;
+    }
+
+    const copiedForm = this.formRepository.create({
+      title: tempTitle,
+      description: originalForm.description,
+      status: 'DRAFT',
+      isPublic: false,
+      version: newVersionNumber,
+      schema: originalForm.schema,
+      settings: originalForm.settings,
+      organizationId: originalForm.organizationId,
+      creatorId: user.id,
+      sections: originalForm.sections?.map(section => ({
+        title: section.title,
+        questions: section.questions?.map(question => ({
+          type: question.type,
+          label: question.label,
+          required: question.required,
+          placeholder: question.placeholder,
+          options: question.options,
+        }))
+      }))
+    });
+
+    const savedForm = await this.formRepository.save(copiedForm);
+
+    await this.auditService.logAction(
+      user,
+      'CREATE_VERSION',
+      'FORM',
+      String(savedForm.id),
+      { originalFormId: id, newVersionNumber }
+    );
+
+    return { newFormId: savedForm.id, versionNumber: newVersionNumber };
+  }
+
+  async getVersions(id: number, user: User) {
+    const form = await this.findOne(id, user);
+    const versions = await this.formVersionRepository.find({
+      where: { formId: form.id },
+      order: { version: 'DESC' },
+    });
+    return versions;
+  }
+
+  async getVersionSnapshot(id: number, versionNumber: number, user: User) {
+    const form = await this.findOne(id, user);
+    const versionRecord = await this.formVersionRepository.findOne({
+      where: { formId: form.id, version: versionNumber },
+    });
+
+    if (!versionRecord) {
+      throw new NotFoundException(`Version ${versionNumber} for Form ${id} not found`);
+    }
+
+    return versionRecord.snapshot;
   }
 
   async update(id: number, updateFormDto: UpdateFormDto, user: User): Promise<Form> {

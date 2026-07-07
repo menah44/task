@@ -207,7 +207,7 @@ export default function ReviewPage() {
 
       {showConfirm && (
         <ModalOverlay onClick={() => !submitting && setShowConfirm(false)}>
-          <ModalCard onClick={(e) => e.stopPropagation()}>
+          <ModalCard onClick={(e: any) => e.stopPropagation()}>
             <ModalTitle>Submit this response?</ModalTitle>
             <ModalBody>
               This action is irreversible. Once submitted, you won't be able to
@@ -319,7 +319,7 @@ const AnswerRow = styled.div<{ $missing: boolean }>`
   gap: 1rem;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #f3f4f6;
-  background: ${(p) => (p.$missing ? "#fef2f2" : "transparent")};
+  background: ${(p: any) => (p.$missing ? "#fef2f2" : "transparent")};
 
   &:last-child {
     border-bottom: none;

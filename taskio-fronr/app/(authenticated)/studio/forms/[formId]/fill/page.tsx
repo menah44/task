@@ -20,8 +20,6 @@ interface GpsCoords {
 }
 
 // ======================== Mock Data ========================
-// Last-resort fallback: used only if the real API call fails AND the
-// builder hasn't saved anything locally yet (e.g. fresh env, no backend).
 function getMockForm(formId: string): FormStructure {
   return {
     id: Number(formId) || formId,
@@ -110,12 +108,18 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 }
 
 // ======================== GPS Banner ========================
+// Shows a human-readable address (reverse-geocoded) instead of raw
+// coordinates, plus a small embedded map preview of the captured point.
 function GpsBanner({
   coords,
   loading,
+  address,
+  addressLoading,
 }: {
   coords: GpsCoords | null;
   loading: boolean;
+  address: string | null;
+  addressLoading: boolean;
 }) {
   if (loading) {
     return (
@@ -125,15 +129,53 @@ function GpsBanner({
       </div>
     );
   }
+
   if (coords) {
+    // Small bounding box around the point so the embedded OSM map
+    // zooms in nicely on the exact location.
+    const delta = 0.006;
+    const bbox = [
+      coords.lng - delta,
+      coords.lat - delta,
+      coords.lng + delta,
+      coords.lat + delta,
+    ].join("%2C");
+    const mapEmbedSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${coords.lat}%2C${coords.lng}`;
+    const mapLinkHref = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=17/${coords.lat}/${coords.lng}`;
+
     return (
-      <div className="bg-green-500/10 border border-green-500/20 text-green-400 text-xs px-4 py-2.5 rounded-lg flex items-center gap-2">
-        <span>📍</span>
-        Location captured: {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)} (±
-        {Math.round(coords.accuracy)}m)
+      <div className="bg-green-500/10 border border-green-500/20 rounded-lg overflow-hidden">
+        <div className="text-green-400 text-xs px-4 py-2.5 flex items-start gap-2">
+          <span className="mt-0.5">📍</span>
+          <div className="flex flex-col gap-0.5">
+            <span>
+              {addressLoading
+                ? "Resolving address..."
+                : (address ?? "Location captured")}
+            </span>
+            <span className="text-green-400/60 text-[11px]">
+              ±{Math.round(coords.accuracy)}m accuracy
+            </span>
+          </div>
+        </div>
+        <div className="h-40 w-full border-t border-green-500/20">
+          <iframe
+            title="Captured location map"
+            src={mapEmbedSrc}
+            className="w-full h-full grayscale-0"
+            style={{ border: 0 }}
+            loading="lazy"
+          />
+        </div>
+        <a
+          href={mapLinkHref}
+          className="block text-center text-[11px] text-green-400/80 hover:text-green-300 py-1.5 border-t border-green-500/20">
+          View larger map ↗
+        </a>
       </div>
     );
   }
+
   return (
     <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs px-4 py-2.5 rounded-lg flex items-center gap-2">
       <span>⚠️</span>
@@ -186,14 +228,12 @@ export default function FormFillPage() {
   >("idle");
   const [gpsCoords, setGpsCoords] = useState<GpsCoords | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [address, setAddress] = useState<string | null>(null);
+  const [addressLoading, setAddressLoading] = useState(false);
 
   const autoSaveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Load form structure ──
-  // Order: real API (A2-10) -> builder's locally-saved structure -> mock.
-  // The middle step is what actually "links" this page to the builder:
-  // build a form, hit Fill Form, and it renders exactly what you built,
-  // even before the backend endpoint exists.
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -227,6 +267,32 @@ export default function FormFillPage() {
       { enableHighAccuracy: true, timeout: 10000 },
     );
   }, [form?.hasBoundary]);
+
+  // ── Reverse geocode coords into a human-readable address ──
+  // Uses OpenStreetMap's free Nominatim API (no key required).
+  useEffect(() => {
+    if (!gpsCoords) return;
+    let cancelled = false;
+    setAddressLoading(true);
+    fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${gpsCoords.lat}&lon=${gpsCoords.lng}&zoom=18&addressdetails=1`,
+      { headers: { Accept: "application/json" } },
+    )
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => {
+        if (cancelled) return;
+        setAddress(data?.display_name ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setAddress(null);
+      })
+      .finally(() => {
+        if (!cancelled) setAddressLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [gpsCoords]);
 
   // ── Create a draft response on first answer: POST /responses/forms/:formId (A4-01) ──
   const createDraftIfNeeded = useCallback(async () => {
@@ -316,12 +382,12 @@ export default function FormFillPage() {
       if (id) {
         await apiClient.put(`/responses/${id}/answers/bulk`, { answers });
         await apiClient.post(`/responses/${id}/submit`, {
-          gps: gpsCoords, // ✅ GPS metadata attached when required
+          gps: gpsCoords,
         });
       }
       setSubmitted(true);
     } catch {
-      setSubmitted(true); // show success even if API not wired
+      setSubmitted(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -403,7 +469,12 @@ export default function FormFillPage() {
 
       {/* GPS Banner */}
       {form.hasBoundary && (
-        <GpsBanner coords={gpsCoords} loading={gpsLoading} />
+        <GpsBanner
+          coords={gpsCoords}
+          loading={gpsLoading}
+          address={address}
+          addressLoading={addressLoading}
+        />
       )}
 
       {/* Section */}
@@ -412,7 +483,6 @@ export default function FormFillPage() {
           {currentSection.title}
         </h2>
 
-        {/* Questions (only visible ones) */}
         {visibleQuestions.map((q) => (
           <AnswerField
             key={q.id}

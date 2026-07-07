@@ -37,17 +37,6 @@ import {
   questionOptionValues,
 } from "@/lib/types/forms/answerFieldAdapter";
 
-// ============================================================
-// UI CONSTANTS (question types the builder can create)
-// Note: "boolean" / "geopoint" exist in the shared type for
-// backend-provided / system questions, but aren't offered here —
-// GPS is captured automatically via the "Requires GPS" form setting.
-//
-// "file" (FE-T403 / A5-01): file picker + drag-drop question type.
-// At fill-time this renders <FileUploadField /> (see
-// components/AnswerField.tsx), which uploads to POST /files/upload
-// and stores the returned mediaId in answer.metadata.
-// ============================================================
 const QUESTION_TYPES: { type: QuestionType; label: string; icon: string }[] = [
   { type: "text", label: "Short Text", icon: "📝" },
   { type: "textarea", label: "Long Text", icon: "📄" },
@@ -60,17 +49,11 @@ const QUESTION_TYPES: { type: QuestionType; label: string; icon: string }[] = [
   { type: "file", label: "File Upload", icon: "📎" },
 ];
 
-// Defaults applied to every new "file" question. Exposed as constants so
-// the Properties panel and FileUploadField both stay in sync with the
-// acceptance criteria (max 10MB, image/* + PDF).
 const FILE_UPLOAD_DEFAULTS = {
   maxSizeBytes: 100 * 1024 * 1024,
   accept: "image/*,application/pdf",
 };
 
-// ============================================================
-// COMPONENT: سؤال قابل للسحب (Sortable)
-// ============================================================
 function SortableQuestion({
   question,
   isSelected,
@@ -135,9 +118,6 @@ function SortableQuestion({
   );
 }
 
-// ============================================================
-// COMPONENT: قسم قابل للسحب (Sortable)
-// ============================================================
 function SortableSection({
   section,
   index,
@@ -204,9 +184,6 @@ function SortableSection({
   );
 }
 
-// ============================================================
-// COMPONENT: معاينة النموذج (Preview Modal)
-// ============================================================
 function PreviewModal({
   sections,
   onClose,
@@ -286,9 +263,6 @@ function PreviewModal({
   );
 }
 
-// ============================================================
-// COMPONENT: Form Settings popover (progress bar / GPS boundary)
-// ============================================================
 function FormSettingsPopover({
   title,
   description,
@@ -390,9 +364,6 @@ function FormSettingsPopover({
   );
 }
 
-// ============================================================
-// DATA INITIAL (بيانات افتراضية)
-// ============================================================
 const DEFAULT_FORM: FormStructure = {
   title: "Untitled Form",
   description: "",
@@ -442,14 +413,10 @@ const DEFAULT_FORM: FormStructure = {
   ],
 };
 
-// ============================================================
-// MAIN PAGE
-// ============================================================
 export default function FormBuilderPage() {
   const params = useParams<{ formId: string }>();
   const formId = params?.formId;
 
-  // ===== STATE =====
   const [title, setTitle] = useState(DEFAULT_FORM.title);
   const [description, setDescription] = useState(
     DEFAULT_FORM.description ?? "",
@@ -473,7 +440,6 @@ export default function FormBuilderPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  // ===== SENSORS for Drag & Drop =====
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -481,10 +447,6 @@ export default function FormBuilderPage() {
     }),
   );
 
-  // ===== LOAD DATA =====
-  // Tries local storage first (this is what the /fill page also reads as
-  // its offline fallback). Swap this for a real GET /forms/:id/structure
-  // call once that endpoint (A2-10) is available for the builder too.
   useEffect(() => {
     if (!formId) {
       setError("Form ID is missing.");
@@ -506,10 +468,6 @@ export default function FormBuilderPage() {
     setIsLoading(false);
   }, [formId]);
 
-  // ===== AUTO-PERSIST whole structure whenever anything changes =====
-  // Fixes a subtle bug from the previous version: calling a save function
-  // right after setSections(prev => ...) captured a stale `sections` value
-  // from the closure. Persisting from an effect always sees fresh state.
   useEffect(() => {
     if (!formId || isLoading) return;
     writeLocalFormStructure(formId, {
@@ -529,7 +487,6 @@ export default function FormBuilderPage() {
     sections,
   ]);
 
-  // ===== HELPERS =====
   const selectedSection = sections.find((s) => s.id === selectedSectionId);
   const selectedQuestion =
     selectedSection?.questions.find((q) => q.id === selectedQuestionId) ?? null;
@@ -546,7 +503,6 @@ export default function FormBuilderPage() {
     ? allQuestions.find((q) => q.id === selectedQuestion.conditional!.dependsOn)
     : undefined;
 
-  // ===== ADD SECTION =====
   const handleAddSection = () => {
     const newSection: Section = {
       id: `sec-${Date.now()}`,
@@ -558,7 +514,6 @@ export default function FormBuilderPage() {
     setSelectedQuestionId(null);
   };
 
-  // ===== DELETE SECTION =====
   const handleDeleteSection = (sectionId: string) => {
     if (sections.length <= 1) {
       setError("You must have at least one section.");
@@ -572,7 +527,6 @@ export default function FormBuilderPage() {
     }
   };
 
-  // ===== ADD QUESTION =====
   const handleAddQuestion = (type: QuestionType) => {
     if (!selectedSectionId) return;
     const newQ: Question = {
@@ -580,9 +534,6 @@ export default function FormBuilderPage() {
       type,
       label: `New ${QUESTION_TYPES.find((t) => t.type === type)?.label ?? "Question"}`,
       required: false,
-      // "file" questions ship with sane defaults matching the acceptance
-      // criteria (max 10MB, image/* + PDF). Stored on the question itself
-      // so a form owner could later loosen/tighten it per-question.
       ...(type === "file"
         ? {
             maxSizeBytes: FILE_UPLOAD_DEFAULTS.maxSizeBytes,
@@ -601,7 +552,6 @@ export default function FormBuilderPage() {
     setShowTypePickerFor(null);
   };
 
-  // ===== DELETE QUESTION =====
   const handleDeleteQuestion = (questionId: string) => {
     if (!selectedSectionId) return;
     setSections((prev) =>
@@ -609,13 +559,11 @@ export default function FormBuilderPage() {
         s.id === selectedSectionId
           ? {
               ...s,
-              // also clear any conditional rules elsewhere that depended on this question
               questions: s.questions.filter((q) => q.id !== questionId),
             }
           : s,
       ),
     );
-    // clear dangling references to the deleted question from other questions
     setSections((prev) =>
       prev.map((s) => ({
         ...s,
@@ -629,7 +577,6 @@ export default function FormBuilderPage() {
     if (selectedQuestionId === questionId) setSelectedQuestionId(null);
   };
 
-  // ===== UPDATE QUESTION PROPERTY =====
   const updateQuestion = (
     field: keyof Question,
     value: string | boolean | string[] | number | ConditionalRule | undefined,
@@ -658,7 +605,6 @@ export default function FormBuilderPage() {
     setTimeout(() => setSavedFieldFlash(null), 900);
   };
 
-  // ===== CONDITIONAL LOGIC =====
   const handleConditionalDependsOnChange = (dependsOn: string) => {
     if (!dependsOn) {
       updateQuestion("conditional", undefined);
@@ -675,14 +621,12 @@ export default function FormBuilderPage() {
     });
   };
 
-  // ===== UPDATE SECTION TITLE =====
   const handleSectionTitleBlur = (sectionId: string, title: string) => {
     setSections((prev) =>
       prev.map((s) => (s.id === sectionId ? { ...s, title } : s)),
     );
   };
 
-  // ===== REORDER SECTIONS =====
   const handleReorderSections = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
@@ -694,7 +638,6 @@ export default function FormBuilderPage() {
     [sections],
   );
 
-  // ===== REORDER QUESTIONS =====
   const handleReorderQuestions = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
@@ -713,10 +656,6 @@ export default function FormBuilderPage() {
     [sections, selectedSectionId],
   );
 
-  // ===== SAVE BUTTON =====
-  // Local storage is already kept in sync by the auto-persist effect above.
-  // This button is the natural spot to also call the real "save structure"
-  // endpoint once it exists (e.g. PUT /forms/:id/structure), then confirm.
   const handleSave = () => {
     setIsSaving(true);
     setError(null);
@@ -730,7 +669,6 @@ export default function FormBuilderPage() {
           sections,
         });
       }
-      // TODO: await apiClient.put(`/forms/${formId}/structure`, { title, description, showProgress, hasBoundary, sections });
       setTimeout(() => {
         setIsSaving(false);
         alert("✅ Form structure saved successfully!");
@@ -741,7 +679,6 @@ export default function FormBuilderPage() {
     }
   };
 
-  // ===== LOADING STATE =====
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#0d1117] text-white">
@@ -753,10 +690,8 @@ export default function FormBuilderPage() {
     );
   }
 
-  // ===== RENDER =====
   return (
     <div className="flex h-screen bg-[#0d1117] text-[#c9d1d9] overflow-hidden">
-      {/* ═══ LEFT PANEL: Sections List ═══ */}
       <aside className="w-56 bg-[#161b22] border-r border-[#30363d] flex flex-col shrink-0">
         <div className="px-4 py-3 border-b border-[#30363d] flex items-center justify-between">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
@@ -800,14 +735,12 @@ export default function FormBuilderPage() {
         </div>
       </aside>
 
-      {/* ═══ CENTER PANEL: Canvas ═══ */}
       <main className="flex-1 flex flex-col overflow-hidden">
         <BuilderTopNav
           formId={formId}
           subtitle={`Form ID: ${formId} — ${sections.length} sections`}
           actions={
             <>
-              {/* Utility action — icon-only, lowest visual weight */}
               <div className="relative">
                 <button
                   onClick={() => setShowSettings((v) => !v)}
@@ -840,11 +773,9 @@ export default function FormBuilderPage() {
                 )}
               </div>
 
-              {/* Secondary view actions, grouped */}
               <div className="flex items-center gap-2">
                 <Link
                   href={`/studio/forms/${formId}/fill`}
-                  target="_blank"
                   className="flex items-center gap-1.5 h-9 px-3.5 bg-transparent hover:bg-[#21262d] border border-[#30363d] text-gray-300 hover:text-white text-sm font-medium rounded-lg transition-colors">
                   <ExternalLink className="w-3.5 h-3.5" />
                   Fill Form
@@ -857,10 +788,8 @@ export default function FormBuilderPage() {
                 </button>
               </div>
 
-              {/* Divider separating view actions from the primary commit action */}
               <div className="w-px h-6 bg-[#30363d]" />
 
-              {/* Primary action */}
               <button
                 onClick={handleSave}
                 disabled={isSaving}
@@ -881,7 +810,6 @@ export default function FormBuilderPage() {
           }
         />
 
-        {/* Error Banner */}
         {error && (
           <div className="px-6 py-2 bg-yellow-500/10 border-b border-yellow-500/20 text-yellow-500 text-xs flex items-center justify-between">
             <span>⚠️ {error}</span>
@@ -891,11 +819,9 @@ export default function FormBuilderPage() {
           </div>
         )}
 
-        {/* Canvas */}
         <div className="flex-1 overflow-y-auto p-6 bg-[#0d1117]">
           {selectedSection ? (
             <div className="max-w-2xl mx-auto space-y-3">
-              {/* Section Title */}
               <input
                 value={selectedSection.title}
                 onChange={(e) => {
@@ -913,7 +839,6 @@ export default function FormBuilderPage() {
                 className="w-full text-xl font-bold text-white bg-transparent border-b-2 border-transparent focus:border-blue-500 focus:outline-none pb-1 transition-colors"
               />
 
-              {/* Questions List */}
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -940,7 +865,6 @@ export default function FormBuilderPage() {
                 </SortableContext>
               </DndContext>
 
-              {/* Add Question Button */}
               {showTypePickerFor === selectedSectionId ? (
                 <div className="border border-[#30363d] rounded-xl bg-[#161b22] p-4 shadow-sm">
                   <p className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">
@@ -983,7 +907,6 @@ export default function FormBuilderPage() {
         </div>
       </main>
 
-      {/* ═══ RIGHT PANEL: Properties ═══ */}
       <aside className="w-64 bg-[#161b22] border-l border-[#30363d] flex flex-col overflow-y-auto shrink-0">
         <div className="px-4 py-3 border-b border-[#30363d] flex items-center justify-between">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
@@ -998,7 +921,6 @@ export default function FormBuilderPage() {
 
         {selectedQuestion ? (
           <div className="p-4 space-y-4">
-            {/* Label */}
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1">
                 Label
@@ -1015,7 +937,6 @@ export default function FormBuilderPage() {
               />
             </div>
 
-            {/* Type */}
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1">
                 Type
@@ -1036,7 +957,6 @@ export default function FormBuilderPage() {
               </select>
             </div>
 
-            {/* Placeholder */}
             {["text", "textarea", "email", "number"].includes(
               selectedQuestion.type,
             ) && (
@@ -1059,7 +979,6 @@ export default function FormBuilderPage() {
               </div>
             )}
 
-            {/* Options */}
             {["radio", "checkbox", "select"].includes(
               selectedQuestion.type,
             ) && (
@@ -1085,7 +1004,6 @@ export default function FormBuilderPage() {
               </div>
             )}
 
-            {/* File upload settings (max size / accepted types) */}
             {selectedQuestion.type === "file" && (
               <div className="space-y-3 pt-1">
                 <div>
@@ -1127,7 +1045,6 @@ export default function FormBuilderPage() {
               </div>
             )}
 
-            {/* Required */}
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-gray-400">
                 Required
@@ -1151,7 +1068,6 @@ export default function FormBuilderPage() {
               </button>
             </div>
 
-            {/* Conditional Logic */}
             <div className="pt-2 border-t border-[#30363d]">
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-medium text-gray-400">
@@ -1227,7 +1143,6 @@ export default function FormBuilderPage() {
         )}
       </aside>
 
-      {/* Preview Modal */}
       {showPreview && (
         <PreviewModal
           sections={sections}

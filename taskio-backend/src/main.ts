@@ -17,8 +17,8 @@ async function bootstrap() {
   console.log('DB_HOST:', process.env.DB_HOST);
   console.log('DB_NAME:', process.env.DB_NAME);
 
-  // Set global API prefix for all routes
-  app.setGlobalPrefix('api/v1');
+  // Set global API prefix for all routes, excluding health check
+  app.setGlobalPrefix('api/v1', { exclude: ['health'] });
 
   // Enable global validation pipe for request validation
   app.useGlobalPipes(

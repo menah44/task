@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, PlusCircle, ClipboardList, Users, Shield, Folder, User, LogOut, Building2, Settings } from "lucide-react";
+import { LayoutDashboard, PlusCircle, ClipboardList, Users, Shield, Folder, User, LogOut, Building2, Settings, FileText } from "lucide-react";
 
 interface SidebarProps {
   userRole: string;
@@ -100,10 +100,20 @@ export default function Sidebar({ userRole, pathname, logout }: SidebarProps) {
               <Link
                 href="/studio/forms"
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
-                  pathname === "/studio/forms" ? "bg-purple-600/10 text-purple-400 border border-purple-600/20" : "border border-transparent"
+                  pathname === "/studio/forms" ? "bg-blue-600/10 text-blue-400 border border-blue-600/20" : "border border-transparent"
                 }`}
               >
-                <ClipboardList className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
+                <ClipboardList className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                <span>Forms</span>
+              </Link>
+
+              <Link
+                href="/studio/responses"
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-300 hover:bg-[#21262d] hover:text-white transition-all font-medium text-sm group ${
+                  pathname === "/studio/responses" ? "bg-purple-600/10 text-purple-400 border border-purple-600/20" : "border border-transparent"
+                }`}
+              >
+                <FileText className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
                 <span>Responses</span>
               </Link>
 

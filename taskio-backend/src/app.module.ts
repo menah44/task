@@ -25,6 +25,7 @@ import { Template } from './forms/entities/template.entity';
 import { FormVersion } from './forms/entities/form-version.entity';
 import { Response } from './forms/entities/response.entity';
 import { SpatialModule } from './spatial/spatial.module';
+import { ResponsesModule } from './responses/responses.module';
 
 import { HealthController } from './health.controller';
 
@@ -64,6 +65,7 @@ import { HealthController } from './health.controller';
     QuestionTypesModule,
     TemplatesModule,
     SpatialModule,
+    ResponsesModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

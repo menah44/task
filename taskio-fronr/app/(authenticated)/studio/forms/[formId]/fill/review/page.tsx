@@ -128,7 +128,7 @@ export default function ReviewPage() {
     setSubmitError(null);
     try {
       await submitResponse(formId);
-      router.push(`/forms/${formId}/fill/thank-you`);
+      router.push(`/studio/forms/${formId}/fill/thank-you`);
     } catch (err) {
       setSubmitError(
         err instanceof Error ? err.message : "Submission failed. Try again.",

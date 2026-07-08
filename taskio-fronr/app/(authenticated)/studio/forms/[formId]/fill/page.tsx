@@ -351,7 +351,7 @@ export default function FormFillPage() {
   // ── Go to review (FE-T404): saves the draft, then hands off to
   // /fill/review, which is where the actual POST /responses/:id/submit
   // (A4-12) happens after the "irreversible" confirmation. ──
-  const handleGoToReview = async () => {
+  const handleSubmit = async () => {
     if (getSectionErrors().length > 0) {
       setShowValidation(true);
       return;
@@ -360,32 +360,24 @@ export default function FormFillPage() {
     let id: number | null = null;
     try {
       id = await createDraftIfNeeded();
-      if (id) {
-        await apiClient.put(`/responses/${id}/answers/bulk`, { answers });
+      if (!id) {
+        throw new Error("Could not create draft");
       }
-    } catch {
-      // fall through — review page will still work off the local handoff
+      await apiClient.put(`/responses/${id}/answers/bulk`, { answers });
+      await apiClient.post(`/responses/${id}/submit`);
+      
+      // Clean up session storage if we had any
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem(reviewStorageKey(id ?? responseId ?? "draft"));
+      }
+
+      router.push(`/studio/forms/${formId}/fill/thank-you`);
+    } catch (err) {
+      console.error("Submission failed:", err);
+      alert("Submission failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
-
-    // Hand off so the review page (GET /responses/:id/full — A4-11) has
-    // something to render even before that endpoint exists / while offline.
-    if (typeof window !== "undefined" && form) {
-      sessionStorage.setItem(
-        reviewStorageKey(id ?? responseId ?? "draft"),
-        JSON.stringify({
-          responseId: id ?? responseId,
-          form,
-          answers,
-          gpsCoords,
-        }),
-      );
-    }
-
-    router.push(
-      `/studio/forms/${formId}/fill/review?responseId=${id ?? responseId ?? "draft"}`,
-    );
   };
 
   // ── Loading ──
@@ -412,7 +404,24 @@ export default function FormFillPage() {
       </div>
     );
 
-  const sections = form.sections;
+  const sections = form.sections || [];
+
+  if (sections.length === 0 || !sections[currentSectionIdx]) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6 pb-10 mt-10">
+        <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 text-center shadow-sm">
+          <h1 className="text-xl font-bold text-white mb-2">{form.title}</h1>
+          <p className="text-sm text-gray-400">This form has no questions yet.</p>
+          <Link
+            href="/userForms"
+            className="mt-4 px-4 py-2 inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors">
+            Back to Forms
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const currentSection = sections[currentSectionIdx];
   const isLastSection = currentSectionIdx === sections.length - 1;
   const visibleQuestions = currentSection.questions.filter(isQuestionVisible);
@@ -488,10 +497,10 @@ export default function FormFillPage() {
 
         {isLastSection ? (
           <button
-            onClick={handleGoToReview}
+            onClick={handleSubmit}
             disabled={isSubmitting}
             className="px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
-            {isSubmitting ? "Saving..." : "Review Answers →"}
+            {isSubmitting ? "Submitting..." : "Submit ✓"}
           </button>
         ) : (
           <button

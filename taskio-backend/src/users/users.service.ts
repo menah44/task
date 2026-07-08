@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
@@ -43,7 +49,8 @@ export class UsersService {
     }
 
     // Exclude password field
-    const { password: _password, ...result } = user;
+    const result = { ...user };
+    delete (result as any).password;
     return result;
   }
 
@@ -63,7 +70,9 @@ export class UsersService {
     }
 
     if (user.roles.length === 0 && user.role) {
-      const existingRole = await this.roleRepository.findOne({ where: { name: user.role } });
+      const existingRole = await this.roleRepository.findOne({
+        where: { name: user.role },
+      });
       if (existingRole) {
         user.roles.push(existingRole);
         await this.userRepository.save(user);
@@ -134,7 +143,11 @@ export class UsersService {
     };
   }
 
-  async create(dto: CreateUserAdminDto, org?: Organization, currentUser?: User) {
+  async create(
+    dto: CreateUserAdminDto,
+    org?: Organization,
+    currentUser?: User,
+  ) {
     if (!dto.email) {
       throw new BadRequestException('Email address is required.');
     }
@@ -143,10 +156,7 @@ export class UsersService {
     }
 
     const existingUser = await this.userRepository.findOne({
-      where: [
-        { email: dto.email.toLowerCase() },
-        { username: dto.username }
-      ],
+      where: [{ email: dto.email.toLowerCase() }, { username: dto.username }],
     });
 
     if (existingUser) {
@@ -160,16 +170,20 @@ export class UsersService {
     }
 
     const roleName = dto.role.toUpperCase();
-    const existingRole = await this.roleRepository.findOne({ where: { name: roleName } });
+    const existingRole = await this.roleRepository.findOne({
+      where: { name: roleName },
+    });
     if (!existingRole) {
-      throw new BadRequestException("Role does not exist");
+      throw new BadRequestException('Role does not exist');
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    let userGroups: Group[] = [];
+    const userGroups: Group[] = [];
     if (dto.groupId) {
-      const group = await this.groupRepository.findOne({ where: { id: dto.groupId } });
+      const group = await this.groupRepository.findOne({
+        where: { id: dto.groupId },
+      });
       if (!group) {
         throw new BadRequestException('Group does not exist');
       }
@@ -189,20 +203,23 @@ export class UsersService {
     });
 
     await this.userRepository.save(newUser);
-    
+
     await this.auditService.logAction(
       currentUser,
       'CREATE_USER',
       'USER',
       String(newUser.id),
-      { email: newUser.email, role: newUser.role }
+      { email: newUser.email, role: newUser.role },
     );
 
     const { password: _password, ...result } = newUser;
     return result;
   }
 
-  async createOrganizationAdmin(org: Organization, dto: CreateOrganizationAdminDto) {
+  async createOrganizationAdmin(
+    org: Organization,
+    dto: CreateOrganizationAdminDto,
+  ) {
     if (!dto.email) {
       throw new BadRequestException('Email address is required.');
     }
@@ -219,9 +236,11 @@ export class UsersService {
     }
 
     const roleName = 'ADMIN';
-    const existingRole = await this.roleRepository.findOne({ where: { name: roleName } });
+    const existingRole = await this.roleRepository.findOne({
+      where: { name: roleName },
+    });
     if (!existingRole) {
-      throw new BadRequestException("Role does not exist");
+      throw new BadRequestException('Role does not exist');
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -246,7 +265,7 @@ export class UsersService {
       'CREATE_ORGANIZATION_ADMIN',
       'USER',
       String(newUser.id),
-      { email: newUser.email, role: newUser.role }
+      { email: newUser.email, role: newUser.role },
     );
 
     const { password: _password, ...result } = newUser;
@@ -254,7 +273,10 @@ export class UsersService {
   }
 
   async deactivate(id: number, currentUser?: User) {
-    const user = await this.userRepository.findOne({ where: { id }, relations: ['organization'] });
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['organization'],
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -266,21 +288,24 @@ export class UsersService {
     }
     user.isActive = false;
     await this.userRepository.save(user);
-    
+
     await this.auditService.logAction(
       currentUser,
       'DEACTIVATE_USER',
       'USER',
       String(user.id),
-      { email: user.email }
+      { email: user.email },
     );
-    
+
     const { password: _password, ...result } = user;
     return result;
   }
 
   async activate(id: number, currentUser?: User) {
-    const user = await this.userRepository.findOne({ where: { id }, relations: ['organization'] });
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['organization'],
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -292,15 +317,15 @@ export class UsersService {
     }
     user.isActive = true;
     await this.userRepository.save(user);
-    
+
     await this.auditService.logAction(
       currentUser,
       'ACTIVATE_USER',
       'USER',
       String(user.id),
-      { email: user.email }
+      { email: user.email },
     );
-    
+
     const { password: _password, ...result } = user;
     return result;
   }
@@ -344,9 +369,11 @@ export class UsersService {
     if (dto.lastName !== undefined) user.lastName = dto.lastName;
     if (dto.role) {
       const roleName = dto.role.toUpperCase();
-      const existingRole = await this.roleRepository.findOne({ where: { name: roleName } });
+      const existingRole = await this.roleRepository.findOne({
+        where: { name: roleName },
+      });
       if (!existingRole) {
-        throw new BadRequestException("Role does not exist");
+        throw new BadRequestException('Role does not exist');
       }
       user.role = roleName;
       user.roles = [existingRole];
@@ -359,7 +386,7 @@ export class UsersService {
       'UPDATE_USER',
       'USER',
       String(user.id),
-      { changes: dto }
+      { changes: dto },
     );
 
     const { password: _password, ...result } = user;

@@ -98,7 +98,7 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 // ======================== Mock Form ========================
 function getMockForm(formId: string): PublicFormDetail {
   return {
-    id: formId,
+    id: parseInt(formId, 10) || 1,
     title: "Customer Satisfaction Survey",
     description: "Help us improve our services. No login required.",
     showProgress: true,
@@ -220,7 +220,7 @@ export default function PublicFormFillPage() {
             Your response has been submitted successfully.
           </p>
           <Link
-ً            href="/public"
+            href="/public"
             className="inline-block mt-4 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors">
             Back to Forms
           </Link>
@@ -229,7 +229,24 @@ export default function PublicFormFillPage() {
     );
   }
 
-  const sections = form.sections;
+  const sections = form.sections || [];
+
+  if (sections.length === 0) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6 pb-10">
+        <div className="bg-white border border-gray-100 rounded-2xl p-6 text-center text-gray-500 shadow-sm">
+          <h1 className="text-xl font-bold text-gray-900 mb-2">{form.title}</h1>
+          <p className="text-sm">This form does not have any sections or questions yet.</p>
+          <button
+            onClick={() => router.push("/public")}
+            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors">
+            Back to Forms
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const currentSection = sections[currentSectionIdx];
   const isLastSection = currentSectionIdx === sections.length - 1;
   const totalQuestions = sections.reduce(

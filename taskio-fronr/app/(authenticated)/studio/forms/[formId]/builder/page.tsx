@@ -23,6 +23,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Settings2, ExternalLink, Eye, Save, Loader2 } from "lucide-react";
 import AnswerField, { AnswerValue } from "@/components/AnswerField";
 import BuilderTopNav from "@/components/builder/BuilderTopNav";
+import apiClient from "@/lib/api/client";
 import {
   ConditionalRule,
   FormStructure,
@@ -455,18 +456,45 @@ export default function FormBuilderPage() {
       return;
     }
 
-    const stored = readLocalFormStructure(formId);
-    const initial = stored ?? DEFAULT_FORM;
+    const load = async () => {
+      try {
+        const res = await apiClient.get(`/forms/${formId}/structure`);
+        const data = res.data;
+        // Always use title/description/settings from the API — never overwrite with localStorage
+        setTitle(data.title);
+        setDescription(data.description ?? "");
+        setShowProgress(data.showProgress);
+        setHasBoundary(data.hasBoundary);
 
-    setTitle(initial.title);
-    setDescription(initial.description ?? "");
-    setShowProgress(initial.showProgress);
-    setHasBoundary(initial.hasBoundary);
-    setSections(initial.sections);
-    if (initial.sections.length > 0) {
-      setSelectedSectionId(initial.sections[0].id);
-    }
-    setIsLoading(false);
+        if (data.sections && data.sections.length > 0) {
+          setSections(data.sections);
+          setSelectedSectionId(data.sections[0].id);
+        } else {
+          // No sections saved yet — try localStorage for draft sections only
+          const stored = readLocalFormStructure(formId);
+          const sections = stored?.sections ?? DEFAULT_FORM.sections;
+          setSections(sections);
+          if (sections.length > 0) {
+            setSelectedSectionId(sections[0].id);
+          }
+        }
+      } catch {
+        const stored = readLocalFormStructure(formId);
+        const initial = stored ?? DEFAULT_FORM;
+        setTitle(initial.title);
+        setDescription(initial.description ?? "");
+        setShowProgress(initial.showProgress);
+        setHasBoundary(initial.hasBoundary);
+        setSections(initial.sections);
+        if (initial.sections.length > 0) {
+          setSelectedSectionId(initial.sections[0].id);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    load();
   }, [formId]);
 
   useEffect(() => {
@@ -657,7 +685,7 @@ export default function FormBuilderPage() {
     [sections, selectedSectionId],
   );
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
     setError(null);
     try {
@@ -669,11 +697,28 @@ export default function FormBuilderPage() {
           hasBoundary,
           sections,
         });
+
+        await apiClient.put(`/forms/${formId}`, {
+          title,
+          description,
+          settings: {
+            hasBoundary,
+            showProgress,
+          },
+          sections: sections.map(sec => ({
+            title: sec.title,
+            questions: sec.questions.map(q => ({
+              type: q.type,
+              label: q.label,
+              required: q.required,
+              placeholder: q.placeholder,
+              options: q.options,
+            }))
+          }))
+        });
       }
-      setTimeout(() => {
-        setIsSaving(false);
-        alert("✅ Form structure saved successfully!");
-      }, 500);
+      setIsSaving(false);
+      alert("✅ Form structure saved successfully!");
     } catch (err) {
       setError("Failed to save data.");
       setIsSaving(false);

@@ -7,7 +7,10 @@ export class UpdateFormDto {
   @IsOptional()
   title?: string;
 
-  @ApiProperty({ description: 'Optional description of the form', required: false })
+  @ApiProperty({
+    description: 'Optional description of the form',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   description?: string;
@@ -15,19 +18,42 @@ export class UpdateFormDto {
   @ApiProperty({
     description: 'Transition status of the form',
     required: false,
-    enum: ['DRAFT', 'PUBLISHED', 'CLOSED', 'ARCHIVED']
+    enum: ['DRAFT', 'PUBLISHED', 'CLOSED', 'ARCHIVED'],
   })
-  @IsEnum(['DRAFT', 'PUBLISHED', 'CLOSED', 'ARCHIVED', 'draft', 'published', 'closed', 'archived'])
+  @IsEnum([
+    'DRAFT',
+    'PUBLISHED',
+    'CLOSED',
+    'ARCHIVED',
+    'draft',
+    'published',
+    'closed',
+    'archived',
+  ])
   @IsOptional()
   status?: string;
 
-  @ApiProperty({ description: 'JSON schema structure for sections and questions', required: false })
+  @ApiProperty({
+    description: 'JSON schema structure for sections and questions',
+    required: false,
+  })
   @IsObject()
   @IsOptional()
   schema?: any;
 
-  @ApiProperty({ description: 'Settings configuration like dates and response limits', required: false })
+  @ApiProperty({
+    description: 'Settings configuration like dates and response limits',
+    required: false,
+  })
   @IsObject()
   @IsOptional()
   settings?: any;
+
+  @ApiProperty({
+    description: 'The sections and nested questions of the form',
+    required: false,
+    type: 'array',
+  })
+  @IsOptional()
+  sections?: any[];
 }

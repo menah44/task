@@ -6,7 +6,10 @@ export class CreateFormDto {
   @IsString()
   title!: string;
 
-  @ApiProperty({ description: 'Optional description of the form', required: false })
+  @ApiProperty({
+    description: 'Optional description of the form',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   description?: string;

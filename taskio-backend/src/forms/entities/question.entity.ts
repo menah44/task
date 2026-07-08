@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, DeleteDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  DeleteDateColumn,
+} from 'typeorm';
 import { Section } from './section.entity';
 
 @Entity('question')
@@ -24,7 +31,9 @@ export class Question {
   @Column({ type: 'int' })
   sectionId!: number;
 
-  @ManyToOne(() => Section, (section) => section.questions, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Section, (section) => section.questions, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'sectionId' })
   section!: Section;
 

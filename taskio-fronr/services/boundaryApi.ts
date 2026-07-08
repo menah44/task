@@ -8,7 +8,7 @@ const apiClient = axios.create({
 export const boundaryApi = {
   // جلب البيانات (GET)
   getBoundary: (formId: string) =>
-    apiClient.get<GeoJSON.FeatureCollection>(`/forms/${formId}/boundary`),
+    apiClient.get<GeoJSON.FeatureCollection>(`/spatial/forms/${formId}/boundary`),
 
   // حفظ البيانات (PUT)
   saveBoundary: (formId: string, data: GeoJSON.FeatureCollection) =>

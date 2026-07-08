@@ -231,7 +231,7 @@ export default function FormBoundaryMapPage() {
       setError(null);
 
       try {
-        const response = await apiClient.get(`/forms/${formId}/boundary`);
+        const response = await apiClient.get(`/spatial/forms/${formId}/boundary`);
         const geojson: FeatureCollection | null =
           response.data?.geojson || response.data || null;
 

@@ -52,17 +52,20 @@ export class AuthService {
     await this.userRepository.update(userId, {
       hashedRefreshToken,
     });
-    
+
     // Attempt to log login action
     try {
-      const user = await this.userRepository.findOne({ where: { id: userId }, relations: ['organization'] });
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['organization'],
+      });
       if (user) {
         await this.auditService.logAction(
           user,
           'USER_LOGIN',
           'USER',
           String(user.id),
-          { email: user.email }
+          { email: user.email },
         );
       }
     } catch (e) {
@@ -71,7 +74,7 @@ export class AuthService {
   }
 
   async refreshTokens(userId: number, refreshToken: string) {
-    const user = await this.userRepository.findOne({ 
+    const user = await this.userRepository.findOne({
       where: { id: userId },
       relations: ['organization'],
     });

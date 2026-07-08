@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Group } from './entities/group.entity';
@@ -28,7 +34,7 @@ export class GroupsService {
       where: whereClause,
       relations: ['users'],
     });
-    return groups.map(g => ({
+    return groups.map((g) => ({
       id: g.id,
       name: g.name,
       parentId: g.parentId,
@@ -46,14 +52,16 @@ export class GroupsService {
     if (isAdmin && orgId) {
       whereClause.organizationId = orgId;
     } else {
-      whereClause.organizationId = null; 
+      whereClause.organizationId = null;
     }
 
     const existing = await this.groupRepository.findOne({ where: whereClause });
     if (existing) {
-      throw new ConflictException('Group name already exists in this organization');
+      throw new ConflictException(
+        'Group name already exists in this organization',
+      );
     }
-    
+
     let resolvedParentId: number | null = null;
     if (parentId !== undefined && parentId !== null) {
       const parentWhere: any = { id: parentId };
@@ -67,10 +75,10 @@ export class GroupsService {
       resolvedParentId = parentId;
     }
 
-    const newGroup = this.groupRepository.create({ 
-      name, 
+    const newGroup = this.groupRepository.create({
+      name,
       parentId: resolvedParentId,
-      ...(isAdmin && orgId ? { organizationId: orgId } : {})
+      ...(isAdmin && orgId ? { organizationId: orgId } : {}),
     });
     const savedGroup = await this.groupRepository.save(newGroup);
 
@@ -79,13 +87,18 @@ export class GroupsService {
       'CREATE_GROUP',
       'GROUP',
       String(savedGroup.id),
-      { name: savedGroup.name, parentId: savedGroup.parentId }
+      { name: savedGroup.name, parentId: savedGroup.parentId },
     );
 
     return savedGroup;
   }
 
-  async update(id: number, name: string, parentId?: number | null, currentUser?: User) {
+  async update(
+    id: number,
+    name: string,
+    parentId?: number | null,
+    currentUser?: User,
+  ) {
     const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
     const orgId = currentUser?.organization?.id || currentUser?.orgId;
 
@@ -104,7 +117,9 @@ export class GroupsService {
     } else {
       existingWhere.organizationId = null;
     }
-    const existing = await this.groupRepository.findOne({ where: existingWhere });
+    const existing = await this.groupRepository.findOne({
+      where: existingWhere,
+    });
     if (existing && existing.id !== id) {
       throw new ConflictException('Group name already exists');
     }
@@ -119,13 +134,17 @@ export class GroupsService {
         if (isAdmin && orgId) {
           parentWhere.organizationId = orgId;
         }
-        const parent = await this.groupRepository.findOne({ where: parentWhere });
+        const parent = await this.groupRepository.findOne({
+          where: parentWhere,
+        });
         if (!parent) {
           throw new NotFoundException('Parent group not found');
         }
         const isDescendant = await this.isDescendantOf(parentId, id);
         if (isDescendant) {
-          throw new BadRequestException('Circular dependency detected: Parent group is a descendant of this group');
+          throw new BadRequestException(
+            'Circular dependency detected: Parent group is a descendant of this group',
+          );
         }
       }
       group.parentId = parentId;
@@ -138,7 +157,7 @@ export class GroupsService {
       'UPDATE_GROUP',
       'GROUP',
       String(savedGroup.id),
-      { name, parentId }
+      { name, parentId },
     );
 
     return savedGroup;
@@ -163,7 +182,7 @@ export class GroupsService {
       'DELETE_GROUP',
       'GROUP',
       String(id),
-      { name: group.name }
+      { name: group.name },
     );
 
     return { success: true };
@@ -197,7 +216,10 @@ export class GroupsService {
     if (isAdmin && orgId) {
       where.organizationId = orgId;
     }
-    const group = await this.groupRepository.findOne({ where, relations: ['users'] });
+    const group = await this.groupRepository.findOne({
+      where,
+      relations: ['users'],
+    });
     if (!group) {
       throw new NotFoundException('Group not found');
     }
@@ -212,7 +234,10 @@ export class GroupsService {
     if (isAdmin && orgId) {
       whereGroup.organizationId = orgId;
     }
-    const group = await this.groupRepository.findOne({ where: whereGroup, relations: ['users'] });
+    const group = await this.groupRepository.findOne({
+      where: whereGroup,
+      relations: ['users'],
+    });
 
     const whereUser: any = { id: userId };
     if (isAdmin && orgId) {
@@ -223,7 +248,7 @@ export class GroupsService {
     if (!group || !user) {
       throw new NotFoundException('Group or User not found');
     }
-    if (!group.users.find(u => u.id === userId)) {
+    if (!group.users.find((u) => u.id === userId)) {
       group.users.push(user);
       await this.groupRepository.save(group);
 
@@ -232,7 +257,7 @@ export class GroupsService {
         'ADD_MEMBER',
         'GROUP',
         String(group.id),
-        { userId, groupName: group.name }
+        { userId, groupName: group.name },
       );
     }
     return group;
@@ -246,11 +271,14 @@ export class GroupsService {
     if (isAdmin && orgId) {
       whereGroup.organizationId = orgId;
     }
-    const group = await this.groupRepository.findOne({ where: whereGroup, relations: ['users'] });
+    const group = await this.groupRepository.findOne({
+      where: whereGroup,
+      relations: ['users'],
+    });
     if (!group) {
       throw new NotFoundException('Group not found');
     }
-    group.users = group.users.filter(user => user.id !== userId);
+    group.users = group.users.filter((user) => user.id !== userId);
     const savedGroup = await this.groupRepository.save(group);
 
     await this.auditService.logAction(
@@ -258,7 +286,7 @@ export class GroupsService {
       'REMOVE_MEMBER',
       'GROUP',
       String(savedGroup.id),
-      { userId, groupName: savedGroup.name }
+      { userId, groupName: savedGroup.name },
     );
 
     return savedGroup;
@@ -290,7 +318,9 @@ export class GroupsService {
       }
       const isDescendant = await this.isDescendantOf(parentId, id);
       if (isDescendant) {
-        throw new BadRequestException('Circular dependency detected: Parent group is a descendant of this group');
+        throw new BadRequestException(
+          'Circular dependency detected: Parent group is a descendant of this group',
+        );
       }
     }
     group.parentId = parentId;
@@ -301,14 +331,19 @@ export class GroupsService {
       'UPDATE_GROUP',
       'GROUP',
       String(savedGroup.id),
-      { parentId }
+      { parentId },
     );
 
     return savedGroup;
   }
 
-  private async isDescendantOf(possibleDescendantId: number, ancestorId: number): Promise<boolean> {
-    const group = await this.groupRepository.findOne({ where: { id: possibleDescendantId } });
+  private async isDescendantOf(
+    possibleDescendantId: number,
+    ancestorId: number,
+  ): Promise<boolean> {
+    const group = await this.groupRepository.findOne({
+      where: { id: possibleDescendantId },
+    });
     if (!group || group.parentId === null || group.parentId === undefined) {
       return false;
     }

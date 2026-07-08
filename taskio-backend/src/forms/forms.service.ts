@@ -1,13 +1,23 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException, BadRequestException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  ConflictException,
+  BadRequestException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Form } from './entities/form.entity';
 import { FormVersion } from './entities/form-version.entity';
+import { Section } from './entities/section.entity';
 import { CreateFormDto } from './dto/create-form.dto';
 import { UpdateFormDto } from './dto/update-form.dto';
 import { User } from '../auth/entities/user.entity';
 import { AuditService } from '../audit/audit.service';
+import { createSnapshot, mapSectionsForCopy } from './utils/form-helpers';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class FormsService {
@@ -18,6 +28,7 @@ export class FormsService {
     private readonly formVersionRepository: Repository<FormVersion>,
     private readonly auditService: AuditService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly dataSource: DataSource,
   ) {}
 
   private getOrgId(user: User): number {
@@ -84,7 +95,7 @@ export class FormsService {
       status: 'DRAFT',
       version: 1,
       isPublic: false,
-      schema: { pages: [{ id: "page-1", title: "Page 1", elements: [] }] },
+      schema: { pages: [{ id: 'page-1', title: 'Page 1', elements: [] }] },
       settings: {},
     });
 
@@ -95,7 +106,7 @@ export class FormsService {
       'CREATE_FORM',
       'FORM',
       String(savedForm.id),
-      { title: savedForm.title }
+      { title: savedForm.title },
     );
 
     return savedForm;
@@ -127,13 +138,13 @@ export class FormsService {
     });
 
     // Map permissions dynamically for frontend
-    const mappedData = data.map(form => ({
+    const mappedData = data.map((form) => ({
       ...form,
       permissions: {
         canEdit: form.status.toUpperCase() !== 'ARCHIVED',
         canView: true,
         canDelete: true,
-      }
+      },
     }));
 
     return {
@@ -159,131 +170,185 @@ export class FormsService {
     return form;
   }
 
-  async createVersion(id: number, user: User): Promise<{ newFormId: number, versionNumber: number }> {
-    const originalForm = await this.findOne(id, user);
+  async createVersion(
+    id: number,
+    user: User,
+  ): Promise<{ newFormId: number; versionNumber: number }> {
+    return this.dataSource.transaction(async (manager) => {
+      const orgId = this.getOrgId(user);
+      const originalForm = await manager.getRepository(Form).findOne({
+        where: { id, organizationId: orgId },
+        relations: ['sections', 'sections.questions'],
+      });
 
-    const snapshot = {
-      title: originalForm.title,
-      description: originalForm.description,
-      schema: originalForm.schema,
-      settings: originalForm.settings,
-      sections: originalForm.sections?.map(section => ({
-        title: section.title,
-        questions: section.questions?.map(question => ({
-          type: question.type,
-          label: question.label,
-          required: question.required,
-          placeholder: question.placeholder,
-          options: question.options,
-        }))
-      }))
-    };
+      if (!originalForm) {
+        throw new NotFoundException(`Form with ID ${id} not found`);
+      }
 
-    const formVersion = this.formVersionRepository.create({
-      formId: originalForm.id,
-      version: originalForm.version,
-      snapshot,
-      createdById: user.id
+      // Find the maximum existing version number to determine next versionNumber
+      const maxVersionRecord = await manager
+        .getRepository(FormVersion)
+        .findOne({
+          where: { formId: originalForm.id },
+          order: { version: 'DESC' },
+        });
+      const nextVersionNumber = maxVersionRecord
+        ? maxVersionRecord.version + 1
+        : 1;
+
+      const snapshot = createSnapshot(originalForm);
+
+      const formVersion = manager.getRepository(FormVersion).create({
+        formId: originalForm.id,
+        version: nextVersionNumber,
+        snapshot,
+        createdById: user.id,
+      });
+      await manager.getRepository(FormVersion).save(formVersion);
+
+      const newTitle = `${originalForm.title} (Copy)`;
+
+      // Ensure title uniqueness just in case
+      let counter = 1;
+      let tempTitle = newTitle;
+      while (
+        await manager.getRepository(Form).findOne({
+          where: {
+            title: tempTitle,
+            organizationId: originalForm.organizationId,
+          },
+        })
+      ) {
+        tempTitle = `${newTitle} (${counter})`;
+        counter++;
+      }
+
+      const copiedForm = manager.getRepository(Form).create({
+        title: tempTitle,
+        description: originalForm.description,
+        status: 'DRAFT',
+        isPublic: false,
+        version: 1, // Copy starts fresh as version 1
+        schema: originalForm.schema,
+        settings: originalForm.settings,
+        organizationId: originalForm.organizationId,
+        creatorId: user.id,
+        sections: mapSectionsForCopy(originalForm.sections),
+      });
+
+      const savedForm = await manager.getRepository(Form).save(copiedForm);
+
+      await this.auditService.logAction(
+        user,
+        'CREATE_VERSION',
+        'FORM',
+        String(savedForm.id),
+        { originalFormId: id, newVersionNumber: nextVersionNumber },
+      );
+
+      return { newFormId: savedForm.id, versionNumber: nextVersionNumber };
     });
-    await this.formVersionRepository.save(formVersion);
-
-    const newVersionNumber = originalForm.version + 1;
-    let newTitle = `${originalForm.title} (Copy)`;
-    
-    // Ensure title uniqueness just in case
-    let counter = 1;
-    let tempTitle = newTitle;
-    while (await this.formRepository.findOne({ where: { title: tempTitle, organizationId: originalForm.organizationId } })) {
-      tempTitle = `${newTitle} (${counter})`;
-      counter++;
-    }
-
-    const copiedForm = this.formRepository.create({
-      title: tempTitle,
-      description: originalForm.description,
-      status: 'DRAFT',
-      isPublic: false,
-      version: newVersionNumber,
-      schema: originalForm.schema,
-      settings: originalForm.settings,
-      organizationId: originalForm.organizationId,
-      creatorId: user.id,
-      sections: originalForm.sections?.map(section => ({
-        title: section.title,
-        questions: section.questions?.map(question => ({
-          type: question.type,
-          label: question.label,
-          required: question.required,
-          placeholder: question.placeholder,
-          options: question.options,
-        }))
-      }))
-    });
-
-    const savedForm = await this.formRepository.save(copiedForm);
-
-    await this.auditService.logAction(
-      user,
-      'CREATE_VERSION',
-      'FORM',
-      String(savedForm.id),
-      { originalFormId: id, newVersionNumber }
-    );
-
-    return { newFormId: savedForm.id, versionNumber: newVersionNumber };
   }
 
-  async getVersions(id: number, user: User) {
+  async getVersions(id: number, user: User): Promise<FormVersion[]> {
     const form = await this.findOne(id, user);
-    const versions = await this.formVersionRepository.find({
+    return this.formVersionRepository.find({
       where: { formId: form.id },
+      select: {
+        id: true,
+        formId: true,
+        version: true,
+        createdAt: true,
+        createdById: true,
+        createdBy: {
+          id: true,
+          email: true,
+          role: true,
+        },
+      },
+      relations: {
+        createdBy: true,
+      },
       order: { version: 'DESC' },
     });
-    return versions;
   }
 
-  async getVersionSnapshot(id: number, versionNumber: number, user: User) {
+  async getVersionSnapshot(
+    id: number,
+    versionNumber: number,
+    user: User,
+  ): Promise<Record<string, unknown>> {
     const form = await this.findOne(id, user);
     const versionRecord = await this.formVersionRepository.findOne({
       where: { formId: form.id, version: versionNumber },
     });
 
     if (!versionRecord) {
-      throw new NotFoundException(`Version ${versionNumber} for Form ${id} not found`);
+      throw new NotFoundException(
+        `Version ${versionNumber} for Form ${id} not found`,
+      );
     }
 
-    return versionRecord.snapshot;
+    return versionRecord.snapshot as Record<string, unknown>;
   }
 
-  async update(id: number, updateFormDto: UpdateFormDto, user: User): Promise<Form> {
-    const form = await this.findOne(id, user);
-
-    if (form.status.toUpperCase() === 'ARCHIVED') {
-      throw new BadRequestException('Updating an ARCHIVED form is blocked');
-    }
-
-    if (updateFormDto.title && updateFormDto.title !== form.title) {
-      // Title unique per organization validation
-      const existing = await this.formRepository.findOne({
-        where: { title: updateFormDto.title, organizationId: form.organizationId },
+  async update(
+    id: number,
+    updateFormDto: UpdateFormDto,
+    user: User,
+  ): Promise<Form> {
+    return this.dataSource.transaction(async (manager) => {
+      const orgId = this.getOrgId(user);
+      const form = await manager.getRepository(Form).findOne({
+        where: { id, organizationId: orgId },
+        relations: ['sections', 'sections.questions'],
       });
-      if (existing) {
-        throw new ConflictException('Form title must be unique per organization');
+
+      if (!form) {
+        throw new NotFoundException(`Form with ID ${id} not found`);
       }
-    }
 
-    Object.assign(form, updateFormDto);
-    const updatedForm = await this.formRepository.save(form);
+      if (form.status.toUpperCase() === 'ARCHIVED') {
+        throw new BadRequestException('Updating an ARCHIVED form is blocked');
+      }
 
-    await this.auditService.logAction(
-      user,
-      'UPDATE_FORM',
-      'FORM',
-      String(updatedForm.id),
-      updateFormDto
-    );
+      if (updateFormDto.title && updateFormDto.title !== form.title) {
+        // Title unique per organization validation
+        const existing = await manager.getRepository(Form).findOne({
+          where: {
+            title: updateFormDto.title,
+            organizationId: form.organizationId,
+          },
+        });
+        if (existing && existing.id !== form.id) {
+          throw new ConflictException(
+            'Form title must be unique per organization',
+          );
+        }
+      }
 
-    return updatedForm;
+      const { sections, ...rest } = updateFormDto;
+      Object.assign(form, rest);
+
+      if (sections) {
+        // Delete all old sections (PostgreSQL cascade deletes questions)
+        await manager.getRepository(Section).delete({ formId: form.id });
+        // Map and set new sections
+        form.sections = mapSectionsForCopy(sections);
+      }
+
+      const updatedForm = await manager.getRepository(Form).save(form);
+
+      await this.auditService.logAction(
+        user,
+        'UPDATE_FORM',
+        'FORM',
+        String(updatedForm.id),
+        updateFormDto,
+      );
+
+      return updatedForm;
+    });
   }
 
   async delete(id: number, user: User): Promise<{ success: boolean }> {
@@ -292,18 +357,18 @@ export class FormsService {
     // Call softRemove to perform cascade soft deletion (retains relations on Form soft delete)
     await this.formRepository.softRemove(form);
 
-    await this.auditService.logAction(
-      user,
-      'DELETE_FORM',
-      'FORM',
-      String(id),
-      { title: form.title }
-    );
+    await this.auditService.logAction(user, 'DELETE_FORM', 'FORM', String(id), {
+      title: form.title,
+    });
 
     return { success: true };
   }
 
-  async updateStatus(id: number, nextStatus: string, user: User): Promise<Form> {
+  async updateStatus(
+    id: number,
+    nextStatus: string,
+    user: User,
+  ): Promise<Form> {
     const form = await this.findOne(id, user);
     const current = form.status.toUpperCase();
     const next = nextStatus.toUpperCase();
@@ -323,16 +388,23 @@ export class FormsService {
     };
 
     if (!allowedTransitions[current]?.includes(next)) {
-      throw new BadRequestException(`Status transition from ${current} to ${next} is not allowed`);
+      throw new BadRequestException(
+        `Status transition from ${current} to ${next} is not allowed`,
+      );
     }
 
     if (next === 'PUBLISHED') {
       const hasQuestions = await this.hasQuestions(form);
       if (!hasQuestions) {
-        throw new UnprocessableEntityException('Form must contain at least one question to be published');
+        throw new UnprocessableEntityException(
+          'Form must contain at least one question to be published',
+        );
       }
       form.isPublic = true;
-      this.eventEmitter.emit('form.published', { formId: form.id, title: form.title });
+      this.eventEmitter.emit('form.published', {
+        formId: form.id,
+        title: form.title,
+      });
     } else if (next === 'CLOSED') {
       form.isPublic = false;
     }
@@ -345,7 +417,7 @@ export class FormsService {
       'UPDATE_FORM_STATUS',
       'FORM',
       String(form.id),
-      { status: next }
+      { status: next },
     );
 
     return updatedForm;
@@ -360,7 +432,9 @@ export class FormsService {
     const form = await this.findOne(id, user);
 
     if (form.status.toUpperCase() === 'ARCHIVED') {
-      throw new BadRequestException('Updating an ARCHIVED form settings is blocked');
+      throw new BadRequestException(
+        'Updating an ARCHIVED form settings is blocked',
+      );
     }
 
     if (settings.startDate && settings.endDate) {
@@ -382,7 +456,7 @@ export class FormsService {
       'UPDATE_FORM_SETTINGS',
       'FORM',
       String(form.id),
-      { settings }
+      { settings },
     );
 
     return updatedForm;
@@ -393,5 +467,41 @@ export class FormsService {
       where: { isPublic: true, status: 'PUBLISHED' },
       order: { updatedAt: 'DESC' },
     });
+  }
+
+  async getBoundary(
+    id: number,
+    user: User,
+  ): Promise<Record<string, unknown> | null> {
+    const form = await this.findOne(id, user);
+    if (!form.boundary) {
+      throw new NotFoundException(`No boundary set for Form ID ${id}`);
+    }
+    return form.boundary as Record<string, unknown>;
+  }
+
+  async updateBoundary(
+    id: number,
+    boundary: Record<string, unknown>,
+    user: User,
+  ): Promise<Form> {
+    const form = await this.findOne(id, user);
+    if (form.status.toUpperCase() === 'ARCHIVED') {
+      throw new BadRequestException(
+        'Updating an ARCHIVED form boundary is blocked',
+      );
+    }
+    form.boundary = boundary;
+    const updatedForm = await this.formRepository.save(form);
+
+    await this.auditService.logAction(
+      user,
+      'UPDATE_FORM_BOUNDARY',
+      'FORM',
+      String(form.id),
+      { boundary },
+    );
+
+    return updatedForm;
   }
 }

@@ -11,6 +11,7 @@ import { Template } from './forms/entities/template.entity';
 import { FormVersion } from './forms/entities/form-version.entity';
 import { Organization } from './organizations/entities/organization.entity';
 import { QuestionType } from './question-types/entities/question-type.entity';
+import { Response } from './forms/entities/response.entity';
 
 dotenv.config();
 
@@ -21,7 +22,20 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || '1234',
   database: process.env.DB_NAME || 'taskio_db',
-  entities: [User, Role, Group, AuditLog, Organization, Form, Section, Question, QuestionType, FormVersion, Template],
+  entities: [
+    User,
+    Role,
+    Group,
+    AuditLog,
+    Organization,
+    Form,
+    Section,
+    Question,
+    QuestionType,
+    FormVersion,
+    Template,
+    Response,
+  ],
   migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
   synchronize: true,
 });

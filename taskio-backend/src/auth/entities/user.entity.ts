@@ -1,4 +1,12 @@
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToMany, JoinTable, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToMany,
+  JoinTable,
+  ManyToOne,
+} from 'typeorm';
 import { Role } from '../../roles/entities/role.entity';
 import { Group } from '../../groups/entities/group.entity';
 import { Organization } from '../../organizations/entities/organization.entity';

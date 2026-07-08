@@ -59,9 +59,17 @@ export class FormsController {
   }
 
   @Get(':id/structure')
-  async getStructure(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+  async getStructure(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: User,
+  ) {
     const form = await this.formsService.findOne(id, user);
-    const settings = form.settings || {};
+    const settings =
+      (form.settings as {
+        showProgress?: boolean;
+        hasBoundary?: boolean;
+        [key: string]: unknown;
+      }) || {};
     return {
       id: form.id,
       title: form.title,
@@ -78,12 +86,18 @@ export class FormsController {
   }
 
   @Post(':id/versions')
-  createVersion(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+  createVersion(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: User,
+  ): Promise<{ newFormId: number; versionNumber: number }> {
     return this.formsService.createVersion(id, user);
   }
 
   @Get(':id/versions')
-  getVersions(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+  getVersions(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: User,
+  ): Promise<any[]> {
     return this.formsService.getVersions(id, user);
   }
 
@@ -91,8 +105,8 @@ export class FormsController {
   getVersionSnapshot(
     @Param('id', ParseIntPipe) id: number,
     @Param('versionNumber', ParseIntPipe) versionNumber: number,
-    @CurrentUser() user: User
-  ) {
+    @CurrentUser() user: User,
+  ): Promise<Record<string, unknown>> {
     return this.formsService.getVersionSnapshot(id, versionNumber, user);
   }
 
@@ -127,14 +141,37 @@ export class FormsController {
   @Put(':id/settings')
   updateSettings(
     @Param('id', ParseIntPipe) id: number,
-    @Body() settingsPayload: any,
+    @Body()
+    settingsPayload:
+      Record<string, unknown> | { settings: Record<string, unknown> },
     @CurrentUser() user: User,
   ) {
     // Support both direct settings or nested settings structure
-    const settings =
-      settingsPayload.settings !== undefined
-        ? settingsPayload.settings
-        : settingsPayload;
+    const isNested =
+      'settings' in settingsPayload &&
+      typeof settingsPayload.settings === 'object' &&
+      settingsPayload.settings !== null;
+    const settings = isNested
+      ? (settingsPayload as { settings: Record<string, unknown> }).settings
+      : settingsPayload;
+
     return this.formsService.updateSettings(id, settings, user);
+  }
+
+  @Get(':id/boundary')
+  getBoundary(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: User,
+  ): Promise<Record<string, unknown> | null> {
+    return this.formsService.getBoundary(id, user);
+  }
+
+  @Put(':id/boundary')
+  updateBoundary(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() boundary: Record<string, unknown>,
+    @CurrentUser() user: User,
+  ) {
+    return this.formsService.updateBoundary(id, boundary, user);
   }
 }

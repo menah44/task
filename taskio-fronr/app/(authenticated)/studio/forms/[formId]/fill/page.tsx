@@ -3,8 +3,10 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "react-hot-toast";
 import AnswerField, { AnswerValue } from "@/components/AnswerField";
 import apiClient from "@/lib/api/client";
+import { spatialApi } from "@/services/spatialApi";
 import {
   FormStructure,
   Question,
@@ -239,7 +241,12 @@ export default function FormFillPage() {
       setLoading(true);
       try {
         const res = await apiClient.get(`/forms/${formId}/structure`);
-        setForm(res.data);
+        if (res.data.sections && res.data.sections.length > 0) {
+          setForm(res.data);
+        } else {
+          const local = formId ? readLocalFormStructure(formId) : null;
+          setForm(local ?? res.data);
+        }
       } catch {
         const local = formId ? readLocalFormStructure(formId) : null;
         setForm(local ?? getMockForm(formId ?? "1"));
@@ -376,6 +383,35 @@ export default function FormFillPage() {
       setShowValidation(true);
       return;
     }
+
+    if (form?.hasBoundary) {
+      if (!navigator.geolocation) {
+        toast.error("Geolocation is not supported by your browser.");
+        return;
+      }
+      if (!gpsCoords) {
+        toast.error("Location access denied or not yet acquired. This form requires your location.");
+        return;
+      }
+      setIsSubmitting(true);
+      try {
+        const geoRes = await spatialApi.validateGeofence(
+          parseInt(formId as string, 10),
+          gpsCoords.lat,
+          gpsCoords.lng,
+        );
+        if (!geoRes.data.inside) {
+          toast.error("You are outside the allowed area for this form.");
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to validate location boundary. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       const id = await createDraftIfNeeded();
@@ -437,7 +473,24 @@ export default function FormFillPage() {
     );
   }
 
-  const sections = form.sections;
+  const sections = form.sections || [];
+
+  if (sections.length === 0) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6 pb-10">
+        <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 text-center text-gray-400">
+          <h1 className="text-xl font-bold text-white mb-2">{form.title}</h1>
+          <p className="text-sm">This form does not have any sections or questions yet.</p>
+          <button
+            onClick={() => router.push("/studio/forms")}
+            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors">
+            Back to Studio
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const currentSection = sections[currentSectionIdx];
   const isLastSection = currentSectionIdx === sections.length - 1;
   const visibleQuestions = currentSection.questions.filter(isQuestionVisible);
@@ -511,7 +564,7 @@ export default function FormFillPage() {
           </button>
         ) : (
           <Link
-            href="/userForms"
+            href={`/studio/forms/${formId}/builder`}
             className="px-5 py-2.5 text-sm font-medium text-gray-400 hover:text-gray-200 transition-colors">
             ← Cancel
           </Link>

@@ -1,4 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToMany, ManyToOne, OneToMany, JoinColumn, Unique } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  Unique,
+} from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 import { Organization } from '../../organizations/entities/organization.entity';
 
@@ -14,7 +25,10 @@ export class Group {
   @Column({ nullable: true, type: 'int' })
   parentId!: number | null;
 
-  @ManyToOne(() => Group, (group) => group.children, { onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => Group, (group) => group.children, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'parentId' })
   parent!: Group | null;
 

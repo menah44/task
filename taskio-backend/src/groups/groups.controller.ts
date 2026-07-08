@@ -1,4 +1,15 @@
-import { Controller, UseGuards, Get, Post, Put, Delete, Body, Param, ParseIntPipe, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  UseGuards,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  ParseIntPipe,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { GroupsService } from './groups.service';
 import { HeaderAuthGuard } from '../auth/header-auth.guard';
@@ -42,7 +53,10 @@ export class GroupsController {
     @Param('id', ParseIntPipe) id: number,
     @Param('parentId') parentIdParam: string,
   ) {
-    const parentId = (parentIdParam === 'null' || parentIdParam === 'root') ? null : Number(parentIdParam);
+    const parentId =
+      parentIdParam === 'null' || parentIdParam === 'root'
+        ? null
+        : Number(parentIdParam);
     if (parentId !== null && isNaN(parentId)) {
       throw new BadRequestException('Invalid parentId parameter');
     }
@@ -50,17 +64,26 @@ export class GroupsController {
   }
 
   @Delete(':id')
-  async delete(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+  async delete(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
     return this.groupsService.delete(id, user);
   }
 
   @Get(':id/children')
-  async getChildren(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+  async getChildren(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
     return this.groupsService.getChildren(id, user);
   }
 
   @Get(':id/members')
-  async getMembers(@CurrentUser() user: User, @Param('id', ParseIntPipe) id: number) {
+  async getMembers(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
     return this.groupsService.getMembers(id, user);
   }
 

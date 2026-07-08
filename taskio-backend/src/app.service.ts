@@ -14,7 +14,9 @@ export class AppService implements OnModuleInit {
     // Seed default roles
     const rolesToSeed = ['ADMIN', 'USER', 'SUPER_ADMIN'];
     for (const roleName of rolesToSeed) {
-      const exists = await roleRepository.findOne({ where: { name: roleName } });
+      const exists = await roleRepository.findOne({
+        where: { name: roleName },
+      });
       if (!exists) {
         const newRole = roleRepository.create({ name: roleName });
         await roleRepository.save(newRole);

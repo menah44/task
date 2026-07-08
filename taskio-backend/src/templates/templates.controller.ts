@@ -19,10 +19,16 @@ export class TemplatesController {
   @Post()
   createTemplate(
     @Body('formId', ParseIntPipe) formId: number,
-    @Body('title') title: string,
+    @Body('title') title: string | undefined,
+    @Body('description') description: string | undefined,
     @CurrentUser() user: User,
   ) {
-    return this.templatesService.createTemplateFromForm(formId, title, user);
+    return this.templatesService.createTemplateFromForm(
+      formId,
+      title,
+      description,
+      user,
+    );
   }
 
   @Post(':id/create-form')

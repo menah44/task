@@ -18,16 +18,22 @@ export class QuestionTypesService {
     });
   }
 
-  async create(createQuestionTypeDto: CreateQuestionTypeDto): Promise<QuestionType> {
+  async create(
+    createQuestionTypeDto: CreateQuestionTypeDto,
+  ): Promise<QuestionType> {
     const existing = await this.questionTypeRepository.findOne({
       where: { type: createQuestionTypeDto.type },
     });
 
     if (existing) {
-      throw new ConflictException(`Question type '${createQuestionTypeDto.type}' already exists`);
+      throw new ConflictException(
+        `Question type '${createQuestionTypeDto.type}' already exists`,
+      );
     }
 
-    const questionType = this.questionTypeRepository.create(createQuestionTypeDto);
+    const questionType = this.questionTypeRepository.create(
+      createQuestionTypeDto,
+    );
     return this.questionTypeRepository.save(questionType);
   }
 }

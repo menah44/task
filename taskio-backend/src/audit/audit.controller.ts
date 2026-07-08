@@ -1,4 +1,12 @@
-import { Controller, UseGuards, Get, Query, Param, ParseIntPipe, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  UseGuards,
+  Get,
+  Query,
+  Param,
+  ParseIntPipe,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuditService } from './audit.service';
 import { HeaderAuthGuard } from '../auth/header-auth.guard';
@@ -22,19 +30,25 @@ export class AuditController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
-    if (user.role?.toUpperCase() !== 'ADMIN' && user.role?.toUpperCase() !== 'SUPER_ADMIN') {
+    if (
+      user.role?.toUpperCase() !== 'ADMIN' &&
+      user.role?.toUpperCase() !== 'SUPER_ADMIN'
+    ) {
       throw new ForbiddenException('Only administrators can view audit logs.');
     }
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 10;
-    return this.auditService.findAll({
-      page: pageNum,
-      limit: limitNum,
-      actorId: actorId ? parseInt(actorId, 10) : undefined,
-      resourceType,
-      startDate,
-      endDate,
-    }, user);
+    return this.auditService.findAll(
+      {
+        page: pageNum,
+        limit: limitNum,
+        actorId: actorId ? parseInt(actorId, 10) : undefined,
+        resourceType,
+        startDate,
+        endDate,
+      },
+      user,
+    );
   }
 
   @Get(':id')
@@ -42,7 +56,10 @@ export class AuditController {
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    if (user.role?.toUpperCase() !== 'ADMIN' && user.role?.toUpperCase() !== 'SUPER_ADMIN') {
+    if (
+      user.role?.toUpperCase() !== 'ADMIN' &&
+      user.role?.toUpperCase() !== 'SUPER_ADMIN'
+    ) {
       throw new ForbiddenException('Only administrators can view audit logs.');
     }
     return this.auditService.findOne(id, user);

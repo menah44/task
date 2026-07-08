@@ -6,13 +6,15 @@ import { User } from './auth/entities/user.entity';
 
 async function bootstrap() {
   if (!process.env.JWT_SECRET) {
-    console.error('❌ FATAL ERROR: JWT_SECRET environment variable is missing.');
+    console.error(
+      '❌ FATAL ERROR: JWT_SECRET environment variable is missing.',
+    );
     process.exit(1);
   }
 
   console.log('Seeding database starting...');
   const app = await NestFactory.createApplicationContext(AppModule);
-  
+
   const dataSource = app.get(DataSource);
   const roleRepository = dataSource.getRepository(Role);
   const userRepository = dataSource.getRepository(User);
@@ -46,10 +48,13 @@ async function bootstrap() {
     console.log('✅ Default Admin created successfully via Seed Script!');
   } else {
     // If admin exists, ensure their password is correct hash of '123456'
-    adminExists.password = '$2b$10$qCVz09lo4SwOYUmkxEdf.unz.CEmw6yZDOcKiJ2c.rDtmxcJ6clD.';
+    adminExists.password =
+      '$2b$10$qCVz09lo4SwOYUmkxEdf.unz.CEmw6yZDOcKiJ2c.rDtmxcJ6clD.';
     adminExists.role = 'ADMIN';
     await userRepository.save(adminExists);
-    console.log('✅ Default Admin password/role verified & updated successfully!');
+    console.log(
+      '✅ Default Admin password/role verified & updated successfully!',
+    );
   }
 
   await app.close();

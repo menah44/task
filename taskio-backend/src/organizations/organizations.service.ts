@@ -54,7 +54,7 @@ export class OrganizationsService {
       'CREATE_ORGANIZATION',
       'ORGANIZATION',
       String(savedOrganization.id),
-      { slug: savedOrganization.slug }
+      { slug: savedOrganization.slug },
     );
 
     return savedOrganization;
@@ -62,8 +62,9 @@ export class OrganizationsService {
 
   async findAll(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
-    
-    const queryBuilder = this.organizationsRepository.createQueryBuilder('organization')
+
+    const queryBuilder = this.organizationsRepository
+      .createQueryBuilder('organization')
       .loadRelationCountAndMap('organization.usersCount', 'organization.users')
       .orderBy('organization.createdAt', 'DESC')
       .skip(skip)
@@ -93,16 +94,23 @@ export class OrganizationsService {
     return result;
   }
 
-  async createAdmin(id: number, dto: CreateOrganizationAdminDto, currentUser?: User) {
+  async createAdmin(
+    id: number,
+    dto: CreateOrganizationAdminDto,
+    currentUser?: User,
+  ) {
     const organization = await this.findOne(id);
-    const result = await this.usersService.createOrganizationAdmin(organization, dto);
-    
+    const result = await this.usersService.createOrganizationAdmin(
+      organization,
+      dto,
+    );
+
     await this.auditService.logAction(
       currentUser,
       'CREATE_ORGANIZATION_ADMIN',
       'ORGANIZATION',
       String(id),
-      { email: dto.email }
+      { email: dto.email },
     );
 
     return result;
@@ -117,14 +125,15 @@ export class OrganizationsService {
 
     // Explicitly update only fields provided in the DTO (guarantees slug is immutable)
     Object.assign(organization, updateDto);
-    const savedOrganization = await this.organizationsRepository.save(organization);
+    const savedOrganization =
+      await this.organizationsRepository.save(organization);
 
     await this.auditService.logAction(
       currentUser,
       'UPDATE_ORGANIZATION',
       'ORGANIZATION',
       String(savedOrganization.id),
-      { changes: updateDto }
+      { changes: updateDto },
     );
 
     return savedOrganization;
@@ -149,7 +158,7 @@ export class OrganizationsService {
       'DEACTIVATE_ORGANIZATION',
       'ORGANIZATION',
       String(savedOrg.id),
-      { status: 'deactivated' }
+      { status: 'deactivated' },
     );
 
     return savedOrg;

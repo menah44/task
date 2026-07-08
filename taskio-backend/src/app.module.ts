@@ -23,6 +23,8 @@ import { QuestionTypesModule } from './question-types/question-types.module';
 import { TemplatesModule } from './templates/templates.module';
 import { Template } from './forms/entities/template.entity';
 import { FormVersion } from './forms/entities/form-version.entity';
+import { Response } from './forms/entities/response.entity';
+import { SpatialModule } from './spatial/spatial.module';
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { FormVersion } from './forms/entities/form-version.entity';
         QuestionType,
         FormVersion,
         Template,
+        Response,
       ],
       synchronize: true,
     }),
@@ -58,6 +61,7 @@ import { FormVersion } from './forms/entities/form-version.entity';
     OrganizationsModule,
     QuestionTypesModule,
     TemplatesModule,
+    SpatialModule,
   ],
   controllers: [AppController],
   providers: [AppService],

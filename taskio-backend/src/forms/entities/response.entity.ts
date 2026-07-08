@@ -7,10 +7,9 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Form } from './form.entity';
-import { User } from '../../auth/entities/user.entity';
 
-@Entity('form_version')
-export class FormVersion {
+@Entity('response')
+export class Response {
   @PrimaryGeneratedColumn()
   id!: number;
 
@@ -21,19 +20,12 @@ export class FormVersion {
   @JoinColumn({ name: 'formId' })
   form!: Form;
 
-  @Column({ type: 'int' })
-  version!: number;
+  @Column({ type: 'double precision', nullable: true })
+  latitude?: number | null;
 
-  @Column({ type: 'jsonb' })
-  snapshot!: any;
+  @Column({ type: 'double precision', nullable: true })
+  longitude?: number | null;
 
   @CreateDateColumn()
   createdAt!: Date;
-
-  @Column({ type: 'int', nullable: true })
-  createdById?: number | null;
-
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'createdById' })
-  createdBy?: User;
 }

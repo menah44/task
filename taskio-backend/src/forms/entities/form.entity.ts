@@ -1,4 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany, DeleteDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+  DeleteDateColumn,
+} from 'typeorm';
 import { Organization } from '../../organizations/entities/organization.entity';
 import { User } from '../../auth/entities/user.entity';
 import { Section } from './section.entity';
@@ -28,6 +38,9 @@ export class Form {
 
   @Column({ type: 'jsonb', nullable: true })
   settings?: any;
+
+  @Column({ type: 'jsonb', nullable: true })
+  boundary?: any;
 
   @CreateDateColumn()
   createdAt!: Date;

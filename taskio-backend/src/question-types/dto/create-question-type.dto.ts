@@ -2,7 +2,9 @@ import { IsString, IsNotEmpty, IsOptional, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateQuestionTypeDto {
-  @ApiProperty({ description: 'The UI type identifier (e.g., text, radio, file)' })
+  @ApiProperty({
+    description: 'The UI type identifier (e.g., text, radio, file)',
+  })
   @IsString()
   @IsNotEmpty()
   type: string;
@@ -17,7 +19,10 @@ export class CreateQuestionTypeDto {
   @IsOptional()
   icon?: string;
 
-  @ApiProperty({ description: 'The core backend type (e.g., TEXT, MULTI_CHOICE, FILE_UPLOAD)' })
+  @ApiProperty({
+    description:
+      'The core backend type (e.g., TEXT, MULTI_CHOICE, FILE_UPLOAD)',
+  })
   @IsString()
   @IsNotEmpty()
   baseType: string;

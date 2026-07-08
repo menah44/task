@@ -1,4 +1,16 @@
-import { Controller, Get, Patch, Post, Put, Param, Query, Body, UseGuards, ParseIntPipe, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Put,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  ParseIntPipe,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { HeaderAuthGuard } from '../auth/header-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -29,13 +41,16 @@ export class UsersController {
   ) {
     const userRole = user.role?.toUpperCase();
     if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('Only administrators can access this resource.');
+      throw new ForbiddenException(
+        'Only administrators can access this resource.',
+      );
     }
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 10;
-    
+
     // Pass user.organization.id or user.orgId if user is an ADMIN (not SUPER_ADMIN)
-    const orgId = userRole === 'ADMIN' ? (user.organization?.id || user.orgId) : undefined;
+    const orgId =
+      userRole === 'ADMIN' ? user.organization?.id || user.orgId : undefined;
     return this.usersService.findAll(pageNum, limitNum, search || '', orgId);
   }
 
@@ -46,7 +61,9 @@ export class UsersController {
   ) {
     const userRole = user.role?.toUpperCase();
     if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('Only administrators can access this resource.');
+      throw new ForbiddenException(
+        'Only administrators can access this resource.',
+      );
     }
     return this.usersService.findById(id, user);
   }
@@ -58,7 +75,9 @@ export class UsersController {
   ) {
     const userRole = user.role?.toUpperCase();
     if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('Only administrators can access this resource.');
+      throw new ForbiddenException(
+        'Only administrators can access this resource.',
+      );
     }
     return this.usersService.getUserRoles(id, user);
   }
@@ -70,26 +89,35 @@ export class UsersController {
   ) {
     const userRole = user.role?.toUpperCase();
     if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('Only administrators can access this resource.');
+      throw new ForbiddenException(
+        'Only administrators can access this resource.',
+      );
     }
     return this.usersService.getUserGroups(id, user);
   }
 
   @Post()
-  async createUser(
-    @CurrentUser() user: User,
-    @Body() dto: CreateUserAdminDto,
-  ) {
+  async createUser(@CurrentUser() user: User, @Body() dto: CreateUserAdminDto) {
     const userRole = user.role?.toUpperCase();
     if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('Only administrators can perform this action.');
+      throw new ForbiddenException(
+        'Only administrators can perform this action.',
+      );
     }
-    if (dto.role?.toUpperCase() === 'SUPER_ADMIN' && userRole !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('You do not have permission to assign the SUPER_ADMIN role.');
+    if (
+      dto.role?.toUpperCase() === 'SUPER_ADMIN' &&
+      userRole !== 'SUPER_ADMIN'
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to assign the SUPER_ADMIN role.',
+      );
     }
-    
+
     // For ADMIN, we pass their organization to automatically bind the new user to it
-    const org = userRole === 'ADMIN' ? (user.organization || { id: user.orgId } as any) : undefined;
+    const org =
+      userRole === 'ADMIN'
+        ? user.organization || ({ id: user.orgId } as any)
+        : undefined;
     return this.usersService.create(dto, org, user);
   }
 
@@ -101,10 +129,17 @@ export class UsersController {
   ) {
     const userRole = user.role?.toUpperCase();
     if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('Only administrators can perform this action.');
+      throw new ForbiddenException(
+        'Only administrators can perform this action.',
+      );
     }
-    if (dto.role?.toUpperCase() === 'SUPER_ADMIN' && userRole !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('You do not have permission to assign the SUPER_ADMIN role.');
+    if (
+      dto.role?.toUpperCase() === 'SUPER_ADMIN' &&
+      userRole !== 'SUPER_ADMIN'
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to assign the SUPER_ADMIN role.',
+      );
     }
     return this.usersService.updateUser(id, dto, user);
   }
@@ -116,7 +151,9 @@ export class UsersController {
   ) {
     const userRole = user.role?.toUpperCase();
     if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('Only administrators can perform this action.');
+      throw new ForbiddenException(
+        'Only administrators can perform this action.',
+      );
     }
     return this.usersService.deactivate(id, user);
   }
@@ -128,7 +165,9 @@ export class UsersController {
   ) {
     const userRole = user.role?.toUpperCase();
     if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('Only administrators can perform this action.');
+      throw new ForbiddenException(
+        'Only administrators can perform this action.',
+      );
     }
     return this.usersService.activate(id, user);
   }

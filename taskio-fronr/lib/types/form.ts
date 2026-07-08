@@ -2,6 +2,7 @@
 // Shared Form types — single source of truth for:
 //   app/(authenticated)/studio/forms/[formId]/builder/page.tsx
 //   app/(authenticated)/studio/forms/[formId]/fill/page.tsx
+//   app/(authenticated)/studio/forms/[formId]/fill/review/page.tsx
 //
 // Adjust the "@/lib/types/form" import path below if your
 // tsconfig path alias differs.
@@ -98,7 +99,9 @@ export interface StoredForm {
 export function storageKeyForForm(formId: string) {
   return `form-${formId}`;
 }
+
 export function readLocalFormStructure(formId: string): FormStructure | null {
+  if (typeof window === "undefined") return null;
   const data = localStorage.getItem(storageKeyForForm(formId));
   return data ? JSON.parse(data) : null;
 }
@@ -107,5 +110,17 @@ export function writeLocalFormStructure(
   formId: string,
   form: Omit<FormStructure, "id">,
 ) {
+  if (typeof window === "undefined") return;
   localStorage.setItem(storageKeyForForm(formId), JSON.stringify(form));
+}
+
+/**
+ * sessionStorage key used to hand the in-progress response (form +
+ * answers + GPS) from the fill page to the review page (A4-11 /
+ * FE-T404), before/without a real GET /responses/:id/full round-trip.
+ * Both pages must import this from here rather than redefining it
+ * locally, or the keys can drift and the handoff will silently fail.
+ */
+export function reviewStorageKey(responseId: number | string): string {
+  return `form-review:${responseId}`;
 }

@@ -25,7 +25,7 @@ interface GpsCoords {
 // builder hasn't saved anything locally yet (e.g. fresh env, no backend).
 function getMockForm(formId: string): FormStructure {
   return {
-    id: Number(formId) || formId,
+    id: formId,
     title: "Employee Feedback Survey",
     description: "Share your thoughts to help us improve.",
     showProgress: true,

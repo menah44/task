@@ -11,4 +11,4 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 EXPOSE 5000
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main"]

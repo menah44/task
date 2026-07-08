@@ -59,6 +59,11 @@ spec:
                 secretKeyRef:
                   name: postgres-ha-app
                   key: password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: JWT_SECRET
           startupProbe:
             httpGet:
               path: /

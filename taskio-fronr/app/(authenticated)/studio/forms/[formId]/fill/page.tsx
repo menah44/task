@@ -3,14 +3,13 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { toast } from "react-hot-toast";
 import AnswerField, { AnswerValue } from "@/components/AnswerField";
 import apiClient from "@/lib/api/client";
-import { spatialApi } from "@/services/spatialApi";
 import {
   FormStructure,
   Question,
   readLocalFormStructure,
+  reviewStorageKey,
 } from "@/lib/types/form";
 import { toAnswerQuestion } from "@/lib/types/forms/answerFieldAdapter";
 
@@ -22,9 +21,11 @@ interface GpsCoords {
 }
 
 // ======================== Mock Data ========================
+// Last-resort fallback: used only if the real API call fails AND the
+// builder hasn't saved anything locally yet (e.g. fresh env, no backend).
 function getMockForm(formId: string): FormStructure {
   return {
-    id: formId,
+    id: Number(formId) || formId,
     title: "Employee Feedback Survey",
     description: "Share your thoughts to help us improve.",
     showProgress: true,
@@ -110,18 +111,14 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 }
 
 // ======================== GPS Banner ========================
-// Shows a human-readable address (reverse-geocoded) instead of raw
-// coordinates, plus a small embedded map preview of the captured point.
 function GpsBanner({
   coords,
   loading,
-  address,
-  addressLoading,
+  denied,
 }: {
   coords: GpsCoords | null;
   loading: boolean;
-  address: string | null;
-  addressLoading: boolean;
+  denied: boolean;
 }) {
   if (loading) {
     return (
@@ -133,57 +130,49 @@ function GpsBanner({
   }
 
   if (coords) {
-    // Small bounding box around the point so the embedded OSM map
-    // zooms in nicely on the exact location.
-    const delta = 0.006;
-    const bbox = [
-      coords.lng - delta,
-      coords.lat - delta,
-      coords.lng + delta,
-      coords.lat + delta,
-    ].join("%2C");
-    const mapEmbedSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${coords.lat}%2C${coords.lng}`;
-    const mapLinkHref = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=17/${coords.lat}/${coords.lng}`;
+    const { lat, lng, accuracy } = coords;
+    const delta = 0.006; // ~600m box around the pin
+    const bbox = `${lng - delta}%2C${lat - delta}%2C${lng + delta}%2C${lat + delta}`;
+    const mapEmbedSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat}%2C${lng}`;
+    const mapLink = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`;
 
     return (
       <div className="bg-green-500/10 border border-green-500/20 rounded-lg overflow-hidden">
-        <div className="text-green-400 text-xs px-4 py-2.5 flex items-start gap-2">
-          <span className="mt-0.5">📍</span>
-          <div className="flex flex-col gap-0.5">
-            <span>
-              {addressLoading
-                ? "Resolving address..."
-                : (address ?? "Location captured")}
-            </span>
-            <span className="text-green-400/60 text-[11px]">
-              ±{Math.round(coords.accuracy)}m accuracy
-            </span>
-          </div>
+        <div className="text-green-400 text-xs px-4 py-2.5 flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2">
+            <span>📍</span>
+            Location captured (±{Math.round(accuracy)}m)
+          </span>
+          {/* Same-tab navigation by design (no target="_blank"). Note: this
+              will leave the fill flow, so anything not auto-saved yet will
+              be lost — surface this to users if it becomes an issue. */}
+          <a
+            href={mapLink}
+            className="underline hover:text-green-300 whitespace-nowrap">
+            Open in Maps ↗
+          </a>
         </div>
-        <div className="h-40 w-full border-t border-green-500/20">
-          <iframe
-            title="Captured location map"
-            src={mapEmbedSrc}
-            className="w-full h-full grayscale-0"
-            style={{ border: 0 }}
-            loading="lazy"
-          />
-        </div>
-        <a
-          href={mapLinkHref}
-          className="block text-center text-[11px] text-green-400/80 hover:text-green-300 py-1.5 border-t border-green-500/20">
-          View larger map ↗
-        </a>
+        <iframe
+          title="Captured location map"
+          src={mapEmbedSrc}
+          className="w-full h-40 border-0"
+          loading="lazy"
+        />
       </div>
     );
   }
 
-  return (
-    <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs px-4 py-2.5 rounded-lg flex items-center gap-2">
-      <span>⚠️</span>
-      Location access denied. This form requires your location.
-    </div>
-  );
+  if (denied) {
+    return (
+      <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs px-4 py-2.5 rounded-lg flex items-center gap-2">
+        <span>⚠️</span>
+        Couldn&apos;t access your location. Check your browser&apos;s location
+        permission for this site and try again.
+      </div>
+    );
+  }
+
+  return null;
 }
 
 // ======================== Auto-save indicator ========================
@@ -223,30 +212,27 @@ export default function FormFillPage() {
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [showValidation, setShowValidation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [responseId, setResponseId] = useState<number | null>(null);
   const [autoSaveStatus, setAutoSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
   const [gpsCoords, setGpsCoords] = useState<GpsCoords | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
-  const [address, setAddress] = useState<string | null>(null);
-  const [addressLoading, setAddressLoading] = useState(false);
+  const [gpsDenied, setGpsDenied] = useState(false);
 
   const autoSaveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Load form structure ──
+  // Order: real API (A2-10) -> builder's locally-saved structure -> mock.
+  // The middle step is what actually "links" this page to the builder:
+  // build a form, hit Fill Form, and it renders exactly what you built,
+  // even before the backend endpoint exists.
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
         const res = await apiClient.get(`/forms/${formId}/structure`);
-        if (res.data.sections && res.data.sections.length > 0) {
-          setForm(res.data);
-        } else {
-          const local = formId ? readLocalFormStructure(formId) : null;
-          setForm(local ?? res.data);
-        }
+        setForm(res.data);
       } catch {
         const local = formId ? readLocalFormStructure(formId) : null;
         setForm(local ?? getMockForm(formId ?? "1"));
@@ -257,11 +243,18 @@ export default function FormFillPage() {
     load();
   }, [formId]);
 
-  // ── GPS capture when hasBoundary = true ──
+  // ── GPS capture: always attempted once the form has loaded ──
+  // hasBoundary still controls whether the banner/GPS is *required* by
+  // the form (used for validation elsewhere), but the location itself is
+  // now always captured so it's attached to every submitted response.
   useEffect(() => {
-    if (!form?.hasBoundary) return;
+    if (!form) return;
+    if (!navigator.geolocation) {
+      setGpsDenied(true);
+      return;
+    }
     setGpsLoading(true);
-    navigator.geolocation?.getCurrentPosition(
+    navigator.geolocation.getCurrentPosition(
       (pos) => {
         setGpsCoords({
           lat: pos.coords.latitude,
@@ -269,37 +262,15 @@ export default function FormFillPage() {
           accuracy: pos.coords.accuracy,
         });
         setGpsLoading(false);
+        setGpsDenied(false);
       },
-      () => setGpsLoading(false),
+      () => {
+        setGpsLoading(false);
+        setGpsDenied(true);
+      },
       { enableHighAccuracy: true, timeout: 10000 },
     );
-  }, [form?.hasBoundary]);
-
-  // ── Reverse geocode coords into a human-readable address ──
-  // Uses OpenStreetMap's free Nominatim API (no key required).
-  useEffect(() => {
-    if (!gpsCoords) return;
-    let cancelled = false;
-    setAddressLoading(true);
-    fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${gpsCoords.lat}&lon=${gpsCoords.lng}&zoom=18&addressdetails=1`,
-      { headers: { Accept: "application/json" } },
-    )
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data) => {
-        if (cancelled) return;
-        setAddress(data?.display_name ?? null);
-      })
-      .catch(() => {
-        if (!cancelled) setAddress(null);
-      })
-      .finally(() => {
-        if (!cancelled) setAddressLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [gpsCoords]);
+  }, [form]);
 
   // ── Create a draft response on first answer: POST /responses/forms/:formId (A4-01) ──
   const createDraftIfNeeded = useCallback(async () => {
@@ -377,56 +348,44 @@ export default function FormFillPage() {
     setCurrentSectionIdx((p) => p - 1);
   };
 
-  // ── Submit: POST /responses/:id/submit (A4-12) ──
-  const handleSubmit = async () => {
+  // ── Go to review (FE-T404): saves the draft, then hands off to
+  // /fill/review, which is where the actual POST /responses/:id/submit
+  // (A4-12) happens after the "irreversible" confirmation. ──
+  const handleGoToReview = async () => {
     if (getSectionErrors().length > 0) {
       setShowValidation(true);
       return;
     }
-
-    if (form?.hasBoundary) {
-      if (!navigator.geolocation) {
-        toast.error("Geolocation is not supported by your browser.");
-        return;
-      }
-      if (!gpsCoords) {
-        toast.error("Location access denied or not yet acquired. This form requires your location.");
-        return;
-      }
-      setIsSubmitting(true);
-      try {
-        const geoRes = await spatialApi.validateGeofence(
-          parseInt(formId as string, 10),
-          gpsCoords.lat,
-          gpsCoords.lng,
-        );
-        if (!geoRes.data.inside) {
-          toast.error("You are outside the allowed area for this form.");
-          setIsSubmitting(false);
-          return;
-        }
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || "Failed to validate location boundary. Please try again.");
-        setIsSubmitting(false);
-        return;
-      }
-    }
-
     setIsSubmitting(true);
+    let id: number | null = null;
     try {
-      const id = await createDraftIfNeeded();
+      id = await createDraftIfNeeded();
       if (id) {
         await apiClient.put(`/responses/${id}/answers/bulk`, { answers });
-        await apiClient.post(`/responses/${id}/submit`, {
-          gps: gpsCoords,
-        });
       }
-      setSubmitted(true);
     } catch {
-      setSubmitted(true);
+      // fall through — review page will still work off the local handoff
     } finally {
       setIsSubmitting(false);
     }
+
+    // Hand off so the review page (GET /responses/:id/full — A4-11) has
+    // something to render even before that endpoint exists / while offline.
+    if (typeof window !== "undefined" && form) {
+      sessionStorage.setItem(
+        reviewStorageKey(id ?? responseId ?? "draft"),
+        JSON.stringify({
+          responseId: id ?? responseId,
+          form,
+          answers,
+          gpsCoords,
+        }),
+      );
+    }
+
+    router.push(
+      `/studio/forms/${formId}/fill/review?responseId=${id ?? responseId ?? "draft"}`,
+    );
   };
 
   // ── Loading ──
@@ -453,44 +412,7 @@ export default function FormFillPage() {
       </div>
     );
 
-  // ── Success screen ──
-  if (submitted) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-10 max-w-md w-full text-center space-y-4">
-          <div className="text-5xl">✅</div>
-          <h2 className="text-2xl font-bold text-white">Submitted!</h2>
-          <p className="text-gray-400 text-sm">
-            Your response has been recorded successfully.
-          </p>
-          <button
-            onClick={() => router.push("/userForms")}
-            className="mt-4 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors">
-            Back to My Forms
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const sections = form.sections || [];
-
-  if (sections.length === 0) {
-    return (
-      <div className="max-w-2xl mx-auto space-y-6 pb-10">
-        <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 text-center text-gray-400">
-          <h1 className="text-xl font-bold text-white mb-2">{form.title}</h1>
-          <p className="text-sm">This form does not have any sections or questions yet.</p>
-          <button
-            onClick={() => router.push("/studio/forms")}
-            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors">
-            Back to Studio
-          </button>
-        </div>
-      </div>
-    );
-  }
-
+  const sections = form.sections;
   const currentSection = sections[currentSectionIdx];
   const isLastSection = currentSectionIdx === sections.length - 1;
   const visibleQuestions = currentSection.questions.filter(isQuestionVisible);
@@ -520,15 +442,8 @@ export default function FormFillPage() {
         )}
       </div>
 
-      {/* GPS Banner */}
-      {form.hasBoundary && (
-        <GpsBanner
-          coords={gpsCoords}
-          loading={gpsLoading}
-          address={address}
-          addressLoading={addressLoading}
-        />
-      )}
+      {/* GPS Banner — location is always captured for this form */}
+      <GpsBanner coords={gpsCoords} loading={gpsLoading} denied={gpsDenied} />
 
       {/* Section */}
       <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 space-y-6">
@@ -536,6 +451,7 @@ export default function FormFillPage() {
           {currentSection.title}
         </h2>
 
+        {/* Questions (only visible ones) */}
         {visibleQuestions.map((q) => (
           <AnswerField
             key={q.id}
@@ -564,7 +480,7 @@ export default function FormFillPage() {
           </button>
         ) : (
           <Link
-            href={`/studio/forms/${formId}/builder`}
+            href="/userForms"
             className="px-5 py-2.5 text-sm font-medium text-gray-400 hover:text-gray-200 transition-colors">
             ← Cancel
           </Link>
@@ -572,10 +488,10 @@ export default function FormFillPage() {
 
         {isLastSection ? (
           <button
-            onClick={handleSubmit}
+            onClick={handleGoToReview}
             disabled={isSubmitting}
             className="px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
-            {isSubmitting ? "Submitting..." : "Submit Form ✓"}
+            {isSubmitting ? "Saving..." : "Review Answers →"}
           </button>
         ) : (
           <button

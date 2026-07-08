@@ -38,7 +38,7 @@ jobs:
       - name: Build frontend image
         run: |
           docker build \
-          --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.SERVER_IP }}/api \
+          --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.LOAD_BALANCER_IP }}/api/v1 \
           -t ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }} \
           ./taskio-fronr
 

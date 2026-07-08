@@ -26,6 +26,8 @@ import { FormVersion } from './forms/entities/form-version.entity';
 import { Response } from './forms/entities/response.entity';
 import { SpatialModule } from './spatial/spatial.module';
 
+import { HealthController } from './health.controller';
+
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -63,7 +65,7 @@ import { SpatialModule } from './spatial/spatial.module';
     TemplatesModule,
     SpatialModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, HealthController],
   providers: [AppService],
 })
 export class AppModule {}

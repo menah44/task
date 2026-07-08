@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController, SwaggerController } from './app.controller';
+import { HealthController } from './health.controller';
 import { AppService } from './app.service';
 import { JwtModule } from '@nestjs/jwt';
 import { GatewayAuthGuard } from './auth/gateway-auth.guard';
@@ -13,7 +14,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
       secret: process.env.JWT_SECRET || 'super-secret-key',
     }),
   ],
-  controllers: [AppController, SwaggerController],
+  controllers: [AppController, SwaggerController, HealthController],
   providers: [
     AppService,
     GatewayAuthGuard,

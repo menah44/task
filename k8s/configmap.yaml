@@ -7,6 +7,6 @@ data:
   DB_HOST: postgres-ha-rw
   DB_PORT: "5432"
   DB_USERNAME: taskio_user
-  DB_NAME: taskio_db
+  DB_NAME: taskio
   PORT: "5000"
   NEXT_PUBLIC_API_URL: "http://20.79.190.41/api/v1"

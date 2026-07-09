@@ -52,6 +52,7 @@ export default function AuthenticatedLayout({
         const isAdminPath = pathname?.startsWith("/admin");
         const isStudioPath = pathname?.startsWith("/studio");
         const isSuperAdminPath = pathname?.startsWith("/super-admin");
+        const isFillPath = pathname?.includes("/fill");
 
         if (isSuperAdminPath && userRole !== "SUPER_ADMIN") {
           console.warn(
@@ -62,7 +63,7 @@ export default function AuthenticatedLayout({
           console.warn("Super Admin redirected to their correct dashboard...");
           router.replace("/super-admin/dashboard");
         } else if (
-          (isAdminPath || isStudioPath) &&
+          (isAdminPath || (isStudioPath && !isFillPath)) &&
           userRole !== "ADMIN" &&
           userRole !== "SUPER_ADMIN"
         ) {

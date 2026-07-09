@@ -231,12 +231,12 @@ export default function PublicFormFillPage() {
 
   const sections = form.sections || [];
 
-  if (sections.length === 0) {
+  if (sections.length === 0 || !sections[currentSectionIdx]) {
     return (
       <div className="max-w-2xl mx-auto space-y-6 pb-10">
         <div className="bg-white border border-gray-100 rounded-2xl p-6 text-center text-gray-500 shadow-sm">
           <h1 className="text-xl font-bold text-gray-900 mb-2">{form.title}</h1>
-          <p className="text-sm">This form does not have any sections or questions yet.</p>
+          <p className="text-sm">This form has no questions yet.</p>
           <button
             onClick={() => router.push("/public")}
             className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors">

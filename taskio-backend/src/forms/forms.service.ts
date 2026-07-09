@@ -123,8 +123,11 @@ export class FormsService {
     const skip = (page - 1) * limit;
 
     const where: any = { organizationId: orgId };
-    if (status) {
-      where.status = status;
+    const userRole = user.role?.toUpperCase();
+    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+      where.status = 'PUBLISHED';
+    } else if (status) {
+      where.status = status.toUpperCase();
     }
     if (search) {
       where.title = Like(`%${search}%`);
@@ -325,6 +328,10 @@ export class FormsService {
             'Form title must be unique per organization',
           );
         }
+      }
+
+      if (updateFormDto.status) {
+        updateFormDto.status = updateFormDto.status.toUpperCase();
       }
 
       const { sections, ...rest } = updateFormDto;

@@ -42,7 +42,7 @@ export default function StudioFormsPage() {
 
   const statusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string | number; status: string }) => {
-      await apiClient.put(`/forms/${id}`, { status });
+      await apiClient.patch(`/forms/${id}/status`, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["accessible-forms"] });
@@ -122,9 +122,9 @@ export default function StudioFormsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
-                          form.status === "published"
+                          form.status?.toUpperCase() === "PUBLISHED"
                             ? "bg-green-500/10 text-green-400 border-green-500/20"
-                            : form.status === "draft"
+                            : form.status?.toUpperCase() === "DRAFT"
                               ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
                               : "bg-gray-500/10 text-gray-400 border-gray-500/20"
                         }`}
@@ -165,9 +165,9 @@ export default function StudioFormsPage() {
                         <ExternalLink className="w-3.5 h-3.5" /> Builder
                       </Link>
 
-                      {form.status !== "published" ? (
+                      {form.status?.toUpperCase() !== "PUBLISHED" ? (
                         <button
-                          onClick={() => statusMutation.mutate({ id: form.id, status: "published" })}
+                          onClick={() => statusMutation.mutate({ id: form.id, status: "PUBLISHED" })}
                           disabled={statusMutation.isPending}
                           className="text-green-400 hover:text-green-300 transition-colors inline-flex items-center gap-1 bg-transparent border-none cursor-pointer disabled:opacity-50"
                         >
@@ -175,7 +175,7 @@ export default function StudioFormsPage() {
                         </button>
                       ) : (
                         <button
-                          onClick={() => statusMutation.mutate({ id: form.id, status: "draft" })}
+                          onClick={() => statusMutation.mutate({ id: form.id, status: "DRAFT" })}
                           disabled={statusMutation.isPending}
                           className="text-yellow-400 hover:text-yellow-300 transition-colors inline-flex items-center gap-1 bg-transparent border-none cursor-pointer disabled:opacity-50"
                         >

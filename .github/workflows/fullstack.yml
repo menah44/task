@@ -36,7 +36,7 @@ jobs:
 
       - name: Build backend image
         run: |
-          docker build \
+          docker build --pull \
           -t ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }} \
           ./taskio-backend
  
@@ -48,7 +48,7 @@ jobs:
           image-ref: ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }}
           format: sarif
           output: trivy-backend.sarif
-          exit-code: 0
+          exit-code: 1
           ignore-unfixed: true
           severity: CRITICAL,HIGH
           scanners: vuln
@@ -65,7 +65,7 @@ jobs:
 
       - name: Build frontend image
         run: |
-          docker build \
+          docker build --pull\
           --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.LOAD_BALANCER_IP }}/api/v1 \
           -t ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }} \
           ./taskio-fronr

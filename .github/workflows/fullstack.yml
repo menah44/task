@@ -93,7 +93,7 @@ jobs:
 
             if ! kubectl rollout status deployment/backend \
             -n form-app \
-            --timeout=120s
+            --timeout=300s
             then
 
               echo "Backend deployment failed!"

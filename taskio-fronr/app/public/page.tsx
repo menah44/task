@@ -6,6 +6,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { hasQuestions } from "@/lib/utils";
 
 // ======================== Types ========================
 interface PublicForm {
@@ -19,13 +20,13 @@ interface PublicForm {
 // ======================== Skeleton ========================
 function SkeletonCard() {
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-4 animate-pulse shadow-sm">
-      <div className="h-5 bg-gray-100 rounded-lg w-3/4" />
+    <div className="bg-white border border-border rounded-2xl p-6 space-y-4 animate-pulse shadow-sm">
+      <div className="h-5 bg-muted rounded-lg w-3/4" />
       <div className="space-y-2">
-        <div className="h-3 bg-gray-100 rounded w-full" />
-        <div className="h-3 bg-gray-100 rounded w-5/6" />
+        <div className="h-3 bg-muted rounded w-full" />
+        <div className="h-3 bg-muted rounded w-5/6" />
       </div>
-      <div className="h-10 bg-gray-100 rounded-xl w-full" />
+      <div className="h-10 bg-muted rounded-xl w-full" />
     </div>
   );
 }
@@ -34,13 +35,13 @@ function SkeletonCard() {
 function EmptyState() {
   return (
     <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-center text-3xl mb-4">
+      <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center text-3xl mb-4">
         📋
       </div>
-      <h3 className="text-gray-800 font-semibold text-lg mb-1">
+      <h3 className="text-foreground font-semibold text-lg mb-1">
         No Public Forms Available
       </h3>
-      <p className="text-gray-400 text-sm max-w-xs">
+      <p className="text-muted-foreground text-sm max-w-xs">
         There are no public forms available at the moment. Check back later.
       </p>
     </div>
@@ -52,25 +53,25 @@ function FormCard({ form }: { form: PublicForm }) {
   const isOpen = form.status === "PUBLISHED";
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md hover:border-blue-200 transition-all">
+    <div className="bg-white border border-border rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md hover:border-blue-200 transition-all">
       <div className="space-y-3">
         {/* Title + Status */}
         <div className="flex items-start justify-between gap-3">
-          <h3 className="text-gray-900 font-semibold text-base leading-snug line-clamp-2">
+          <h3 className="text-foreground font-semibold text-base leading-snug line-clamp-2">
             {form.title}
           </h3>
           <span
             className={`shrink-0 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
               isOpen
-                ? "bg-green-50 text-green-600 border-green-200"
-                : "bg-gray-50 text-gray-500 border-gray-200"
+                ? "bg-green-50 text-success border-green-200"
+                : "bg-muted text-muted-foreground border-border"
             }`}>
             {isOpen ? "Open" : "Closed"}
           </span>
         </div>
 
         {/* Description */}
-        <p className="text-gray-500 text-sm line-clamp-3 leading-relaxed">
+        <p className="text-muted-foreground text-sm line-clamp-3 leading-relaxed">
           {form.description || "No description provided."}
         </p>
 
@@ -85,13 +86,13 @@ function FormCard({ form }: { form: PublicForm }) {
       {isOpen ? (
         <Link
           href={`/public/forms/${form.id}`}
-          className="mt-5 w-full py-2.5 rounded-xl text-sm font-bold text-center text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm block">
+          className="mt-5 w-full py-2.5 rounded-xl text-sm font-bold text-center text-white bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-colors shadow-sm block">
           Fill Out Form →
         </Link>
       ) : (
         <button
           disabled
-          className="mt-5 w-full py-2.5 rounded-xl text-sm font-bold text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed">
+          className="mt-5 w-full py-2.5 rounded-xl text-sm font-bold text-muted-foreground bg-muted border border-border cursor-not-allowed">
           Form Closed
         </button>
       )}
@@ -114,8 +115,8 @@ export default function PublicFormsPage() {
         const res = await fetch(`${baseURL}/forms/public`);
         if (res.ok) {
           const data: PublicForm[] = await res.json();
-          // ✅ Only show allowAnonymous forms
-          setForms(data.filter((f) => f.allowAnonymous));
+          // ✅ Only show allowAnonymous forms that have questions
+          setForms(data.filter((f) => f.allowAnonymous && hasQuestions(f)));
         } else {
           setForms(getMockForms());
         }
@@ -129,29 +130,29 @@ export default function PublicFormsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted">
       {/* Navbar */}
-      <header className="bg-white border-b border-gray-100 shadow-sm">
+      <header className="bg-white border-b border-border shadow-sm">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-blue-600 text-2xl font-black">■</span>
-            <span className="text-gray-900 font-bold text-lg">FormFlow</span>
+            <span className="text-primary text-2xl font-black">■</span>
+            <span className="text-foreground font-bold text-lg">FormFlow</span>
           </div>
           <Link
             href="/login"
-            className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">
+            className="px-4 py-2 text-sm font-medium text-primary border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">
             Sign In
           </Link>
         </div>
       </header>
 
       {/* Hero */}
-      <div className="bg-white border-b border-gray-100">
+      <div className="bg-white border-b border-border">
         <div className="max-w-6xl mx-auto px-6 py-12 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
+          <h1 className="text-4xl font-bold text-foreground mb-3">
             Public Forms
           </h1>
-          <p className="text-gray-500 text-lg max-w-xl mx-auto">
+          <p className="text-muted-foreground text-lg max-w-xl mx-auto">
             Browse and fill out forms — no account required.
           </p>
         </div>
@@ -171,8 +172,8 @@ export default function PublicFormsPage() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-gray-100 mt-10">
-        <div className="max-w-6xl mx-auto px-6 py-6 text-center text-xs text-gray-400">
+      <footer className="border-t border-border mt-10">
+        <div className="max-w-6xl mx-auto px-6 py-6 text-center text-xs text-muted-foreground">
           © {new Date().getFullYear()} FormFlow. All rights reserved.
         </div>
       </footer>

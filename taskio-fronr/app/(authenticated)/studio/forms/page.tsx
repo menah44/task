@@ -4,6 +4,7 @@ import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { ClipboardList, ExternalLink, Play, Square, ShieldAlert, BarChart3, Trash } from "lucide-react";
+import { hasQuestions } from "@/lib/utils";
 
 interface FormPermissions {
   canEdit: boolean;
@@ -47,9 +48,10 @@ export default function StudioFormsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["accessible-forms"] });
     },
-    onError: (err) => {
+    onError: (err: any) => {
       console.error("Failed to update status", err);
-      alert("Failed to update status.");
+      const msg = err?.response?.data?.message || "Failed to update status.";
+      alert(msg);
     }
   });
 
@@ -75,65 +77,64 @@ export default function StudioFormsPage() {
   }
 
   return (
-    <div className="space-y-6 text-[#c9d1d9]" dir="ltr">
-      <div className="flex justify-between items-center border-b border-[#30363d] pb-5">
+    <div className="space-y-6 text-foreground" dir="ltr">
+      <div className="flex justify-between items-center border-b border-border pb-5">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
             <ClipboardList className="w-8 h-8 text-blue-500" />
             Studio Forms
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Manage your created forms, check statuses, and open response builders.
           </p>
         </div>
         <Link
           href="/studio/forms/new"
-          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-md border border-blue-500/20"
+          className="px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-0.5 shadow-[0_4px_14px_0_rgba(59,130,246,0.39)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.23)] text-sm font-semibold rounded-full transition-all duration-200 border border-transparent ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center gap-2"
         >
           + Create New Form
         </Link>
       </div>
 
-      <div className="bg-[#161b22] rounded-3xl border border-[#30363d] overflow-hidden shadow-sm">
+      <div className="bg-card rounded-2xl border border-border/60 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-[#30363d] text-left text-sm">
-            <thead className="bg-[#161b22]/50 text-gray-400 uppercase text-xs font-bold tracking-wider">
+          <table className="min-w-full text-left text-sm">
+            <thead className="bg-muted/30 text-muted-foreground uppercase text-xs font-semibold tracking-wider border-b border-border/60">
               <tr>
-                <th className="px-6 py-4">Title</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Updated</th>
-                <th className="px-6 py-4">Permissions</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-5">Title</th>
+                <th className="px-6 py-5">Status</th>
+                <th className="px-6 py-5">Updated</th>
+                <th className="px-6 py-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#30363d] text-sm text-gray-300">
+            <tbody className="text-sm text-muted-foreground">
               {forms && forms.length > 0 ? (
                 forms.map((form) => (
                   <tr
                     key={form.id}
-                    className="hover:bg-[#1f242c] transition-colors"
+                    className="hover:bg-muted/30 transition-colors border-b border-border/40 last:border-0 group"
                   >
                     {/* Title */}
-                    <td className="px-6 py-4 font-semibold text-white whitespace-nowrap">
+                    <td className="px-6 py-4 font-semibold text-foreground whitespace-nowrap">
                       {form.title}
                     </td>
 
                     {/* Status Badge */}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-5 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
                           form.status?.toUpperCase() === "PUBLISHED"
-                            ? "bg-green-500/10 text-green-400 border-green-500/20"
+                            ? "bg-success/10 text-success border border-success/20"
                             : form.status?.toUpperCase() === "DRAFT"
-                              ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
-                              : "bg-gray-500/10 text-gray-400 border-gray-500/20"
+                              ? "bg-warning/10 text-warning border border-warning/20"
+                              : "bg-muted text-muted-foreground border border-border"
                         }`}
                       >
                         {form.status}
                       </span>
                     </td>
 
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-400">
+                    <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">
                       {form.updatedAt ? new Date(form.updatedAt).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "short",
@@ -141,35 +142,29 @@ export default function StudioFormsPage() {
                       }) : "N/A"}
                     </td>
 
-                    {/* Permissions Icons */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-3 text-sm">
-                        {form.permissions?.canEdit && (
-                          <span title="Can Edit" className="text-blue-400 bg-blue-500/5 px-2 py-0.5 rounded border border-blue-500/10 text-[10px] font-bold">EDIT</span>
-                        )}
-                        {form.permissions?.canView && (
-                          <span title="Can View" className="text-green-400 bg-green-500/5 px-2 py-0.5 rounded border border-green-500/10 text-[10px] font-bold">VIEW</span>
-                        )}
-                        {form.permissions?.canDelete && (
-                          <span title="Can Delete" className="text-red-400 bg-red-500/5 px-2 py-0.5 rounded border border-red-500/10 text-[10px] font-bold">DELETE</span>
-                        )}
-                      </div>
-                    </td>
+
 
                     {/* Actions */}
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-xs font-bold space-x-3">
+                    <td className="px-6 py-5 whitespace-nowrap text-right flex items-center justify-end gap-2 opacity-100 transition-opacity">
                       <Link
                         href={`/studio/forms/${form.id}/builder`}
-                        className="text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-full bg-blue-500/10 text-primary hover:bg-primary hover:text-primary-foreground border border-transparent transition-all inline-flex items-center gap-1.5 text-xs font-semibold"
                       >
                         <ExternalLink className="w-3.5 h-3.5" /> Builder
                       </Link>
 
                       {form.status?.toUpperCase() !== "PUBLISHED" ? (
                         <button
-                          onClick={() => statusMutation.mutate({ id: form.id, status: "PUBLISHED" })}
-                          disabled={statusMutation.isPending}
-                          className="text-green-400 hover:text-green-300 transition-colors inline-flex items-center gap-1 bg-transparent border-none cursor-pointer disabled:opacity-50"
+                          onClick={() => {
+                            if (!hasQuestions(form)) {
+                              alert("A form must contain at least one question before it can be published.");
+                              return;
+                            }
+                            statusMutation.mutate({ id: form.id, status: "PUBLISHED" });
+                          }}
+                          disabled={statusMutation.isPending || !hasQuestions(form)}
+                          title={!hasQuestions(form) ? "A form must contain at least one question before it can be published." : "Publish"}
+                          className="px-3 py-1.5 rounded-full bg-success/10 text-success hover:bg-success hover:text-white border border-transparent transition-all inline-flex items-center gap-1.5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Play className="w-3.5 h-3.5" /> Publish
                         </button>
@@ -177,25 +172,11 @@ export default function StudioFormsPage() {
                         <button
                           onClick={() => statusMutation.mutate({ id: form.id, status: "DRAFT" })}
                           disabled={statusMutation.isPending}
-                          className="text-yellow-400 hover:text-yellow-300 transition-colors inline-flex items-center gap-1 bg-transparent border-none cursor-pointer disabled:opacity-50"
+                          className="px-3 py-1.5 rounded-full bg-warning/10 text-warning hover:bg-warning hover:text-white border border-transparent transition-all inline-flex items-center gap-1.5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Square className="w-3.5 h-3.5" /> Unpublish
                         </button>
                       )}
-
-                      <Link
-                        href={`/studio/forms/${form.id}/permissions`}
-                        className="text-purple-400 hover:text-purple-300 transition-colors inline-flex items-center gap-1"
-                      >
-                        <ShieldAlert className="w-3.5 h-3.5" /> Security
-                      </Link>
-
-                      <Link
-                        href={`/studio/forms/${form.id}/analytics`}
-                        className="text-indigo-400 hover:text-indigo-300 transition-colors inline-flex items-center gap-1"
-                      >
-                        <BarChart3 className="w-3.5 h-3.5" /> Analytics
-                      </Link>
 
                       <button
                         disabled={!form.permissions?.canDelete || deleteMutation.isPending}
@@ -204,10 +185,10 @@ export default function StudioFormsPage() {
                             deleteMutation.mutate(form.id);
                           }
                         }}
-                        className={`inline-flex items-center gap-1 transition-colors bg-transparent border-none cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full transition-all inline-flex items-center gap-1.5 text-xs font-semibold border border-transparent ${
                           form.permissions?.canDelete
-                            ? "text-red-400 hover:text-red-300"
-                            : "text-gray-600 cursor-not-allowed"
+                            ? "bg-error/10 text-error hover:bg-error hover:text-white cursor-pointer"
+                            : "bg-muted text-muted-foreground cursor-not-allowed"
                         }`}
                       >
                         <Trash className="w-3.5 h-3.5" /> Delete
@@ -219,7 +200,7 @@ export default function StudioFormsPage() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-6 py-12 text-center text-gray-500"
+                    className="px-6 py-12 text-center text-muted-foreground"
                   >
                     No permitted forms found.
                   </td>

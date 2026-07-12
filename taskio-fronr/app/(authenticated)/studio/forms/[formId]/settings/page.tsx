@@ -13,6 +13,7 @@ interface FormSettings {
   allowAnonymous: boolean;
   requireLogin: boolean;
   showProgress: boolean;
+  restrictByLocation: boolean;
 }
 
 // Mock data for development (remove when API is ready)
@@ -23,6 +24,7 @@ const MOCK_SETTINGS: FormSettings = {
   allowAnonymous: true,
   requireLogin: false,
   showProgress: true,
+  restrictByLocation: false,
 };
 
 export default function SettingsPage() {
@@ -40,6 +42,7 @@ export default function SettingsPage() {
     allowAnonymous: false,
     requireLogin: false,
     showProgress: false,
+    restrictByLocation: false,
   });
 
   // Fetch settings – fallback to mock if API fails
@@ -59,6 +62,7 @@ export default function SettingsPage() {
           allowAnonymous: data.settings?.allowAnonymous ?? false,
           requireLogin: data.settings?.requireLogin ?? false,
           showProgress: data.settings?.showProgress ?? false,
+          restrictByLocation: data.settings?.restrictByLocation ?? false,
         });
         setError(null);
       } catch (err: unknown) {
@@ -126,6 +130,7 @@ export default function SettingsPage() {
           allowAnonymous: settings.allowAnonymous,
           requireLogin: settings.requireLogin,
           showProgress: settings.showProgress,
+          restrictByLocation: settings.restrictByLocation,
         }
       };
 
@@ -144,18 +149,18 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0d1117] p-6 flex justify-center items-center">
+      <div className="min-h-screen bg-background p-6 flex justify-center items-center">
         <SkeletonCard />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-[#c9d1d9] p-6">
+    <div className="min-h-screen bg-background text-foreground p-6">
       <div className="max-w-2xl mx-auto">
         <Link
           href={`/studio/forms/${formId}/builder`}
-          className="inline-flex items-center text-blue-400 hover:text-blue-300 mb-6 text-sm">
+          className="inline-flex items-center text-primary hover:text-primary/80 mb-6 text-sm">
           ← Back to Builder
         </Link>
 
@@ -174,7 +179,7 @@ export default function SettingsPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-5 bg-[#161b22] border border-[#30363d] rounded-lg p-6">
+          className="space-y-5 bg-card border border-border rounded-lg p-6">
           <div>
             <label
               htmlFor="startDate"
@@ -187,7 +192,7 @@ export default function SettingsPage() {
               name="startDate"
               value={settings.startDate}
               onChange={handleChange}
-              className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -201,14 +206,14 @@ export default function SettingsPage() {
               name="endDate"
               value={settings.endDate}
               onChange={handleChange}
-              className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {settings.startDate && settings.endDate && (
               <p
                 className={`text-sm mt-1 ${
                   new Date(settings.endDate) > new Date(settings.startDate)
-                    ? "text-green-400"
-                    : "text-red-400"
+                    ? "text-success"
+                    : "text-error"
                 }`}>
                 {new Date(settings.endDate) > new Date(settings.startDate)
                   ? "✓ Valid range"
@@ -230,7 +235,7 @@ export default function SettingsPage() {
               value={settings.maxResponses}
               onChange={handleChange}
               min="1"
-              className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Leave empty for unlimited"
             />
           </div>
@@ -268,12 +273,23 @@ export default function SettingsPage() {
               />
               Show Progress Bar
             </label>
+
+            <label className="flex items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                name="restrictByLocation"
+                checked={settings.restrictByLocation}
+                onChange={handleChange}
+                className="accent-blue-500"
+              />
+              Restrict by Location (Requires saved map boundary)
+            </label>
           </div>
 
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors disabled:opacity-50">
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm font-medium py-2 rounded-lg transition-colors disabled:opacity-50">
             {saving ? "Saving…" : "Save Settings"}
           </button>
         </form>

@@ -18,10 +18,15 @@ import { CurrentUser } from '../auth/current-user.decorator';
 export class ResponsesController {
   constructor(private readonly responsesService: ResponsesService) {}
 
+  @Get('my-submissions')
+  findMySubmissions(@CurrentUser() user: any) {
+    return this.responsesService.findMySubmissions(user);
+  }
+
   @Post('forms/:formId')
   createDraft(
     @Param('formId', ParseIntPipe) formId: number,
-    @Body('gps') gps: { latitude?: number; longitude?: number } | undefined,
+    @Body('gps') gps: { latitude?: number; longitude?: number; lat?: number; lng?: number } | undefined,
     @CurrentUser() user: any,
   ) {
     return this.responsesService.createDraft(formId, gps, user);
@@ -47,9 +52,10 @@ export class ResponsesController {
   @Post(':id/submit')
   submitResponse(
     @Param('id', ParseIntPipe) id: number,
+    @Body('gps') gps: { latitude?: number; longitude?: number; lat?: number; lng?: number } | undefined,
     @CurrentUser() user: any,
   ) {
-    return this.responsesService.submitResponse(id, user);
+    return this.responsesService.submitResponse(id, gps, user);
   }
 
   @Get()

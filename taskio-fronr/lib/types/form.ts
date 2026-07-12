@@ -67,11 +67,13 @@ export interface Section {
 export interface FormSettings {
   showProgress: boolean;
   hasBoundary: boolean; // triggers GPS capture on the fill page
+  restrictByLocation?: boolean; // forces GPS validation against boundary
 }
 
 export const DEFAULT_FORM_SETTINGS: FormSettings = {
   showProgress: true,
   hasBoundary: false,
+  restrictByLocation: false,
 };
 
 /** Full structure as returned by GET /forms/:id/structure (A2-10) */

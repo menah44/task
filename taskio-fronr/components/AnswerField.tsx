@@ -105,7 +105,7 @@ export default function AnswerField({
     <div className="space-y-1.5">
       <label className="block text-sm font-medium text-white">
         {question.label}
-        {question.required && <span className="text-red-400 ml-1">*</span>}
+        {question.required && <span className="text-error ml-1">*</span>}
       </label>
 
       <RendererSwitch
@@ -117,7 +117,7 @@ export default function AnswerField({
       />
 
       {isInvalid && (
-        <p className="text-xs text-red-400 mt-1">This field is required.</p>
+        <p className="text-xs text-error mt-1">This field is required.</p>
       )}
     </div>
   );
@@ -137,8 +137,8 @@ function RendererSwitch({
   mode: "preview" | "fill";
   isInvalid: boolean;
 }) {
-  const baseInputClasses = `w-full bg-[#0d1117] border rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-    isInvalid ? "border-red-500" : "border-[#30363d]"
+  const baseInputClasses = `w-full bg-background border rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+    isInvalid ? "border-red-500" : "border-border"
   }`;
 
   switch (question.type) {
@@ -202,7 +202,7 @@ function RendererSwitch({
             </label>
           ))}
           {(!question.options || question.options.length === 0) && (
-            <p className="text-xs text-gray-500 italic">
+            <p className="text-xs text-muted-foreground italic">
               No options defined yet.
             </p>
           )}
@@ -236,7 +236,7 @@ function RendererSwitch({
             </label>
           ))}
           {(!question.options || question.options.length === 0) && (
-            <p className="text-xs text-gray-500 italic">
+            <p className="text-xs text-muted-foreground italic">
               No options defined yet.
             </p>
           )}
@@ -254,8 +254,8 @@ function RendererSwitch({
             onClick={() => onChange(true)}
             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
               value === true
-                ? "bg-blue-600 border-blue-600 text-white"
-                : "bg-[#0d1117] border-[#30363d] text-gray-300 hover:border-blue-500/50"
+                ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm border-blue-600 text-white"
+                : "bg-background border-border text-muted-foreground hover:border-blue-500/50"
             }`}>
             Yes
           </button>
@@ -265,8 +265,8 @@ function RendererSwitch({
             onClick={() => onChange(false)}
             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
               value === false
-                ? "bg-blue-600 border-blue-600 text-white"
-                : "bg-[#0d1117] border-[#30363d] text-gray-300 hover:border-blue-500/50"
+                ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm border-blue-600 text-white"
+                : "bg-background border-border text-muted-foreground hover:border-blue-500/50"
             }`}>
             No
           </button>
@@ -293,7 +293,7 @@ function RendererSwitch({
 
     default:
       return (
-        <p className="text-xs text-gray-500 italic">
+        <p className="text-xs text-muted-foreground italic">
           Unsupported question type: {question.type}
         </p>
       );
@@ -354,7 +354,7 @@ function GeoPointPicker({
         onMouseLeave={() => setHoverPos(null)}
         className={`relative w-full h-48 rounded-lg border overflow-hidden select-none ${
           disabled ? "cursor-not-allowed opacity-70" : "cursor-crosshair"
-        } ${isInvalid ? "border-red-500" : "border-[#30363d]"}`}
+        } ${isInvalid ? "border-red-500" : "border-border"}`}
         style={{
           backgroundImage:
             "linear-gradient(0deg, #161b22 1px, transparent 1px), linear-gradient(90deg, #161b22 1px, transparent 1px)",
@@ -362,9 +362,9 @@ function GeoPointPicker({
           backgroundColor: "#0d1117",
         }}>
         {/* Faux "land mass" shapes so it looks a bit map-like */}
-        <div className="absolute top-6 left-10 w-20 h-12 bg-[#1f242c] rounded-full opacity-60" />
-        <div className="absolute bottom-8 right-12 w-24 h-16 bg-[#1f242c] rounded-full opacity-60" />
-        <div className="absolute top-1/2 left-1/3 w-16 h-10 bg-[#1f242c] rounded-full opacity-40" />
+        <div className="absolute top-6 left-10 w-20 h-12 bg-muted rounded-full opacity-60" />
+        <div className="absolute bottom-8 right-12 w-24 h-16 bg-muted rounded-full opacity-60" />
+        <div className="absolute top-1/2 left-1/3 w-16 h-10 bg-muted rounded-full opacity-40" />
 
         {/* Hover crosshair hint */}
         {hoverPos && !disabled && (
@@ -384,14 +384,14 @@ function GeoPointPicker({
         )}
 
         {!value && (
-          <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs pointer-events-none">
+          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs pointer-events-none">
             Click to drop a pin
           </div>
         )}
       </div>
 
       {value && (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-muted-foreground">
           Lat: {value.lat}, Lng: {value.lng}
         </p>
       )}

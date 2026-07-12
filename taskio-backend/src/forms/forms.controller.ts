@@ -68,6 +68,7 @@ export class FormsController {
       (form.settings as {
         showProgress?: boolean;
         hasBoundary?: boolean;
+        restrictByLocation?: boolean;
         [key: string]: unknown;
       }) || {};
     return {
@@ -76,6 +77,7 @@ export class FormsController {
       description: form.description,
       showProgress: settings.showProgress ?? true,
       hasBoundary: settings.hasBoundary ?? false,
+      restrictByLocation: settings.restrictByLocation ?? false,
       sections: form.sections || [],
     };
   }

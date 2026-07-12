@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import apiClient from "@/lib/api/client";
 import SkeletonCard from "@/components/SkeletonCard";
 import EmptyState from "@/components/EmptyState";
+import { hasQuestions } from "@/lib/utils";
 
 interface Form {
   id: number;
@@ -17,13 +18,12 @@ export default function AdminDashboard() {
   const [forms, setForms] = useState<Form[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setLoading(true);
-
+  const fetchForms = useCallback(() => {
     apiClient
       .get("/forms")
       .then((response) => {
-        setForms(response.data.items || []);
+        const items = response.data.items || [];
+        setForms(items.filter(hasQuestions));
       })
       .catch((error) => {
         console.warn(
@@ -54,53 +54,74 @@ export default function AdminDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    fetchForms();
+    const interval = setInterval(fetchForms, 10000);
+    return () => clearInterval(interval);
+  }, [fetchForms]);
+
   return (
-    <main className="space-y-8 text-[#c9d1d9]" dir="ltr">
+    <main className="space-y-8 text-foreground" dir="ltr">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-white tracking-tight">
+          <h2 className="text-3xl font-bold text-foreground tracking-tight">
             Form Dashboard
           </h2>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             Manage and monitor all active forms and submissions received.
           </p>
         </div>
         <Link
           href="/studio/forms/new"
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors">
+          className="px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-0.5 shadow-[0_4px_14px_0_rgba(59,130,246,0.39)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.23)] text-sm font-semibold rounded-full transition-all duration-200 border border-transparent ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center gap-2">
           + Create Form
         </Link>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-[#161b22] rounded-2xl p-6 shadow-sm border border-[#30363d]">
-          <p className="text-gray-400 text-sm font-medium">Total Forms</p>
-          <h3 className="text-3xl font-bold mt-2 text-white">{forms.length}</h3>
+        <div className="bg-card rounded-xl p-6 shadow-md border border-border/60 flex flex-col gap-1 hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground text-sm font-bold tracking-wide uppercase">Total Forms</p>
+            <div className="bg-muted p-2 rounded-xl">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-foreground"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+          </div>
+          <h3 className="text-4xl font-black mt-2 text-foreground tracking-tighter">{forms.length}</h3>
         </div>
-        <div className="bg-[#161b22] rounded-2xl p-6 shadow-sm border border-[#30363d]">
-          <p className="text-gray-400 text-sm font-medium">Published Forms</p>
-          <h3 className="text-3xl font-bold mt-2 text-green-400">
+        <div className="bg-card rounded-xl p-6 shadow-md border border-border/60 flex flex-col gap-1 hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground text-sm font-bold tracking-wide uppercase">Published Forms</p>
+            <div className="bg-success/10 p-2 rounded-xl">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-success"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+          </div>
+          <h3 className="text-4xl font-black mt-2 text-success tracking-tighter">
             {forms.filter((f) => f.status?.toLowerCase() === "published").length}
           </h3>
         </div>
-        <div className="bg-[#161b22] rounded-2xl p-6 shadow-sm border border-[#30363d]">
-          <p className="text-gray-400 text-sm font-medium">Total Submissions</p>
-          <h3 className="text-3xl font-bold mt-2 text-blue-400">
+        <div className="bg-card rounded-xl p-6 shadow-md border border-border/60 flex flex-col gap-1 hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground text-sm font-bold tracking-wide uppercase">Total Submissions</p>
+            <div className="bg-primary/10 p-2 rounded-xl">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            </div>
+          </div>
+          <h3 className="text-4xl font-black mt-2 text-primary tracking-tighter">
             {forms.reduce((acc, form) => acc + (form.submissions || 0), 0)}
           </h3>
         </div>
       </div>
 
       {/* Recent Forms Section */}
-      <div className="bg-[#161b22] rounded-3xl p-6 shadow-sm border border-[#30363d]">
-        <h3 className="text-xl font-bold mb-6 text-white border-b border-[#30363d] pb-3">
+      <div className="bg-card rounded-xl p-8 shadow-sm border border-border/60">
+        <h3 className="text-xl font-bold mb-6 text-foreground border-b border-border/60 pb-4">
           Recent Forms
         </h3>
 
         {loading ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {[1, 2, 3].map((item) => (
               <SkeletonCard key={item} />
             ))}
@@ -108,52 +129,56 @@ export default function AdminDashboard() {
         ) : forms.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {forms.map((form) => (
               <div
                 key={form.id}
-                className="border border-[#30363d] rounded-2xl p-5 hover:border-blue-500/50 hover:bg-[#1f242c] transition-all bg-[#0d1117] flex flex-col justify-between">
+                className="border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all bg-card flex flex-col justify-between group">
                 <div>
-                  <div className="flex justify-between items-start gap-4">
+                  <div className="flex justify-between items-start gap-4 mb-3">
                     <Link
                       href={`/studio/forms/${form.id}/builder`}
-                      className="font-semibold text-lg text-white hover:text-blue-400 transition-colors cursor-pointer">
+                      className="font-bold text-lg text-foreground group-hover:text-primary transition-colors cursor-pointer tracking-tight">
                       {form.title}
                     </Link>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+                      className={`px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider whitespace-nowrap ${
                         form.status?.toLowerCase() === "published"
-                          ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                          : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                          ? "bg-success/10 text-success border border-success/20"
+                          : "bg-warning/10 text-warning border border-warning/20"
                       }`}>
                       {form.status?.toLowerCase() === "published" ? "Published" : "Draft"}
                     </span>
                   </div>
 
-                  <p className="text-gray-400 text-sm mt-3">
-                    Submissions:{" "}
-                    <span className="text-gray-200 font-medium">
-                      {form.submissions || 0}
-                    </span>{" "}
-                    responses
-                  </p>
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span>
+                      <span className="text-foreground font-medium">
+                        {form.submissions || 0}
+                      </span>{" "}
+                      responses
+                    </span>
+                  </div>
                 </div>
 
                 {/* ✅ Actions: Open Builder + Versions + View Details */}
-                <div className="mt-5 pt-3 border-t border-[#30363d]/50 flex justify-end gap-4 flex-wrap">
+                <div className="mt-5 pt-4 border-t border-border flex justify-end gap-3 flex-wrap">
                   <Link
                     href={`/studio/forms/${form.id}/builder`}
-                    className="text-purple-400 font-medium text-sm hover:text-purple-300 transition-colors">
+                    className="text-purple-600 dark:text-purple-400 font-bold text-xs hover:bg-purple-500/10 transition-colors px-3 py-1.5 rounded-md">
                     Open Builder →
                   </Link>
                   <Link
                     href={`/studio/forms/${form.id}/versions`}
-                    className="text-yellow-400 font-medium text-sm hover:text-yellow-300 transition-colors">
+                    className="text-warning font-bold text-xs hover:bg-warning/10 transition-colors px-3 py-1.5 rounded-md">
                     Versions →
                   </Link>
-                  <button className="text-blue-400 font-medium text-sm hover:text-blue-300 transition-colors">
+                  <Link
+                    href={`/studio/forms/${form.id}/analytics`}
+                    className="text-primary font-bold text-xs hover:bg-primary/10 transition-colors px-3 py-1.5 rounded-md">
                     View Details →
-                  </button>
+                  </Link>
                 </div>
               </div>
             ))}

@@ -1,4 +1,4 @@
-import { Controller, All, Req, Res, Next, UseGuards } from '@nestjs/common';
+import { Controller, All, Get, Req, Res, Next, UseGuards } from '@nestjs/common';
 import type { Request, Response, NextFunction } from 'express';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 import { GatewayAuthGuard } from './auth/gateway-auth.guard';
@@ -37,6 +37,12 @@ export class AppController {
   @Public()
   @All('auth/refresh')
   authRefresh(@Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+    backendProxy(req, res, next);
+  }
+
+  @Public()
+  @Get('files/:mediaId')
+  proxyFiles(@Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
     backendProxy(req, res, next);
   }
 

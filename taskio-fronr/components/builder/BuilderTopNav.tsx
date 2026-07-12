@@ -46,10 +46,10 @@ export default function BuilderTopNav({
   const pathname = usePathname();
 
   return (
-    <div className="bg-[#161b22] border-b border-[#30363d] px-6 h-16 flex items-center justify-between shrink-0 gap-4">
+    <div className="bg-card border-b border-border px-6 h-16 flex items-center justify-between shrink-0 gap-4">
       {/* Left cluster: segmented tabs + contextual subtitle */}
       <div className="flex items-center gap-4 min-w-0">
-        <div className="flex items-center gap-0.5 bg-[#0d1117] border border-[#30363d] rounded-lg p-1 shrink-0">
+        <div className="flex items-center gap-0.5 bg-background border border-border rounded-lg p-1 shrink-0">
           {TABS.map(({ key, label, href, icon: Icon }) => {
             const isActive = pathname?.includes(`/${key}`);
             return (
@@ -58,8 +58,8 @@ export default function BuilderTopNav({
                 href={href(formId)}
                 className={`flex items-center gap-1.5 text-sm font-medium rounded-md px-3 py-1.5 transition-colors ${
                   isActive
-                    ? "bg-blue-600/15 text-blue-400"
-                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                    ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm/15 text-primary"
+                    : "text-muted-foreground hover:text-gray-200 hover:bg-white/5"
                 }`}>
                 <Icon className="w-4 h-4" />
                 {label}
@@ -70,8 +70,8 @@ export default function BuilderTopNav({
 
         {subtitle && (
           <>
-            <div className="w-px h-5 bg-[#30363d] shrink-0" />
-            <p className="text-xs text-gray-500 truncate">{subtitle}</p>
+            <div className="w-px h-5 bg-accent shrink-0" />
+            <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
           </>
         )}
       </div>

@@ -118,13 +118,13 @@ export default function RolesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0d1117] text-[#c9d1d9] py-10 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-white">Roles Management</h1>
+          <h1 className="text-3xl font-bold text-foreground">Roles Management</h1>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-xl text-sm font-medium transition-colors"
+            className="px-4 py-2 bg-primary hover:bg-primary/80 text-primary-foreground shadow-sm rounded-xl text-sm font-medium transition-colors"
           >
             Add Role
           </button>
@@ -133,39 +133,39 @@ export default function RolesPage() {
         {loading && <SkeletonTable />}
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6">
+          <div className="bg-error/15 border border-error/20 text-error p-4 rounded-xl mb-6">
             {error}
           </div>
         )}
 
         {!loading && !error && (
-          <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-[#30363d] flex justify-between items-center bg-[#161b22]">
-              <h2 className="text-lg font-semibold text-white">All Roles</h2>
+          <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-card">
+              <h2 className="text-lg font-semibold text-foreground">All Roles</h2>
             </div>
             
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#21262d] border-b border-[#30363d] text-gray-400 text-sm font-medium uppercase tracking-wider">
+                  <tr className="bg-muted border-b border-border text-muted-foreground text-[11px] font-semibold uppercase tracking-wider">
                     <th className="p-4 py-3">Role Name</th>
                     <th className="p-4 py-3">Users Count</th>
                     <th className="p-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#30363d] text-sm text-gray-300">
+                <tbody className="divide-y divide-border/60 text-sm text-muted-foreground">
                   {roles.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="p-8 text-center text-gray-500">
+                      <td colSpan={3} className="p-8 text-center text-muted-foreground">
                         No roles found.
                       </td>
                     </tr>
                   ) : (
                     roles.map((role) => (
-                      <tr key={role.id} className="hover:bg-[#21262d]/50 transition-colors">
+                      <tr key={role.id} className="hover:bg-muted/50 transition-colors">
                         {editRoleId === role.id ? (
                           <>
-                            <td className="p-4 font-medium text-gray-200">
+                            <td className="p-4 font-medium text-foreground">
                               <form 
                                 onSubmit={(e) => {
                                   e.preventDefault();
@@ -178,17 +178,17 @@ export default function RolesPage() {
                                   value={editRoleName}
                                   onChange={(e) => setEditRoleName(e.target.value)}
                                   placeholder="e.g. EDITOR"
-                                  className="w-full bg-[#0d1117] border border-blue-500 rounded-xl px-3 py-1.5 text-white focus:outline-none focus:border-blue-400 transition-colors uppercase sm:max-w-xs"
+                                  className="w-full bg-background border border-blue-500 rounded-xl px-3 py-1.5 text-foreground focus:outline-none focus:border-blue-400 transition-colors uppercase sm:max-w-xs"
                                   required
                                   disabled={editLoading}
                                   autoFocus
                                 />
                                 {editError && (
-                                  <span className="text-xs text-red-400">{editError}</span>
+                                  <span className="text-xs text-error">{editError}</span>
                                 )}
                               </form>
                             </td>
-                            <td className="p-4 text-gray-300">
+                            <td className="p-4 text-muted-foreground">
                               {role.usersCount ?? 0} {(role.usersCount ?? 0) === 1 ? "user" : "users"}
                             </td>
                             <td className="p-4 text-right">
@@ -196,14 +196,14 @@ export default function RolesPage() {
                                 <button 
                                   onClick={() => handleEditRole()}
                                   disabled={editLoading || !editRoleName.trim() || editRoleName.toUpperCase() === role.name.toUpperCase()}
-                                  className="text-green-400 hover:text-green-300 font-medium transition-colors disabled:opacity-50"
+                                  className="text-success hover:text-green-300 font-medium transition-colors disabled:opacity-50"
                                 >
                                   {editLoading ? "Saving..." : "Save"}
                                 </button>
                                 <button 
                                   onClick={() => setEditRoleId(null)}
                                   disabled={editLoading}
-                                  className="text-gray-400 hover:text-gray-300 font-medium transition-colors"
+                                  className="text-muted-foreground hover:text-muted-foreground font-medium transition-colors"
                                 >
                                   Cancel
                                 </button>
@@ -212,10 +212,10 @@ export default function RolesPage() {
                           </>
                         ) : (
                           <>
-                            <td className="p-4 font-medium text-gray-200">
+                            <td className="p-4 font-medium text-foreground">
                               {role.name}
                             </td>
-                            <td className="p-4 text-gray-300">
+                            <td className="p-4 text-muted-foreground">
                               {role.usersCount ?? 0} {(role.usersCount ?? 0) === 1 ? "user" : "users"}
                             </td>
                             <td className="p-4 text-right">
@@ -226,13 +226,13 @@ export default function RolesPage() {
                                     setEditRoleName(role.name);
                                     setEditError(null);
                                   }}
-                                  className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                                  className="text-primary hover:text-primary/80 font-medium transition-colors"
                                 >
                                   Edit
                                 </button>
                                 <button 
                                   onClick={() => handleDeleteRole(role.id, role.name)}
-                                  className="text-red-400 hover:text-red-300 font-medium transition-colors"
+                                  className="text-error hover:text-red-300 font-medium transition-colors"
                                 >
                                   Delete
                                 </button>
@@ -252,41 +252,41 @@ export default function RolesPage() {
 
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-[#161b22] rounded-3xl w-full max-w-md border border-[#30363d] overflow-hidden shadow-2xl flex flex-col">
-            <div className="p-6 border-b border-[#30363d] flex justify-between items-center bg-[#161b22]">
-              <h3 className="text-xl font-bold text-white">Add New Role</h3>
+          <div className="bg-card rounded-3xl w-full max-w-md border border-border overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-card">
+              <h3 className="text-xl font-bold text-foreground">Add New Role</h3>
               <button 
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-gray-400 hover:text-white transition-colors p-2"
+                className="text-muted-foreground hover:text-foreground transition-colors p-2"
               >
                 ✕
               </button>
             </div>
             <div className="p-6">
               {addError && (
-                <div className="mb-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                <div className="mb-4 p-4 rounded-xl bg-error/15 border border-error/20 text-error text-sm">
                   {addError}
                 </div>
               )}
               <form id="addRoleForm" onSubmit={handleAddRole} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Role Name</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Role Name</label>
                   <input
                     type="text"
                     value={newRoleName}
                     onChange={(e) => setNewRoleName(e.target.value)}
                     placeholder="e.g. EDITOR"
-                    className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors uppercase"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors uppercase"
                     required
                   />
                 </div>
               </form>
             </div>
-            <div className="p-6 border-t border-[#30363d] flex justify-end gap-3 bg-[#161b22]">
+            <div className="p-6 border-t border-border flex justify-end gap-3 bg-card">
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-[#30363d] transition-colors"
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               >
                 Cancel
               </button>
@@ -294,7 +294,7 @@ export default function RolesPage() {
                 type="submit"
                 form="addRoleForm"
                 disabled={addLoading || !newRoleName.trim()}
-                className="px-5 py-2.5 bg-primary hover:bg-primary/80 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-5 py-2.5 bg-primary hover:bg-primary/80 text-primary-foreground shadow-sm rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {addLoading && (
                   <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>

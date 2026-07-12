@@ -143,11 +143,11 @@ export default function UserManagementPage() {
   const safeUsers = Array.isArray(users) ? users : [];
 
   return (
-    <main className="space-y-8 text-[#c9d1d9]" dir="ltr">
+    <main className="space-y-8 text-foreground" dir="ltr">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <Link
               href="/super-admin"
               className="hover:text-blue-500 transition-colors flex items-center gap-1"
@@ -155,13 +155,13 @@ export default function UserManagementPage() {
               Dashboard <ArrowRight className="w-4 h-4 rotate-180" />
             </Link>
             <span>/</span>
-            <span className="text-white font-medium">User Management</span>
+            <span className="text-foreground font-medium">User Management</span>
           </div>
-          <h2 className="text-3xl font-bold text-white tracking-tight flex items-center gap-2">
+          <h2 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
             <Users className="w-8 h-8 text-blue-500" />
             User Management & Permissions
           </h2>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             Add new users, edit permissions, and manage account statuses across
             the system.
           </p>
@@ -169,7 +169,7 @@ export default function UserManagementPage() {
 
         <button
           onClick={() => router.push("/super-admin/users/new")}
-          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-semibold shadow-md text-sm border border-blue-500/20"
+          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-xl transition-all font-semibold shadow-md text-sm border border-blue-500/20"
         >
           <UserPlus className="w-4 h-4" />
           Add New User
@@ -178,21 +178,21 @@ export default function UserManagementPage() {
 
       {/* API Error Alert */}
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-xl flex items-center gap-2">
+        <div className="bg-error/15 border border-error/20 text-error text-sm px-4 py-3 rounded-xl flex items-center gap-2">
           <AlertCircle className="w-5 h-5 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Search Bar */}
-      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-4 flex items-center gap-3">
-        <Search className="w-5 h-5 text-gray-500" />
+      <div className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3">
+        <Search className="w-5 h-5 text-muted-foreground" />
         <input
           type="text"
           placeholder="Search by name or email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="bg-transparent border-none text-white text-sm focus:outline-none w-full placeholder-gray-500"
+          className="bg-transparent border-none text-foreground text-sm focus:outline-none w-full placeholder-gray-500"
         />
       </div>
 
@@ -200,11 +200,11 @@ export default function UserManagementPage() {
       {isLoading ? (
         <SkeletonTable />
       ) : (
-        <div className="bg-[#161b22] border border-[#30363d] rounded-3xl overflow-hidden shadow-sm">
+        <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#30363d] bg-[#161b22]/50 text-gray-400 text-xs font-bold uppercase tracking-wider">
+                <tr className="border-b border-border bg-card/50 text-muted-foreground text-xs font-bold uppercase tracking-wider">
                   <th className="px-6 py-4">Name</th>
                   <th className="px-6 py-4">Email</th>
                   <th className="px-6 py-4">Role</th>
@@ -212,12 +212,12 @@ export default function UserManagementPage() {
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#30363d] text-sm">
+              <tbody className="divide-y divide-border/60 text-sm">
                 {safeUsers.length === 0 ? (
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-6 py-12 text-center text-gray-500"
+                      className="px-6 py-12 text-center text-muted-foreground"
                     >
                       No users found matching your search criteria.
                     </td>
@@ -235,32 +235,38 @@ export default function UserManagementPage() {
                     return (
                       <tr
                         key={user.id}
-                        className="hover:bg-[#1f242c] transition-colors"
+                        className="hover:bg-muted transition-colors"
                       >
-                        <td className="px-6 py-4 font-semibold text-white whitespace-nowrap">
+                        <td className="px-6 py-4 font-semibold text-foreground whitespace-nowrap">
                           {displayName}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4 text-gray-500" />
+                            <Mail className="w-4 h-4 text-muted-foreground" />
                             <span>{user.email}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                            user.role === "ADMIN" 
-                              ? "bg-red-500/10 text-red-400 border border-red-500/20" 
-                              : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                            user.role?.toUpperCase() === "SUPER_ADMIN" 
+                              ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 shadow-sm" 
+                              : user.role?.toUpperCase() === "ADMIN" 
+                                ? "bg-error/10 text-error border border-error/20 shadow-sm"
+                                : user.role?.toUpperCase() === "MANAGER" || user.role?.toUpperCase() === "MANGER"
+                                  ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
+                                  : user.role?.toUpperCase() === "EMPLOYEE" || user.role?.toUpperCase() === "EMPLOYE"
+                                    ? "bg-success/10 text-success border border-success/20 shadow-sm"
+                                    : "bg-muted text-muted-foreground border border-border shadow-sm"
                           }`}>
-                            {user.role === "ADMIN" ? <ShieldAlert className="w-3 h-3" /> : <ShieldCheck className="w-3 h-3" />} {user.role || "N/A"}
+                            {user.role?.toUpperCase() === "ADMIN" || user.role?.toUpperCase() === "SUPER_ADMIN" ? <ShieldAlert className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />} {user.role || "N/A"}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
                               user.isActive
-                                ? "bg-green-500/10 text-green-400 border-green-500/20"
-                                : "bg-gray-500/10 text-gray-400 border-gray-500/20"
+                                ? "bg-success/15 text-success border-success/20"
+                                : "bg-muted0/10 text-muted-foreground border-gray-500/20"
                             }`}
                           >
                             {user.isActive ? "Active" : "Inactive"}
@@ -270,26 +276,26 @@ export default function UserManagementPage() {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => router.push(`/super-admin/users/${user.id}`)}
-                              className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-blue-400 border border-blue-500/10 bg-blue-500/5 hover:bg-blue-500/10 transition-all"
+                              className="px-3 py-1.5 rounded-full text-xs font-semibold text-primary border border-blue-500/10 bg-blue-500/5 hover:bg-blue-500/10 transition-all"
                             >
                               View Details
                             </button>
                             {/* Safeguard: never show action buttons for the logged-in admin's own row */}
                             {user.id === currentUserId ? (
-                              <span className="text-xs text-gray-600 italic px-3 py-1">
+                              <span className="text-xs text-muted-foreground italic px-3 py-1">
                                 You
                               </span>
                             ) : user.isActive ? (
                               <button
                                 onClick={() => handleDeactivate(user.id, displayName)}
-                                className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-red-400 border border-red-500/10 bg-red-500/5 hover:bg-red-500/10 transition-all"
+                                className="px-3 py-1.5 rounded-full text-xs font-semibold text-error border border-red-500/10 bg-red-500/5 hover:bg-error/15 transition-all"
                               >
                                 Disable Account
                               </button>
                             ) : (
                               <button
                                 onClick={() => handleActivate(user.id, displayName)}
-                                className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-green-400 border border-green-500/10 bg-green-500/5 hover:bg-green-500/10 transition-all"
+                                className="px-3 py-1.5 rounded-full text-xs font-semibold text-success border border-green-500/10 bg-green-500/5 hover:bg-success/15 transition-all"
                               >
                                 Enable Account
                               </button>
@@ -308,22 +314,22 @@ export default function UserManagementPage() {
 
       {/* Pagination Controls */}
       {!isLoading && totalPages > 1 && (
-        <div className="flex justify-between items-center bg-[#161b22] border border-[#30363d] rounded-2xl p-4">
-          <span className="text-sm text-gray-400">
+        <div className="flex justify-between items-center bg-card border border-border rounded-2xl p-4">
+          <span className="text-sm text-muted-foreground">
             Showing Page {page} of {totalPages} (Total: {total} users)
           </span>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
               disabled={page === 1}
-              className="px-4 py-2 bg-[#0d1117] border border-[#30363d] rounded-xl text-xs font-bold text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="px-4 py-2 bg-background border border-border rounded-xl text-[11px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               Previous
             </button>
             <button
               onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={page === totalPages}
-              className="px-4 py-2 bg-[#0d1117] border border-[#30363d] rounded-xl text-xs font-bold text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="px-4 py-2 bg-background border border-border rounded-xl text-[11px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               Next
             </button>

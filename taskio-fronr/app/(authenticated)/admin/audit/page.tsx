@@ -162,12 +162,12 @@ export default function AuditLogsPage() {
       return "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
     }
     if (act.startsWith("UPDATE") || act.startsWith("ASSIGN")) {
-      return "bg-blue-500/10 border-blue-500/20 text-blue-400";
+      return "bg-blue-500/10 border-blue-500/20 text-primary";
     }
     if (act.startsWith("DELETE") || act.startsWith("DEACTIVATE") || act.startsWith("REMOVE")) {
       return "bg-rose-500/10 border-rose-500/20 text-rose-400";
     }
-    return "bg-purple-500/10 border-purple-500/20 text-purple-400";
+    return "bg-purple-500/10 border-purple-500/20 text-primary";
   };
 
   const getResourceTypeColor = (resType: string) => {
@@ -181,7 +181,7 @@ export default function AuditLogsPage() {
       case "FORM":
         return "bg-fuchsia-500/10 border-fuchsia-500/20 text-fuchsia-400";
       default:
-        return "bg-gray-500/10 border-gray-500/20 text-gray-400";
+        return "bg-muted0/10 border-gray-500/20 text-muted-foreground";
     }
   };
 
@@ -191,16 +191,16 @@ export default function AuditLogsPage() {
       : u.username || u.email;
 
   return (
-    <main className="min-h-screen bg-[#0d1117] text-[#c9d1d9] py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <main className="min-h-screen bg-background text-foreground py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-start mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-              <ClipboardList className="w-8 h-8 text-purple-400" />
+            <h1 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
+              <ClipboardList className="w-8 h-8 text-primary" />
               Audit Logs
             </h1>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Track user actions, database operations, and system administration activities
             </p>
           </div>
@@ -209,7 +209,7 @@ export default function AuditLogsPage() {
               fetchLogs();
               toast.success("Logs refreshed");
             }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#161b22] border border-[#30363d] hover:bg-[#21262d] text-white rounded-xl text-sm font-semibold transition-all shadow-md"
+            className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border hover:bg-muted text-foreground rounded-xl text-sm font-semibold transition-all shadow-md"
           >
             <RefreshCw className="w-4 h-4" />
             Refresh
@@ -217,14 +217,14 @@ export default function AuditLogsPage() {
         </div>
 
         {/* Filter Panel */}
-        <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-5 mb-6 shadow-sm">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">
+        <div className="bg-card border border-border rounded-2xl p-5 mb-6 shadow-sm">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">
             Filter System Activity
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Actor Filter */}
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5 flex items-center gap-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
                 <UserIcon className="w-3.5 h-3.5" />
                 Actor (User)
               </label>
@@ -234,7 +234,7 @@ export default function AuditLogsPage() {
                   setSelectedActorId(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-3 py-2 text-white text-xs font-medium focus:outline-none focus:border-purple-500 transition-colors"
+                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-purple-500 transition-colors"
               >
                 <option value="">All Actors</option>
                 {allUsers.map((u) => (
@@ -247,7 +247,7 @@ export default function AuditLogsPage() {
 
             {/* Resource Type Filter */}
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5 flex items-center gap-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
                 <ClipboardList className="w-3.5 h-3.5" />
                 Resource Type
               </label>
@@ -257,7 +257,7 @@ export default function AuditLogsPage() {
                   setSelectedResourceType(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-3 py-2 text-white text-xs font-medium focus:outline-none focus:border-purple-500 transition-colors"
+                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-purple-500 transition-colors"
               >
                 <option value="ALL">All Types</option>
                 <option value="USER">USER</option>
@@ -269,7 +269,7 @@ export default function AuditLogsPage() {
 
             {/* Date Range Start */}
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5 flex items-center gap-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
                 Start Date
               </label>
@@ -280,13 +280,13 @@ export default function AuditLogsPage() {
                   setStartDate(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-3 py-2 text-white text-xs font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer"
+                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer"
               />
             </div>
 
             {/* Date Range End */}
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5 flex items-center gap-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
                 End Date
               </label>
@@ -298,13 +298,13 @@ export default function AuditLogsPage() {
                     setEndDate(e.target.value);
                     setPage(1);
                   }}
-                  className="flex-1 bg-[#0d1117] border border-[#30363d] rounded-xl px-3 py-2 text-white text-xs font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer"
+                  className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer"
                 />
                 {(selectedActorId || selectedResourceType !== "ALL" || startDate || endDate) && (
                   <button
                     onClick={handleResetFilters}
                     title="Clear filters"
-                    className="p-2 border border-[#30363d] bg-[#0d1117] hover:bg-rose-500/10 hover:border-rose-500/20 text-gray-400 hover:text-rose-400 rounded-xl transition-all flex items-center justify-center"
+                    className="p-2 border border-border bg-background hover:bg-rose-500/10 hover:border-rose-500/20 text-muted-foreground hover:text-rose-400 rounded-xl transition-all flex items-center justify-center"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -318,51 +318,51 @@ export default function AuditLogsPage() {
         {loading && <SkeletonTable />}
 
         {error && (
-          <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6">
+          <div className="flex items-center gap-3 bg-error/15 border border-error/20 text-error p-4 rounded-xl mb-6">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {!loading && !error && (
-          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl overflow-hidden shadow-sm flex flex-col">
+          <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm flex flex-col">
             {/* Table Container */}
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-[#30363d]">
-                <thead className="bg-[#161b22]">
+              <table className="min-w-full divide-y divide-border/60">
+                <thead className="bg-card">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Timestamp
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Actor
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Action
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Resource Type
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Target ID
                     </th>
                     {isSuperAdmin && (
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                         Organization
                       </th>
                     )}
-                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#30363d] bg-[#0d1117]/50">
+                <tbody className="divide-y divide-border/60 bg-card">
                   {logs.length === 0 ? (
                     <tr>
-                      <td colSpan={isSuperAdmin ? 7 : 6} className="text-center py-16 text-gray-500">
-                        <ClipboardList className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                      <td colSpan={isSuperAdmin ? 7 : 6} className="text-center py-16 text-muted-foreground">
+                        <ClipboardList className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                         <p className="font-semibold text-sm">No audit logs found</p>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                           Try adjustments to filters or check back later
                         </p>
                       </td>
@@ -372,12 +372,12 @@ export default function AuditLogsPage() {
                       <tr
                         key={log.id}
                         onClick={() => handleViewDetails(log.id)}
-                        className="hover:bg-[#21262d]/30 transition-colors cursor-pointer group"
+                        className="hover:bg-muted/30 transition-colors cursor-pointer group"
                       >
-                        <td className="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-400">
+                        <td className="px-6 py-4 whitespace-nowrap text-xs font-mono text-muted-foreground">
                           {formatTimestamp(log.createdAt)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-foreground">
                           {log.actorEmail}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -398,18 +398,18 @@ export default function AuditLogsPage() {
                             {log.resourceType}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-500 group-hover:text-gray-400 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-xs font-mono text-muted-foreground group-hover:text-muted-foreground transition-colors">
                           {log.resourceId || "—"}
                         </td>
                         {isSuperAdmin && (
-                          <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-300">
+                          <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-muted-foreground">
                             {log.organization ? (
                               <div className="flex items-center gap-1.5">
-                                <Building2 className="w-3.5 h-3.5 text-gray-500" />
+                                <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
                                 {log.organization.name}
                               </div>
                             ) : (
-                              <span className="text-gray-500 italic">System</span>
+                              <span className="text-muted-foreground italic">System</span>
                             )}
                           </td>
                         )}
@@ -419,7 +419,7 @@ export default function AuditLogsPage() {
                               e.stopPropagation();
                               handleViewDetails(log.id);
                             }}
-                            className="p-1.5 text-gray-400 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-all"
+                            className="p-1.5 text-muted-foreground hover:text-primary/80 hover:bg-purple-500/10 rounded-lg transition-all"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -433,24 +433,24 @@ export default function AuditLogsPage() {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-[#30363d] flex items-center justify-between bg-[#161b22]">
-                <div className="text-xs text-gray-500 font-medium">
-                  Showing Page <span className="text-white font-semibold">{page}</span> of{" "}
-                  <span className="text-white font-semibold">{totalPages}</span> (
-                  <span className="text-white font-semibold">{total}</span> total entries)
+              <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-card">
+                <div className="text-xs text-muted-foreground font-medium">
+                  Showing Page <span className="text-foreground font-semibold">{page}</span> of{" "}
+                  <span className="text-foreground font-semibold">{totalPages}</span> (
+                  <span className="text-foreground font-semibold">{total}</span> total entries)
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setPage((p) => Math.max(p - 1, 1))}
                     disabled={page === 1}
-                    className="px-4 py-2 border border-[#30363d] hover:bg-[#21262d] text-xs font-semibold text-white rounded-xl transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+                    className="px-4 py-2 border border-border hover:bg-muted text-xs font-semibold text-foreground rounded-xl transition-all disabled:opacity-30 disabled:hover:bg-transparent"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
                     disabled={page === totalPages}
-                    className="px-4 py-2 border border-[#30363d] hover:bg-[#21262d] text-xs font-semibold text-white rounded-xl transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+                    className="px-4 py-2 border border-border hover:bg-muted text-xs font-semibold text-foreground rounded-xl transition-all disabled:opacity-30 disabled:hover:bg-transparent"
                   >
                     Next
                   </button>
@@ -475,22 +475,22 @@ export default function AuditLogsPage() {
 
         {/* Drawer container */}
         <div
-          className={`absolute right-0 top-0 bottom-0 w-full max-w-xl bg-[#161b22] border-l border-[#30363d] shadow-2xl flex flex-col transition-transform duration-300 ${
+          className={`absolute right-0 top-0 bottom-0 w-full max-w-xl bg-card border-l border-border shadow-2xl flex flex-col transition-transform duration-300 ${
             drawerOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
           {/* Header */}
-          <div className="flex justify-between items-center px-6 py-5 border-b border-[#30363d]">
+          <div className="flex justify-between items-center px-6 py-5 border-b border-border">
             <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <ClipboardList className="w-5 h-5 text-purple-400" />
+              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <ClipboardList className="w-5 h-5 text-primary" />
                 Audit Log Details
               </h3>
-              <p className="text-xs text-gray-500 mt-1">Log Identifier #{selectedLogId}</p>
+              <p className="text-xs text-muted-foreground mt-1">Log Identifier #{selectedLogId}</p>
             </div>
             <button
               onClick={() => setDrawerOpen(false)}
-              className="text-gray-400 hover:text-white p-1 rounded-lg transition-colors"
+              className="text-muted-foreground hover:text-foreground p-1 rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -500,33 +500,33 @@ export default function AuditLogsPage() {
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {loadingDetail ? (
               <div className="space-y-4">
-                <div className="h-6 bg-[#21262d] rounded-lg animate-pulse w-2/3" />
-                <div className="h-20 bg-[#21262d] rounded-lg animate-pulse" />
-                <div className="h-40 bg-[#21262d] rounded-lg animate-pulse" />
+                <div className="h-6 bg-muted rounded-lg animate-pulse w-2/3" />
+                <div className="h-20 bg-muted rounded-lg animate-pulse" />
+                <div className="h-40 bg-muted rounded-lg animate-pulse" />
               </div>
             ) : (
               detailedLog && (
                 <>
                   {/* Summary Grid */}
-                  <div className={`grid grid-cols-2 ${isSuperAdmin ? 'md:grid-cols-3' : ''} gap-4 bg-[#0d1117] border border-[#30363d] rounded-2xl p-4`}>
+                  <div className={`grid grid-cols-2 ${isSuperAdmin ? 'md:grid-cols-3' : ''} gap-4 bg-background border border-border rounded-2xl p-4`}>
                     <div>
-                      <span className="block text-[10px] uppercase font-bold text-gray-500">
+                      <span className="block text-[10px] uppercase font-bold text-muted-foreground">
                         Actor Email
                       </span>
-                      <span className="text-sm font-semibold text-white">
+                      <span className="text-sm font-semibold text-foreground">
                         {detailedLog.actorEmail}
                       </span>
                     </div>
                     <div>
-                      <span className="block text-[10px] uppercase font-bold text-gray-500">
+                      <span className="block text-[10px] uppercase font-bold text-muted-foreground">
                         Actor ID
                       </span>
-                      <span className="text-sm font-mono text-gray-300">
+                      <span className="text-sm font-mono text-muted-foreground">
                         {detailedLog.actorId}
                       </span>
                     </div>
                     <div>
-                      <span className="block text-[10px] uppercase font-bold text-gray-500">
+                      <span className="block text-[10px] uppercase font-bold text-muted-foreground">
                         Action Executed
                       </span>
                       <span
@@ -538,7 +538,7 @@ export default function AuditLogsPage() {
                       </span>
                     </div>
                     <div>
-                      <span className="block text-[10px] uppercase font-bold text-gray-500">
+                      <span className="block text-[10px] uppercase font-bold text-muted-foreground">
                         Resource Type / Target ID
                       </span>
                       <div className="flex items-center gap-1.5 mt-0.5">
@@ -549,19 +549,19 @@ export default function AuditLogsPage() {
                         >
                           {detailedLog.resourceType}
                         </span>
-                        <span className="text-xs font-mono text-gray-400">
+                        <span className="text-xs font-mono text-muted-foreground">
                           #{detailedLog.resourceId || "—"}
                         </span>
                       </div>
                     </div>
                     {isSuperAdmin && (
                       <div>
-                        <span className="block text-[10px] uppercase font-bold text-gray-500">
+                        <span className="block text-[10px] uppercase font-bold text-muted-foreground">
                           Organization
                         </span>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <Building2 className="w-3.5 h-3.5 text-gray-500" />
-                          <span className="text-xs font-medium text-gray-300">
+                          <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="text-xs font-medium text-muted-foreground">
                             {detailedLog.organization?.name || "System"}
                           </span>
                         </div>
@@ -571,24 +571,24 @@ export default function AuditLogsPage() {
 
                   {/* Metadata Sections */}
                   <div className="space-y-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Network & Agent Metadata
                     </h4>
                     <div className="space-y-2">
-                      <div className="flex items-center gap-3 text-xs text-gray-300 py-1">
-                        <Clock className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                        <span className="text-gray-500 w-24 flex-shrink-0">Event Time</span>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground py-1">
+                        <Clock className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="text-muted-foreground w-24 flex-shrink-0">Event Time</span>
                         <span className="font-mono">{formatTimestamp(detailedLog.createdAt)}</span>
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-gray-300 py-1">
-                        <Globe className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                        <span className="text-gray-500 w-24 flex-shrink-0">IP Address</span>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground py-1">
+                        <Globe className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="text-muted-foreground w-24 flex-shrink-0">IP Address</span>
                         <span className="font-mono">{detailedLog.ipAddress || "—"}</span>
                       </div>
-                      <div className="flex items-start gap-3 text-xs text-gray-300 py-1">
-                        <Terminal className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-500 w-24 flex-shrink-0">User Agent</span>
-                        <span className="text-gray-300 text-left truncate hover:text-clip hover:whitespace-normal">
+                      <div className="flex items-start gap-3 text-xs text-muted-foreground py-1">
+                        <Terminal className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-muted-foreground w-24 flex-shrink-0">User Agent</span>
+                        <span className="text-muted-foreground text-left truncate hover:text-clip hover:whitespace-normal">
                           {detailedLog.userAgent || "—"}
                         </span>
                       </div>
@@ -598,10 +598,10 @@ export default function AuditLogsPage() {
                   {/* Payload Details */}
                   {detailedLog.details && (
                     <div className="space-y-3">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                         Action Payload Details & Changes
                       </h4>
-                      <pre className="bg-[#0d1117] p-4 rounded-xl border border-[#30363d] overflow-x-auto text-xs text-indigo-300 font-mono leading-relaxed max-h-[300px]">
+                      <pre className="bg-background p-4 rounded-xl border border-border overflow-x-auto text-xs text-indigo-300 font-mono leading-relaxed max-h-[300px]">
                         {JSON.stringify(detailedLog.details, null, 2)}
                       </pre>
                     </div>
@@ -612,10 +612,10 @@ export default function AuditLogsPage() {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-[#30363d] bg-[#161b22] flex justify-end">
+          <div className="px-6 py-4 border-t border-border bg-card flex justify-end">
             <button
               onClick={() => setDrawerOpen(false)}
-              className="px-5 py-2.5 bg-[#0d1117] border border-[#30363d] hover:bg-[#21262d] text-white rounded-xl text-xs font-semibold transition-all"
+              className="px-5 py-2.5 bg-background border border-border hover:bg-muted text-foreground rounded-xl text-xs font-semibold transition-all"
             >
               Close Drawer
             </button>

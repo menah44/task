@@ -336,20 +336,20 @@ export default function FormBoundaryMapPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#0d1117] text-[#c9d1d9] overflow-hidden">
+    <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
       <BuilderTopNav
         formId={formId}
         subtitle={`Form ID: ${formId} — ${hasPolygon ? `${areaKm2.toFixed(3)} km² covered` : "no boundary set"}`}
         actions={
           <>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium rounded-lg">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 text-primary text-sm font-medium rounded-lg">
               <Ruler className="w-4 h-4" />
               {hasPolygon ? `${areaKm2.toFixed(3)} km²` : "0 km²"}
             </div>
             <button
               onClick={handleSave}
               disabled={!hasPolygon || !isDirty || isSaving}
-              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5">
+              className="px-4 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-medium rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5">
               {isSaving ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" /> Saving...
@@ -370,26 +370,26 @@ export default function FormBoundaryMapPage() {
 
       {/* Warning / error banner, matching the Builder page's inline banner style */}
       {error && (
-        <div className="px-6 py-2 bg-yellow-500/10 border-b border-yellow-500/20 text-yellow-500 text-xs flex items-center justify-between shrink-0">
+        <div className="px-6 py-2 bg-warning/15 border-b border-warning/20 text-warning text-xs flex items-center justify-between shrink-0">
           <span className="flex items-center gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5" /> {error}
           </span>
-          <button onClick={() => setError(null)} className="hover:text-white">
+          <button onClick={() => setError(null)} className="hover:text-foreground">
             ✕
           </button>
         </div>
       )}
 
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-3 px-6 py-3 bg-[#0d1117] border-b border-[#30363d] shrink-0">
+      <div className="flex flex-wrap items-center gap-3 px-6 py-3 bg-background border-b border-border shrink-0">
         <button
           type="button"
           onClick={() => handleSetMode("polygon")}
           disabled={!isMapReady}
-          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
             activeMode === "polygon"
-              ? "bg-blue-600 text-white border-blue-500/20"
-              : "bg-[#161b22] text-gray-300 border-[#30363d] hover:bg-[#21262d]"
+              ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm border-blue-500/20"
+              : "bg-card text-muted-foreground border-border hover:bg-muted"
           } disabled:opacity-50 disabled:cursor-not-allowed`}>
           <PenLine className="w-4 h-4" /> Draw Polygon
         </button>
@@ -398,10 +398,10 @@ export default function FormBoundaryMapPage() {
           type="button"
           onClick={() => handleSetMode("select")}
           disabled={!isMapReady || !hasPolygon}
-          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
             activeMode === "select"
-              ? "bg-blue-600 text-white border-blue-500/20"
-              : "bg-[#161b22] text-gray-300 border-[#30363d] hover:bg-[#21262d]"
+              ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm border-blue-500/20"
+              : "bg-card text-muted-foreground border-border hover:bg-muted"
           } disabled:opacity-50 disabled:cursor-not-allowed`}>
           <MousePointer2 className="w-4 h-4" /> Edit Vertices
         </button>
@@ -410,18 +410,18 @@ export default function FormBoundaryMapPage() {
           type="button"
           onClick={handleClear}
           disabled={!isMapReady || !hasPolygon}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium text-red-400 bg-[#161b22] border border-[#30363d] hover:bg-red-500/10 hover:border-red-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-error bg-card border border-border hover:bg-error/15 hover:border-error/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           <Trash2 className="w-4 h-4" /> Clear
         </button>
 
-        <div className="w-px h-5 bg-[#30363d] mx-1" />
+        <div className="w-px h-5 bg-accent mx-1" />
 
         {/* Basemap toggle — Streets (vector) vs Satellite (real aerial imagery) */}
         <button
           type="button"
           onClick={handleToggleBasemap}
           disabled={!isMapReady || isSwitchingBasemap}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium text-gray-300 bg-[#161b22] border border-[#30363d] hover:bg-[#21262d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-muted-foreground bg-card border border-border hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           {isSwitchingBasemap ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : basemap === "satellite" ? (
@@ -434,10 +434,10 @@ export default function FormBoundaryMapPage() {
             : "Switch to Satellite"}
         </button>
 
-        <p className="text-xs text-gray-500 ml-2">
-          Click <span className="text-gray-300 font-medium">Draw Polygon</span>,
+        <p className="text-xs text-muted-foreground ml-2">
+          Click <span className="text-muted-foreground font-medium">Draw Polygon</span>,
           place vertices, and double-click to finish. Use{" "}
-          <span className="text-gray-300 font-medium">Edit Vertices</span> to
+          <span className="text-muted-foreground font-medium">Edit Vertices</span> to
           drag points afterward.
         </p>
       </div>
@@ -447,10 +447,10 @@ export default function FormBoundaryMapPage() {
         <div ref={mapContainerRef} className="w-full h-full" />
 
         {(isLoadingBoundary || !isMapReady) && (
-          <div className="absolute inset-0 bg-[#0d1117]/70 backdrop-blur-sm flex items-center justify-center">
+          <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
               <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 {isMapReady ? "Loading saved boundary..." : "Loading map..."}
               </p>
             </div>

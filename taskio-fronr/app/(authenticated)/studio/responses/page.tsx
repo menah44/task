@@ -141,39 +141,68 @@ export default function GlobalResponsesPage() {
   }, [responses, selectedFormId, searchEmail, startDate, endDate]);
 
   const renderAnswerValue = (val: any) => {
-    if (val === null || val === undefined) return <span className="text-gray-600 italic">No Answer</span>;
+    if (val === null || val === undefined) return <span className="text-muted-foreground italic">No Answer</span>;
     if (typeof val === "boolean") return val ? "Yes" : "No";
     if (Array.isArray(val)) return val.join(", ");
-    if (typeof val === "object") return JSON.stringify(val);
+    if (typeof val === "object") {
+      if (val.lat !== undefined && val.lng !== undefined) {
+        return (
+          <span className="inline-flex items-center gap-1 text-primary bg-blue-500/5 px-2.5 py-0.5 rounded border border-blue-500/10 text-xs font-medium">
+            {val.lat.toFixed(4)}, {val.lng.toFixed(4)}
+          </span>
+        );
+      }
+      if (val.mediaId) {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api/v1";
+        const fileUrl = `${baseUrl}/files/${val.mediaId}`;
+        return (
+          <div className="flex items-center gap-4 border border-border p-3 rounded-xl bg-muted/20 w-max max-w-full overflow-hidden">
+            <div className="flex items-center gap-2 truncate">
+              <span className="text-sm font-medium truncate">{val.fileName || "Uploaded File"}</span>
+              {val.fileSize && <span className="text-xs text-muted-foreground whitespace-nowrap">({Math.round(val.fileSize / 1024)} KB)</span>}
+            </div>
+            <div className="flex items-center gap-2 ml-auto shrink-0">
+              <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-lg hover:bg-secondary/80 transition">
+                View
+              </a>
+              <a href={fileUrl} download={val.fileName || "download"} className="px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition">
+                Download
+              </a>
+            </div>
+          </div>
+        );
+      }
+      return JSON.stringify(val);
+    }
     return String(val);
   };
 
   return (
-    <main className="space-y-6 text-[#c9d1d9] pb-12" dir="ltr">
+    <main className="space-y-6 text-foreground pb-12" dir="ltr">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-5">
+      <div className="flex items-center justify-between border-b border-border pb-5">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
             <ClipboardList className="w-8 h-8 text-blue-500" />
             Submitted Responses
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Browse and review submitted responses across all active forms in your organization.
           </p>
         </div>
       </div>
 
       {/* Filters Bar */}
-      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-5 grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="bg-card border border-border rounded-2xl p-5 grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Form Selection */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+          <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
             Filter by Form
           </label>
           <select
             value={selectedFormId}
             onChange={(e) => setSelectedFormId(e.target.value)}
-            className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors"
           >
             <option value="">All Forms</option>
             {formsList.map((f) => (
@@ -186,7 +215,7 @@ export default function GlobalResponsesPage() {
 
         {/* Email Search */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+          <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
             Search Submitter
           </label>
           <input
@@ -194,33 +223,33 @@ export default function GlobalResponsesPage() {
             placeholder="Search by name or email..."
             value={searchEmail}
             onChange={(e) => setSearchEmail(e.target.value)}
-            className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors"
           />
         </div>
 
         {/* Start Date */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+          <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
             From Date
           </label>
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors"
           />
         </div>
 
         {/* End Date */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+          <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
             To Date
           </label>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors"
           />
         </div>
       </div>
@@ -231,18 +260,18 @@ export default function GlobalResponsesPage() {
           <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
         </div>
       ) : error ? (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-6 rounded-2xl text-center text-sm font-semibold">
+        <div className="bg-error/15 border border-error/20 text-error p-6 rounded-2xl text-center text-sm font-semibold">
           {error}
         </div>
       ) : filteredResponses.length === 0 ? (
-        <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-12 text-center text-gray-500">
+        <div className="bg-card border border-border rounded-2xl p-12 text-center text-muted-foreground">
           No matching submissions found.
         </div>
       ) : (
-        <div className="bg-[#161b22] rounded-2xl border border-[#30363d] overflow-hidden shadow-sm">
+        <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-[#30363d] text-left text-sm">
-              <thead className="bg-[#161b22]/50 text-gray-400 uppercase text-xs font-bold tracking-wider">
+            <table className="min-w-full divide-y divide-border/60 text-left text-sm">
+              <thead className="bg-card/50 text-muted-foreground uppercase text-xs font-bold tracking-wider">
                 <tr>
                   <th className="px-6 py-4">Form</th>
                   <th className="px-6 py-4">Submitter</th>
@@ -251,7 +280,7 @@ export default function GlobalResponsesPage() {
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#30363d] text-sm text-gray-300">
+              <tbody className="divide-y divide-border/60 text-sm text-muted-foreground">
                 {filteredResponses.map((res) => {
                   const submitterName = `${res.user?.firstName || ""} ${res.user?.lastName || ""}`.trim();
                   const submitterDisplay = submitterName
@@ -259,30 +288,30 @@ export default function GlobalResponsesPage() {
                     : res.user?.email || "Anonymous";
 
                   return (
-                    <tr key={res.id} className="hover:bg-[#1f242c] transition-colors">
-                      <td className="px-6 py-4 font-semibold text-white whitespace-nowrap">
+                    <tr key={res.id} className="hover:bg-muted transition-colors">
+                      <td className="px-6 py-4 font-semibold text-foreground whitespace-nowrap">
                         {res.form?.title || `Form #${res.formId}`}
                       </td>
-                      <td className="px-6 py-4 text-gray-200 whitespace-nowrap">
+                      <td className="px-6 py-4 text-foreground whitespace-nowrap">
                         {submitterDisplay}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-400">
+                      <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">
                         {res.submittedAt ? new Date(res.submittedAt).toLocaleString() : "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {res.latitude && res.longitude ? (
-                          <span className="inline-flex items-center gap-1 text-blue-400 bg-blue-500/5 px-2.5 py-0.5 rounded border border-blue-500/10 text-xs font-medium">
+                          <span className="inline-flex items-center gap-1 text-primary bg-blue-500/5 px-2.5 py-0.5 rounded border border-blue-500/10 text-xs font-medium">
                             <MapPin className="w-3.5 h-3.5" />
                             {res.latitude.toFixed(4)}, {res.longitude.toFixed(4)}
                           </span>
                         ) : (
-                          <span className="text-gray-600 italic text-xs">No GPS Data</span>
+                          <span className="text-muted-foreground italic text-xs">No GPS Data</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <button
                           onClick={() => setSelectedResponseId(res.id)}
-                          className="px-3 py-1.5 bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/25 rounded-xl transition-all inline-flex items-center gap-1 text-xs font-bold"
+                          className="px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm border border-primary/20 rounded-xl transition-all inline-flex items-center gap-1 text-xs font-bold"
                         >
                           <Eye className="w-3.5 h-3.5" /> View Details
                         </button>
@@ -299,27 +328,27 @@ export default function GlobalResponsesPage() {
       {/* Detail Viewer Modal */}
       {selectedResponseId !== null && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#161b22] border border-[#30363d] rounded-3xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-card border border-border rounded-3xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
-            <div className="p-6 border-b border-[#30363d] flex justify-between items-center bg-[#0d1117]">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-background">
               <div>
-                <h3 className="text-xl font-bold text-white tracking-tight">
+                <h3 className="text-xl font-bold text-foreground tracking-tight">
                   {detailData ? `Submission Details` : "Loading Details..."}
                 </h3>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {detailData ? detailData.formTitle : "Please wait"}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedResponseId(null)}
-                className="p-1.5 hover:bg-[#21262d] rounded-xl text-gray-400 hover:text-white transition-colors"
+                className="p-1.5 hover:bg-muted rounded-xl text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-[#0d1117]/50">
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-card">
               {loadingDetail || !detailData ? (
                 <div className="flex justify-center items-center py-12">
                   <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
@@ -327,16 +356,16 @@ export default function GlobalResponsesPage() {
               ) : (
                 detailData.sections.map((sec) => (
                   <div key={sec.id} className="space-y-4">
-                    <h4 className="font-bold text-md text-white border-l-4 border-blue-500 pl-3 uppercase tracking-wider text-xs">
+                    <h4 className="font-bold text-md text-foreground border-l-4 border-blue-500 pl-3 uppercase tracking-wider text-xs">
                       {sec.title}
                     </h4>
-                    <div className="bg-[#161b22] border border-[#30363d] rounded-2xl overflow-hidden divide-y divide-[#30363d]">
+                    <div className="bg-card border border-border rounded-2xl overflow-hidden divide-y divide-border/60">
                       {sec.answers.map((ans) => (
                         <div key={ans.questionId} className="p-4 grid grid-cols-1 md:grid-cols-3 gap-2">
-                          <span className="font-semibold text-sm text-gray-400 md:col-span-1">
+                          <span className="font-semibold text-sm text-muted-foreground md:col-span-1">
                             {ans.label}
                           </span>
-                          <div className="text-sm text-white md:col-span-2">
+                          <div className="text-sm text-foreground md:col-span-2">
                             {renderAnswerValue(ans.value)}
                           </div>
                         </div>
@@ -348,10 +377,10 @@ export default function GlobalResponsesPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 border-t border-[#30363d] flex justify-end bg-[#0d1117]">
+            <div className="p-6 border-t border-border flex justify-end bg-background">
               <button
                 onClick={() => setSelectedResponseId(null)}
-                className="px-5 py-2.5 bg-[#21262d] hover:bg-[#30363d] text-white text-sm font-semibold rounded-xl transition-colors border border-[#30363d]"
+                className="px-5 py-2.5 bg-muted hover:bg-accent text-foreground text-sm font-semibold rounded-xl transition-colors border border-border"
               >
                 Close
               </button>

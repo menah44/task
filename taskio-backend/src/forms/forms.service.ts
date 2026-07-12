@@ -12,6 +12,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Form } from './entities/form.entity';
 import { FormVersion } from './entities/form-version.entity';
 import { Section } from './entities/section.entity';
+import { Response as FormResponse } from './entities/response.entity';
 import { CreateFormDto } from './dto/create-form.dto';
 import { UpdateFormDto } from './dto/update-form.dto';
 import { User } from '../auth/entities/user.entity';
@@ -80,16 +81,20 @@ export class FormsService {
   async create(createFormDto: CreateFormDto, user: User): Promise<Form> {
     const orgId = this.getOrgId(user);
 
-    // Title unique per organization validation
-    const existing = await this.formRepository.findOne({
-      where: { title: createFormDto.title, organizationId: orgId },
-    });
-    if (existing) {
-      throw new ConflictException('Form title must be unique per organization');
+    let finalTitle = createFormDto.title;
+    let counter = 2;
+    while (
+      await this.formRepository.findOne({
+        where: { title: finalTitle, organizationId: orgId },
+      })
+    ) {
+      finalTitle = `${createFormDto.title} (${counter})`;
+      counter++;
     }
 
     const form = this.formRepository.create({
       ...createFormDto,
+      title: finalTitle,
       organizationId: orgId,
       creatorId: user.id,
       status: 'DRAFT',
@@ -138,11 +143,29 @@ export class FormsService {
       order: { updatedAt: 'DESC' },
       skip,
       take: limit,
+      relations: ['sections', 'sections.questions'],
     });
+
+    const formIds = data.map((f) => f.id);
+    let counts: { formId: number; count: string }[] = [];
+    if (formIds.length > 0) {
+      counts = await this.dataSource
+        .getRepository(FormResponse)
+        .createQueryBuilder('response')
+        .select('response.formId', 'formId')
+        .addSelect('COUNT(response.id)', 'count')
+        .where('response.formId IN (:...formIds)', { formIds })
+        .andWhere('response.status = :status', { status: 'SUBMITTED' })
+        .groupBy('response.formId')
+        .getRawMany();
+    }
+    const countMap = new Map<number, number>();
+    counts.forEach((c) => countMap.set(c.formId, parseInt(c.count, 10)));
 
     // Map permissions dynamically for frontend
     const mappedData = data.map((form) => ({
       ...form,
+      submissions: countMap.get(form.id) || 0,
       permissions: {
         canEdit: form.status.toUpperCase() !== 'ARCHIVED',
         canView: true,
@@ -300,12 +323,15 @@ export class FormsService {
     updateFormDto: UpdateFormDto,
     user: User,
   ): Promise<Form> {
+    console.log(`[FormsService] PUT /forms/${id} received`);
     return this.dataSource.transaction(async (manager) => {
       const orgId = this.getOrgId(user);
+      console.log(`[FormsService] Loading form ${id} for org ${orgId}...`);
       const form = await manager.getRepository(Form).findOne({
         where: { id, organizationId: orgId },
         relations: ['sections', 'sections.questions'],
       });
+      console.log(`[FormsService] Form loaded: ${form ? 'yes' : 'no'}`);
 
       if (!form) {
         throw new NotFoundException(`Form with ID ${id} not found`);
@@ -315,7 +341,17 @@ export class FormsService {
         throw new BadRequestException('Updating an ARCHIVED form is blocked');
       }
 
+      if (form.status.toUpperCase() === 'PUBLISHED') {
+        if (updateFormDto.sections || updateFormDto.schema) {
+          console.log(`[FormsService] Validation failed: cannot modify sections of published form`);
+          throw new BadRequestException(
+            'Cannot modify the structure (sections/schema) of a PUBLISHED form.',
+          );
+        }
+      }
+
       if (updateFormDto.title && updateFormDto.title !== form.title) {
+        console.log(`[FormsService] Validating unique title: ${updateFormDto.title}`);
         // Title unique per organization validation
         const existing = await manager.getRepository(Form).findOne({
           where: {
@@ -334,18 +370,31 @@ export class FormsService {
         updateFormDto.status = updateFormDto.status.toUpperCase();
       }
 
-      const { sections, ...rest } = updateFormDto;
+      const { sections, settings, ...rest } = updateFormDto;
+      console.log(`[FormsService] Updating settings and rest...`);
       Object.assign(form, rest);
 
+      if (settings) {
+        form.settings = {
+          ...(form.settings || {}),
+          ...settings,
+        };
+      }
+
       if (sections) {
+        console.log(`[FormsService] Deleting old sections...`);
         // Delete all old sections (PostgreSQL cascade deletes questions)
         await manager.getRepository(Section).delete({ formId: form.id });
         // Map and set new sections
+        console.log(`[FormsService] Mapping new sections...`);
         form.sections = mapSectionsForCopy(sections);
       }
 
+      console.log(`[FormsService] Saving entity...`);
       const updatedForm = await manager.getRepository(Form).save(form);
+      console.log(`[FormsService] Database save completed`);
 
+      console.log(`[FormsService] Logging audit action...`);
       await this.auditService.logAction(
         user,
         'UPDATE_FORM',
@@ -353,6 +402,7 @@ export class FormsService {
         String(updatedForm.id),
         updateFormDto,
       );
+      console.log(`[FormsService] Audit log completed. Returning response...`);
 
       return updatedForm;
     });
@@ -473,6 +523,7 @@ export class FormsService {
     return this.formRepository.find({
       where: { isPublic: true, status: 'PUBLISHED' },
       order: { updatedAt: 'DESC' },
+      relations: ['sections', 'sections.questions'],
     });
   }
 

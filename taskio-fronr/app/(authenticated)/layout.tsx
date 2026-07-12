@@ -116,11 +116,11 @@ export default function AuthenticatedLayout({
   if (isChecking) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center bg-[#0d1117] text-white"
+        className="min-h-screen flex items-center justify-center bg-background text-foreground"
         dir="ltr">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-          <p className="text-[#c9d1d9] text-sm">Verifying authentication...</p>
+          <p className="text-foreground text-sm">Verifying authentication...</p>
         </div>
       </div>
     );
@@ -147,7 +147,7 @@ export default function AuthenticatedLayout({
   );
 
   return (
-    <div dir="ltr" className="min-h-screen bg-[#0d1117] text-[#c9d1d9] flex">
+    <div dir="ltr" className="min-h-screen bg-background text-foreground flex">
       {/* Reusable Sidebar */}
       <Sidebar userRole={userRole} pathname={pathname} logout={logout} />
 
@@ -157,11 +157,11 @@ export default function AuthenticatedLayout({
         <TopBar name={currentUser.name || ""} email={currentUser.email || ""} />
 
         {isFullBleedPage ? (
-          <main className="flex-1 overflow-hidden bg-[#0d1117]">
+          <main className="flex-1 overflow-hidden bg-background">
             {children}
           </main>
         ) : (
-          <main className="flex-1 p-6 overflow-y-auto bg-[#0d1117]">
+          <main className="flex-1 p-6 overflow-y-auto bg-background">
             <div className="max-w-7xl mx-auto">{children}</div>
           </main>
         )}

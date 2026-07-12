@@ -120,7 +120,7 @@ function GroupTreeNode({
             ? "bg-indigo-600/15 border-indigo-500/30 text-indigo-300"
             : isDragOver
             ? "bg-blue-500/10 border-blue-500/30"
-            : "border-transparent hover:bg-[#21262d] hover:border-[#30363d] text-gray-300 hover:text-white"
+            : "border-transparent hover:bg-muted hover:border-border text-muted-foreground hover:text-foreground"
         }`}
         onClick={() => onSelect(node)}
       >
@@ -132,7 +132,7 @@ function GroupTreeNode({
           }}
           className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded transition-colors ${
             hasChildren
-              ? "text-gray-400 hover:text-white"
+              ? "text-muted-foreground hover:text-foreground"
               : "text-transparent cursor-default"
           }`}
         >
@@ -156,7 +156,7 @@ function GroupTreeNode({
 
         {/* Name + Count */}
         <span className="flex-1 text-sm font-medium truncate">{node.name}</span>
-        <span className="flex-shrink-0 flex items-center gap-1 text-xs text-gray-500 group-hover:text-gray-400 transition-colors">
+        <span className="flex-shrink-0 flex items-center gap-1 text-xs text-muted-foreground group-hover:text-muted-foreground transition-colors">
           <Users className="w-3 h-3" />
           {node.membersCount}
         </span>
@@ -169,14 +169,14 @@ function GroupTreeNode({
           <button
             onClick={() => onEdit(node)}
             title="Edit group"
-            className="p-1 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
+            className="p-1 rounded-lg text-muted-foreground hover:text-primary/80 hover:bg-blue-500/10 transition-all"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => onDelete(node)}
             title="Delete group"
-            className="p-1 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+            className="p-1 rounded-lg text-muted-foreground hover:text-error hover:bg-error/15 transition-all"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -188,7 +188,7 @@ function GroupTreeNode({
         <div className="relative">
           {/* Vertical connecting line */}
           <div
-            className="absolute top-0 bottom-0 border-l border-[#30363d]"
+            className="absolute top-0 bottom-0 border-l border-border"
             style={{ left: `${depth * 24 + 20}px` }}
           />
           {node.children.map((child) => (
@@ -305,36 +305,36 @@ function MembersPanel({ group, onClose }: MembersPanelProps) {
       : u.username || u.email;
 
   return (
-    <div className="w-80 flex-shrink-0 bg-[#161b22] border border-[#30363d] rounded-2xl overflow-hidden flex flex-col h-full max-h-[calc(100vh-10rem)]">
+    <div className="w-80 flex-shrink-0 bg-card border border-border rounded-2xl overflow-hidden flex flex-col h-full max-h-[calc(100vh-10rem)]">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-[#30363d] bg-[#161b22]">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-card">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-indigo-400" />
           <div>
-            <h3 className="text-sm font-bold text-white truncate max-w-[160px]">
+            <h3 className="text-sm font-bold text-foreground truncate max-w-[160px]">
               {group.name}
             </h3>
-            <p className="text-xs text-gray-500">Members</p>
+            <p className="text-xs text-muted-foreground">Members</p>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-white transition-colors text-lg leading-none p-1"
+          className="text-muted-foreground hover:text-foreground transition-colors text-lg leading-none p-1"
         >
           ✕
         </button>
       </div>
 
       {/* Add Member */}
-      <div className="p-4 border-b border-[#30363d]">
-        <label className="block text-xs font-medium text-gray-400 mb-2">
+      <div className="p-4 border-b border-border">
+        <label className="block text-xs font-medium text-muted-foreground mb-2">
           Add Member
         </label>
         <div className="flex gap-2">
           <select
             value={selectedUserId}
             onChange={(e) => setSelectedUserId(e.target.value)}
-            className="flex-1 min-w-0 bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 transition-colors"
+            className="flex-1 min-w-0 bg-background border border-border rounded-lg px-3 py-2 text-foreground text-xs focus:outline-none focus:border-indigo-500 transition-colors"
           >
             <option value="">Select user…</option>
             {availableUsers.map((u) => (
@@ -346,7 +346,7 @@ function MembersPanel({ group, onClose }: MembersPanelProps) {
           <button
             onClick={handleAddMember}
             disabled={!selectedUserId || addingMember}
-            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-1"
+            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-foreground rounded-lg text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-1"
           >
             {addingMember ? <Spinner /> : <Plus className="w-3.5 h-3.5" />}
           </button>
@@ -360,31 +360,31 @@ function MembersPanel({ group, onClose }: MembersPanelProps) {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-10 bg-[#21262d] rounded-lg animate-pulse"
+                className="h-10 bg-muted rounded-lg animate-pulse"
               />
             ))}
           </div>
         ) : members.length === 0 ? (
           <div className="text-center py-8">
-            <Users className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-            <p className="text-gray-500 text-xs">No members yet</p>
+            <Users className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-muted-foreground text-xs">No members yet</p>
           </div>
         ) : (
           members.map((member) => (
             <div
               key={member.id}
-              className="flex items-center justify-between gap-2 bg-[#0d1117] border border-[#30363d] rounded-lg p-3 group"
+              className="flex items-center justify-between gap-2 bg-background border border-border rounded-lg p-3 group"
             >
               <div className="min-w-0">
-                <p className="text-sm text-white font-medium truncate">
+                <p className="text-sm text-foreground font-medium truncate">
                   {displayName(member)}
                 </p>
-                <p className="text-xs text-gray-500 truncate">{member.email}</p>
+                <p className="text-xs text-muted-foreground truncate">{member.email}</p>
               </div>
               <button
                 onClick={() => handleRemoveMember(member.id)}
                 disabled={removingId === member.id}
-                className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                className="flex-shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-error hover:bg-error/15 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
               >
                 {removingId === member.id ? (
                   <Spinner />
@@ -434,15 +434,15 @@ function GroupModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#161b22] rounded-2xl w-full max-w-md border border-[#30363d] shadow-2xl flex flex-col overflow-hidden">
+      <div className="bg-card rounded-2xl w-full max-w-md border border-border shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex justify-between items-center px-6 py-5 border-b border-[#30363d]">
-          <h3 className="text-lg font-bold text-white">
+        <div className="flex justify-between items-center px-6 py-5 border-b border-border">
+          <h3 className="text-lg font-bold text-foreground">
             {mode === "create" ? "Create Group" : "Edit Group"}
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-muted-foreground hover:text-foreground transition-colors p-1"
           >
             ✕
           </button>
@@ -451,15 +451,15 @@ function GroupModal({
         {/* Body */}
         <form id="groupForm" onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-error/15 border border-error/20 text-error text-sm">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Group Name <span className="text-red-400">*</span>
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
+              Group Name <span className="text-error">*</span>
             </label>
             <input
               type="text"
@@ -468,21 +468,21 @@ function GroupModal({
               placeholder="e.g. Engineering"
               autoFocus
               required
-              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+              className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-foreground text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Parent Group{" "}
-              <span className="text-gray-500 font-normal">(optional)</span>
+              <span className="text-muted-foreground font-normal">(optional)</span>
             </label>
             <select
               value={parentId ?? ""}
               onChange={(e) =>
                 setParentId(e.target.value ? Number(e.target.value) : null)
               }
-              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500 transition-all appearance-none"
+              className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-foreground text-sm focus:outline-none focus:border-indigo-500 transition-all appearance-none"
             >
               <option value="">— No parent (root group) —</option>
               {groups
@@ -497,11 +497,11 @@ function GroupModal({
         </form>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-[#30363d] flex justify-end gap-3">
+        <div className="px-6 py-4 border-t border-border flex justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-[#21262d] transition-colors"
+            className="px-5 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             Cancel
           </button>
@@ -509,7 +509,7 @@ function GroupModal({
             type="submit"
             form="groupForm"
             disabled={loading || !name.trim()}
-            className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-foreground rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {loading && <Spinner />}
             {mode === "create" ? "Create" : "Save Changes"}
@@ -719,16 +719,16 @@ export default function GroupsPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <main className="min-h-screen bg-[#0d1117] text-[#c9d1d9] py-8 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-background text-foreground py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
               <Folder className="w-8 h-8 text-indigo-400" />
               Groups
             </h1>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Manage group hierarchy, members, and permissions
             </p>
           </div>
@@ -737,7 +737,7 @@ export default function GroupsPage() {
               setCreateError(null);
               setShowCreate(true);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-all shadow-md border border-indigo-500/30"
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-foreground rounded-xl text-sm font-semibold transition-all shadow-md border border-indigo-500/30"
           >
             <Plus className="w-4 h-4" />
             Add Group
@@ -748,7 +748,7 @@ export default function GroupsPage() {
         {loading && <SkeletonTable />}
 
         {error && (
-          <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl">
+          <div className="flex items-center gap-3 bg-error/15 border border-error/20 text-error p-4 rounded-xl">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -757,18 +757,18 @@ export default function GroupsPage() {
         {!loading && !error && (
           <div className="flex gap-4 items-start">
             {/* Tree Panel */}
-            <div className="flex-1 bg-[#161b22] border border-[#30363d] rounded-2xl overflow-hidden shadow-sm">
+            <div className="flex-1 bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
               {/* Panel Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-[#30363d]">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-semibold text-white">
+                  <h2 className="text-sm font-semibold text-foreground">
                     Group Hierarchy
                   </h2>
                   <span className="text-xs bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 rounded-full px-2 py-0.5 font-medium">
                     {groups.length}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-gray-500">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-indigo-400 inline-block" />
                     Drag to re-parent
@@ -823,16 +823,16 @@ export default function GroupsPage() {
                   } ${
                     dragOverId === -1
                       ? "bg-indigo-600/15 border-indigo-500 text-indigo-300"
-                      : "border-[#30363d] text-gray-500 hover:text-gray-400"
+                      : "border-border text-muted-foreground hover:text-muted-foreground"
                   }`}
                 >
                   Drop here to move to Root
                 </div>
                 {tree.length === 0 ? (
                   <div className="py-16 text-center">
-                    <Folder className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                    <p className="text-gray-400 font-medium">No groups yet</p>
-                    <p className="text-gray-600 text-sm mt-1">
+                    <Folder className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground font-medium">No groups yet</p>
+                    <p className="text-muted-foreground text-sm mt-1">
                       Click &ldquo;Add Group&rdquo; to create your first group
                     </p>
                   </div>

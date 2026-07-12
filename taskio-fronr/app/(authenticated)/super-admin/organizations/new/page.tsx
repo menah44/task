@@ -75,11 +75,11 @@ export default function CreateOrganizationPage() {
 
 
   return (
-    <main className="space-y-8 text-[#c9d1d9]" dir="ltr">
+    <main className="space-y-8 text-foreground" dir="ltr">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <Link
               href={`/super-admin/organizations`}
               className="hover:text-blue-500 transition-colors flex items-center gap-1"
@@ -87,63 +87,63 @@ export default function CreateOrganizationPage() {
               <ArrowLeft className="w-4 h-4" /> Back to Organizations
             </Link>
           </div>
-          <h2 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+          <h2 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-3">
             <Building2 className="w-8 h-8 text-blue-500" />
             Create Organization
           </h2>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             Add a new organization to the system.
           </p>
         </div>
       </div>
 
       {/* Form Content */}
-      <div className="max-w-2xl bg-[#161b22] border border-[#30363d] rounded-3xl p-8 shadow-sm">
+      <div className="max-w-2xl bg-card border border-border rounded-3xl p-8 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-6">
           
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-300">
-              Organization Name <span className="text-red-500">*</span>
+            <label className="text-sm font-semibold text-muted-foreground">
+              Organization Name <span className="text-error">*</span>
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={handleNameChange}
-              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors"
               placeholder="e.g. Acme Corporation"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-300">
-              Slug <span className="text-red-500">*</span>
+            <label className="text-sm font-semibold text-muted-foreground">
+              Slug <span className="text-error">*</span>
             </label>
             <input
               type="text"
               value={formData.slug}
               onChange={handleSlugChange}
-              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors"
               placeholder="e.g. acme-corporation"
               required
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Only lowercase letters, numbers, and hyphens are allowed.
             </p>
           </div>
 
-          <div className="pt-4 border-t border-[#30363d] flex justify-end gap-3">
+          <div className="pt-4 border-t border-border flex justify-end gap-3">
             <button
               type="button"
               onClick={() => router.push(`/super-admin/organizations`)}
-              className="px-5 py-2.5 rounded-xl font-semibold text-sm text-gray-300 bg-[#1f242c] hover:bg-[#30363d] transition-colors"
+              className="px-5 py-2.5 rounded-xl font-semibold text-sm text-muted-foreground bg-muted hover:bg-accent transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-primary-foreground shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Create Organization

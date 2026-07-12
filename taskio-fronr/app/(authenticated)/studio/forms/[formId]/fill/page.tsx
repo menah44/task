@@ -12,6 +12,7 @@ import {
   reviewStorageKey,
 } from "@/lib/types/form";
 import { toAnswerQuestion } from "@/lib/types/forms/answerFieldAdapter";
+import { useAuthStore } from "@/lib/auth-store";
 
 // ======================== Types ========================
 interface GpsCoords {
@@ -94,15 +95,15 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   const pct = total === 0 ? 0 : Math.round((current / total) * 100);
   return (
     <div className="space-y-1.5">
-      <div className="flex justify-between text-xs text-gray-400">
+      <div className="flex justify-between text-xs text-muted-foreground">
         <span>
           Section {current} of {total}
         </span>
-        <span className="font-medium text-blue-400">{pct}%</span>
+        <span className="font-medium text-primary">{pct}%</span>
       </div>
-      <div className="h-1.5 bg-[#21262d] rounded-full overflow-hidden">
+      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
         <div
-          className="h-full bg-blue-600 rounded-full transition-all duration-500"
+          className="h-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm rounded-full transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -122,7 +123,7 @@ function GpsBanner({
 }) {
   if (loading) {
     return (
-      <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs px-4 py-2.5 rounded-lg flex items-center gap-2">
+      <div className="bg-warning/15 border border-warning/20 text-warning text-xs px-4 py-2.5 rounded-lg flex items-center gap-2">
         <span className="animate-spin">⟳</span>
         Capturing your location...
       </div>
@@ -137,8 +138,8 @@ function GpsBanner({
     const mapLink = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`;
 
     return (
-      <div className="bg-green-500/10 border border-green-500/20 rounded-lg overflow-hidden">
-        <div className="text-green-400 text-xs px-4 py-2.5 flex items-center justify-between gap-2">
+      <div className="bg-success/15 border border-success/20 rounded-lg overflow-hidden">
+        <div className="text-success text-xs px-4 py-2.5 flex items-center justify-between gap-2">
           <span className="flex items-center gap-2">
             <span>📍</span>
             Location captured (±{Math.round(accuracy)}m)
@@ -164,7 +165,7 @@ function GpsBanner({
 
   if (denied) {
     return (
-      <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs px-4 py-2.5 rounded-lg flex items-center gap-2">
+      <div className="bg-error/15 border border-error/20 text-error text-xs px-4 py-2.5 rounded-lg flex items-center gap-2">
         <span>⚠️</span>
         Couldn&apos;t access your location. Check your browser&apos;s location
         permission for this site and try again.
@@ -186,10 +187,10 @@ function AutoSaveIndicator({
     <span
       className={`text-[10px] font-medium ${
         status === "saving"
-          ? "text-gray-400 animate-pulse"
+          ? "text-muted-foreground animate-pulse"
           : status === "saved"
-            ? "text-green-400"
-            : "text-red-400"
+            ? "text-success"
+            : "text-error"
       }`}>
       {status === "saving"
         ? "Auto-saving..."
@@ -219,6 +220,17 @@ export default function FormFillPage() {
   const [gpsCoords, setGpsCoords] = useState<GpsCoords | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsDenied, setGpsDenied] = useState(false);
+  const [locationBlocked, setLocationBlocked] = useState(false);
+  const [locationErrorMsg, setLocationErrorMsg] = useState("");
+
+  const { currentUser } = useAuthStore();
+  const role = currentUser?.role;
+
+  const backLink = React.useMemo(() => {
+    if (role === "SUPER_ADMIN") return "/super-admin/dashboard";
+    if (role === "ADMIN" || role === "STUDIO") return "/studio/forms";
+    return "/userForms";
+  }, [role]);
 
   const autoSaveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -283,10 +295,26 @@ export default function FormFillPage() {
       const id = res.data.id;
       setResponseId(id);
       return id;
-    } catch {
+    } catch (err: any) {
+      if (err?.response?.status === 403) {
+        setLocationBlocked(true);
+        setLocationErrorMsg(
+          err?.response?.data?.message || "You must be inside the configured location to submit this form."
+        );
+      }
       return null;
     }
   }, [formId, responseId, gpsCoords]);
+
+  // ── Eagerly create draft to validate location if restricted ──
+  useEffect(() => {
+    if (!form || !form.restrictByLocation || locationBlocked || responseId) return;
+    
+    // We only want to trigger this eagerly once we have either a GPS success or failure
+    if (gpsCoords || gpsDenied) {
+      createDraftIfNeeded();
+    }
+  }, [form, gpsCoords, gpsDenied, locationBlocked, responseId, createDraftIfNeeded]);
 
   // ── Auto-save every 30 seconds: PUT /responses/:id/answers/bulk (A4-08) ──
   const autoSave = useCallback(async () => {
@@ -364,7 +392,7 @@ export default function FormFillPage() {
         throw new Error("Could not create draft");
       }
       await apiClient.put(`/responses/${id}/answers/bulk`, { answers });
-      await apiClient.post(`/responses/${id}/submit`);
+      await apiClient.post(`/responses/${id}/submit`, { gps: gpsCoords });
       
       // Clean up session storage if we had any
       if (typeof window !== "undefined") {
@@ -386,7 +414,7 @@ export default function FormFillPage() {
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-400">Loading form...</p>
+          <p className="text-sm text-muted-foreground">Loading form...</p>
         </div>
       </div>
     );
@@ -395,26 +423,49 @@ export default function FormFillPage() {
   if (!form)
     return (
       <div className="text-center py-20">
-        <p className="text-gray-400">Form not found.</p>
+        <p className="text-muted-foreground">Form not found.</p>
         <Link
-          href="/userForms"
-          className="text-blue-400 text-sm hover:underline mt-2 block">
+          href={backLink}
+          className="text-primary text-sm hover:underline mt-2 block">
           ← Back to forms
         </Link>
       </div>
     );
+
+  if (locationBlocked) {
+    return (
+      <div className="max-w-md mx-auto space-y-6 pb-10 mt-20">
+        <div className="bg-card border border-border rounded-2xl p-8 text-center shadow-sm">
+          <div className="w-16 h-16 bg-red-100/50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-foreground mb-2">Location Restricted</h1>
+          <p className="text-sm text-muted-foreground">{locationErrorMsg}</p>
+          <Link
+            href={backLink}
+            className="mt-6 px-4 py-2 inline-block bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-bold rounded-xl transition-colors">
+            Back to Forms
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const sections = form.sections || [];
 
   if (sections.length === 0 || !sections[currentSectionIdx]) {
     return (
       <div className="max-w-2xl mx-auto space-y-6 pb-10 mt-10">
-        <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 text-center shadow-sm">
-          <h1 className="text-xl font-bold text-white mb-2">{form.title}</h1>
-          <p className="text-sm text-gray-400">This form has no questions yet.</p>
+        <div className="bg-card border border-border rounded-2xl p-6 text-center shadow-sm">
+          <h1 className="text-xl font-bold text-foreground mb-2">{form.title}</h1>
+          <p className="text-sm text-muted-foreground">This form has no questions yet.</p>
           <Link
-            href="/userForms"
-            className="mt-4 px-4 py-2 inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors">
+            href={backLink}
+            className="mt-4 px-4 py-2 inline-block bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-bold rounded-xl transition-colors">
             Back to Forms
           </Link>
         </div>
@@ -429,12 +480,12 @@ export default function FormFillPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-10">
       {/* Form Header */}
-      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6">
+      <div className="bg-card border border-border rounded-2xl p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-white">{form.title}</h1>
+            <h1 className="text-xl font-bold text-foreground">{form.title}</h1>
             {form.description && (
-              <p className="text-gray-400 text-sm mt-1">{form.description}</p>
+              <p className="text-muted-foreground text-sm mt-1">{form.description}</p>
             )}
           </div>
           <AutoSaveIndicator status={autoSaveStatus} />
@@ -455,8 +506,8 @@ export default function FormFillPage() {
       <GpsBanner coords={gpsCoords} loading={gpsLoading} denied={gpsDenied} />
 
       {/* Section */}
-      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 space-y-6">
-        <h2 className="text-base font-bold text-white border-b border-[#30363d] pb-3">
+      <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
+        <h2 className="text-base font-bold text-foreground border-b border-border pb-3">
           {currentSection.title}
         </h2>
 
@@ -473,7 +524,7 @@ export default function FormFillPage() {
         ))}
 
         {visibleQuestions.length === 0 && (
-          <p className="text-gray-500 text-sm italic text-center py-4">
+          <p className="text-muted-foreground text-sm italic text-center py-4">
             No questions to display in this section.
           </p>
         )}
@@ -484,13 +535,13 @@ export default function FormFillPage() {
         {currentSectionIdx > 0 ? (
           <button
             onClick={handleBack}
-            className="px-5 py-2.5 text-sm font-medium text-gray-300 border border-[#30363d] rounded-xl hover:bg-[#21262d] transition-colors">
+            className="px-5 py-2.5 text-sm font-medium text-muted-foreground border border-border rounded-xl hover:bg-muted transition-colors">
             ← Back
           </button>
         ) : (
           <Link
-            href="/userForms"
-            className="px-5 py-2.5 text-sm font-medium text-gray-400 hover:text-gray-200 transition-colors">
+            href={backLink}
+            className="px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             ← Cancel
           </Link>
         )}
@@ -499,13 +550,13 @@ export default function FormFillPage() {
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
+            className="px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-foreground text-sm font-bold rounded-xl transition-colors shadow-sm">
             {isSubmitting ? "Submitting..." : "Submit ✓"}
           </button>
         ) : (
           <button
             onClick={handleNext}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
+            className="px-6 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-bold rounded-xl transition-colors shadow-sm">
             Next →
           </button>
         )}
@@ -522,7 +573,7 @@ export default function FormFillPage() {
                   ? "bg-blue-500"
                   : idx < currentSectionIdx
                     ? "bg-green-500"
-                    : "bg-[#30363d]"
+                    : "bg-accent"
               }`}
             />
           ))}

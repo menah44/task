@@ -11,6 +11,39 @@ import { Form } from '../forms/entities/form.entity';
 import { User } from '../auth/entities/user.entity';
 import { AuditService } from '../audit/audit.service';
 
+// Helper functions for point-in-polygon
+function isPointInPolygon(point: [number, number], vs: [number, number][]) {
+  const x = point[0], y = point[1];
+  let inside = false;
+  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+    const xi = vs[i][0], yi = vs[i][1];
+    const xj = vs[j][0], yj = vs[j][1];
+    const intersect = ((yi > y) !== (yj > y))
+        && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+function isPointInFeatureCollection(point: [number, number], boundaryObj: any): boolean {
+  // The boundary is saved as { geojson: FeatureCollection, areaKm2: ... }
+  const geojson = boundaryObj?.geojson || boundaryObj;
+  
+  if (!geojson || !geojson.features) return false;
+  for (const feature of geojson.features) {
+    if (feature.geometry?.type === 'Polygon') {
+      const exteriorRing = feature.geometry.coordinates[0];
+      if (isPointInPolygon(point, exteriorRing)) return true;
+    } else if (feature.geometry?.type === 'MultiPolygon') {
+      for (const polygon of feature.geometry.coordinates) {
+        const exteriorRing = polygon[0];
+        if (isPointInPolygon(point, exteriorRing)) return true;
+      }
+    }
+  }
+  return false;
+}
+
 @Injectable()
 export class ResponsesService {
   constructor(
@@ -29,9 +62,16 @@ export class ResponsesService {
     return orgId;
   }
 
+  private async hasUserSubmitted(formId: number, userId: number, orgId: number): Promise<boolean> {
+    const existing = await this.responseRepository.findOne({
+      where: { formId, userId, organizationId: orgId, status: 'SUBMITTED' },
+    });
+    return !!existing;
+  }
+
   async createDraft(
     formId: number,
-    gps: { latitude?: number; longitude?: number } | undefined,
+    gps: { latitude?: number; longitude?: number; lat?: number; lng?: number } | undefined,
     user: any,
   ): Promise<Response> {
     const orgId = this.getOrgId(user);
@@ -44,13 +84,52 @@ export class ResponsesService {
       throw new NotFoundException(`Form with ID ${formId} not found`);
     }
 
+    if (await this.hasUserSubmitted(formId, user.id, orgId)) {
+      throw new ForbiddenException('You have already submitted this form.');
+    }
+
+    const settings = (form.settings || {}) as { restrictByLocation?: boolean };
+    const lat = gps?.latitude ?? gps?.lat;
+    const lng = gps?.longitude ?? gps?.lng;
+    
+    console.log(`\n--- LOCATION VALIDATION DEBUG (DRAFT) ---`);
+    console.log(`restrictByLocation: ${settings.restrictByLocation}`);
+    console.log(`Stored Boundary:`, JSON.stringify(form.boundary));
+    
+    // Check location restriction
+    if (settings.restrictByLocation === true) {
+      console.log(`User Location: { lat: ${lat}, lng: ${lng} }`);
+      
+      if (lat === undefined || lng === undefined) {
+        console.log(`Validation Result: NO GPS PROVIDED`);
+        console.log(`Returning 403 Forbidden`);
+        throw new ForbiddenException("You must be inside the configured location to submit this form.");
+      }
+      
+      const point: [number, number] = [lng, lat]; // GeoJSON expects [lng, lat]
+      
+      let isInside = false;
+      if (form.boundary) {
+        // Output debug logs closer to the format requested
+        console.log(`Calculated Position (GeoJSON check): executing isPointInFeatureCollection...`);
+        isInside = isPointInFeatureCollection(point, form.boundary);
+      }
+      
+      console.log(`Validation Result: ${isInside ? 'INSIDE' : 'OUTSIDE'}`);
+      
+      if (!isInside) {
+        console.log(`Returning 403 Forbidden`);
+        throw new ForbiddenException("You must be inside the configured location to submit this form.");
+      }
+    }
+
     const draft = this.responseRepository.create({
       formId,
       userId: user.id,
       organizationId: orgId,
       status: 'DRAFT',
-      latitude: gps?.latitude || null,
-      longitude: gps?.longitude || null,
+      latitude: lat || null,
+      longitude: lng || null,
       answers: {},
     });
 
@@ -78,8 +157,13 @@ export class ResponsesService {
   async findOneFull(id: number, user: any) {
     const orgId = this.getOrgId(user);
 
+    const whereClause: any = { id, organizationId: orgId };
+    if (user.role === 'USER') {
+      whereClause.userId = user.id;
+    }
+
     const response = await this.responseRepository.findOne({
-      where: { id, organizationId: orgId },
+      where: whereClause,
       relations: ['form', 'form.sections', 'form.sections.questions'],
     });
 
@@ -109,16 +193,22 @@ export class ResponsesService {
 
     return {
       id: response.id,
+      formId: form.id,
       formTitle: form.title,
       sections,
     };
   }
 
-  async submitResponse(id: number, user: any): Promise<Response> {
+  async submitResponse(
+    id: number,
+    gps: { latitude?: number; longitude?: number; lat?: number; lng?: number } | undefined,
+    user: any
+  ): Promise<Response> {
     const orgId = this.getOrgId(user);
 
     const response = await this.responseRepository.findOne({
       where: { id, organizationId: orgId },
+      relations: ['form'],
     });
     if (!response) {
       throw new NotFoundException(`Response with ID ${id} not found`);
@@ -126,6 +216,51 @@ export class ResponsesService {
 
     if (response.status === 'SUBMITTED') {
       throw new BadRequestException('Response already submitted');
+    }
+
+    if (await this.hasUserSubmitted(response.formId, user.id, orgId)) {
+      throw new ForbiddenException('You have already submitted this form.');
+    }
+
+    const form = response.form;
+    const settings = (form?.settings || {}) as { restrictByLocation?: boolean };
+    
+    console.log(`\n--- LOCATION VALIDATION DEBUG (SUBMIT) ---`);
+    console.log(`restrictByLocation: ${settings.restrictByLocation}`);
+    console.log(`Stored Boundary:`, JSON.stringify(form.boundary));
+    
+    // Check location restriction again on submit using the live gps
+    if (settings.restrictByLocation === true) {
+      const lat = gps?.latitude ?? gps?.lat;
+      const lng = gps?.longitude ?? gps?.lng;
+      console.log(`User Location: { lat: ${lat}, lng: ${lng} }`);
+      
+      if (lat === null || lng === null || lat === undefined || lng === undefined) {
+        console.log(`Validation Result: NO GPS PROVIDED`);
+        console.log(`Returning 403 Forbidden`);
+        throw new ForbiddenException("You must be inside the configured location to submit this form.");
+      }
+      
+      const point: [number, number] = [lng, lat];
+      
+      let isInside = false;
+      if (form.boundary) {
+        // Log boundary check details
+        const geojson = form.boundary?.geojson || form.boundary;
+        console.log(`Boundary Type:`, geojson?.type, `Features:`, geojson?.features?.length);
+        isInside = isPointInFeatureCollection(point, form.boundary);
+      }
+      
+      console.log(`Validation Result: ${isInside ? 'INSIDE' : 'OUTSIDE'}`);
+      
+      if (!isInside) {
+        console.log(`Returning 403 Forbidden`);
+        throw new ForbiddenException("You must be inside the configured location to submit this form.");
+      }
+
+      // Update response coordinates with the final submission coordinates
+      response.latitude = lat;
+      response.longitude = lng;
     }
 
     response.status = 'SUBMITTED';
@@ -205,5 +340,29 @@ export class ResponsesService {
           : null,
       };
     });
+  }
+
+  async findMySubmissions(user: any) {
+    const orgId = this.getOrgId(user);
+
+    const query = this.responseRepository
+      .createQueryBuilder('response')
+      .leftJoinAndSelect('response.form', 'form')
+      .select([
+        'response.id',
+        'response.formId',
+        'response.status',
+        'response.submittedAt',
+        'response.createdAt',
+        'form.id',
+        'form.title',
+      ])
+      .where('response.organizationId = :orgId', { orgId })
+      .andWhere('response.userId = :userId', { userId: user.id })
+      .andWhere('response.status = :status', { status: 'SUBMITTED' })
+      .orderBy('response.submittedAt', 'DESC');
+
+    const dbResponses = await query.getMany();
+    return dbResponses;
   }
 }

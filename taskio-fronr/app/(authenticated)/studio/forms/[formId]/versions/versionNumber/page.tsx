@@ -79,11 +79,11 @@ function ReadOnlyQuestion({ question }: { question: SnapshotQuestion }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <p className="text-sm font-medium text-white">
+        <p className="text-sm font-medium text-foreground">
           {question.label}
-          {question.required && <span className="text-red-400 ml-1">*</span>}
+          {question.required && <span className="text-error ml-1">*</span>}
         </p>
-        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#21262d] text-gray-400 border border-[#30363d]">
+        <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
           {question.type}
         </span>
       </div>
@@ -93,7 +93,7 @@ function ReadOnlyQuestion({ question }: { question: SnapshotQuestion }) {
         <input
           disabled
           placeholder={`Enter ${question.label.toLowerCase()}...`}
-          className="w-full bg-[#0d1117]/50 border border-[#30363d]/50 rounded-lg px-3 py-2 text-sm text-gray-600 cursor-not-allowed"
+          className="w-full bg-card border border-border/50 rounded-lg px-3 py-2 text-sm text-muted-foreground cursor-not-allowed"
         />
       )}
 
@@ -102,7 +102,7 @@ function ReadOnlyQuestion({ question }: { question: SnapshotQuestion }) {
           disabled
           rows={3}
           placeholder="Enter your answer..."
-          className="w-full bg-[#0d1117]/50 border border-[#30363d]/50 rounded-lg px-3 py-2 text-sm text-gray-600 cursor-not-allowed resize-none"
+          className="w-full bg-card border border-border/50 rounded-lg px-3 py-2 text-sm text-muted-foreground cursor-not-allowed resize-none"
         />
       )}
 
@@ -110,7 +110,7 @@ function ReadOnlyQuestion({ question }: { question: SnapshotQuestion }) {
         <input
           type="date"
           disabled
-          className="w-full bg-[#0d1117]/50 border border-[#30363d]/50 rounded-lg px-3 py-2 text-sm text-gray-600 cursor-not-allowed [color-scheme:dark]"
+          className="w-full bg-card border border-border/50 rounded-lg px-3 py-2 text-sm text-muted-foreground cursor-not-allowed [color-scheme:dark]"
         />
       )}
 
@@ -119,7 +119,7 @@ function ReadOnlyQuestion({ question }: { question: SnapshotQuestion }) {
           {(question.options ?? []).map((opt) => (
             <label
               key={opt}
-              className="flex items-center gap-2 text-sm text-gray-500 cursor-not-allowed">
+              className="flex items-center gap-2 text-sm text-muted-foreground cursor-not-allowed">
               <input type="radio" disabled className="accent-blue-600" />
               {opt}
             </label>
@@ -132,7 +132,7 @@ function ReadOnlyQuestion({ question }: { question: SnapshotQuestion }) {
           {(question.options ?? []).map((opt) => (
             <label
               key={opt}
-              className="flex items-center gap-2 text-sm text-gray-500 cursor-not-allowed">
+              className="flex items-center gap-2 text-sm text-muted-foreground cursor-not-allowed">
               <input type="checkbox" disabled className="accent-blue-600" />
               {opt}
             </label>
@@ -199,22 +199,22 @@ export default function SnapshotViewPage({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0d1117]">
-        <p className="text-gray-500 text-sm">Loading snapshot...</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-muted-foreground text-sm">Loading snapshot...</p>
       </div>
     );
   }
 
   if (!snapshot) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0d1117]">
-        <p className="text-red-400 text-sm">Snapshot not found.</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-error text-sm">Snapshot not found.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-[#c9d1d9] p-6">
+    <div className="min-h-screen bg-background text-foreground p-6">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* ── Header ── */}
         <div className="flex items-start justify-between gap-4">
@@ -224,14 +224,14 @@ export default function SnapshotViewPage({
                 onClick={() =>
                   router.push(`/studio/forms/${params.formId}/versions`)
                 }
-                className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
+                className="text-muted-foreground hover:text-muted-foreground text-sm transition-colors">
                 ← Versions
               </button>
             </div>
-            <h1 className="text-xl font-bold text-white">
+            <h1 className="text-xl font-bold text-foreground">
               v{snapshot.versionNumber} — {snapshot.label}
             </h1>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {formatDate(snapshot.createdAt)} · by {snapshot.createdBy}
             </p>
           </div>
@@ -239,13 +239,13 @@ export default function SnapshotViewPage({
           <button
             onClick={handleCopy}
             disabled={isCopying}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors shrink-0">
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-foreground text-sm font-medium rounded-lg transition-colors shrink-0">
             {isCopying ? "Creating..." : "📋 Copy as New Form"}
           </button>
         </div>
 
         {/* ── Read-only banner ── */}
-        <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs px-4 py-2.5 rounded-lg flex items-center gap-2">
+        <div className="bg-warning/15 border border-warning/20 text-warning text-xs px-4 py-2.5 rounded-lg flex items-center gap-2">
           <span>🔒</span>
           <span>
             This is a <strong>read-only snapshot</strong>. You cannot edit it.
@@ -258,8 +258,8 @@ export default function SnapshotViewPage({
           {snapshot.sections.map((sec) => (
             <div
               key={sec.id}
-              className="bg-[#161b22] border border-[#30363d] rounded-2xl p-5 space-y-4">
-              <h2 className="text-base font-bold text-white border-b border-[#30363d] pb-2">
+              className="bg-card border border-border rounded-2xl p-5 space-y-4">
+              <h2 className="text-base font-bold text-foreground border-b border-border pb-2">
                 {sec.title}
               </h2>
               <div className="space-y-5">
@@ -267,7 +267,7 @@ export default function SnapshotViewPage({
                   <ReadOnlyQuestion key={q.id} question={q} />
                 ))}
                 {sec.questions.length === 0 && (
-                  <p className="text-xs text-gray-500 italic">
+                  <p className="text-xs text-muted-foreground italic">
                     No questions in this section.
                   </p>
                 )}

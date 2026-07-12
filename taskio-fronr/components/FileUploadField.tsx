@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useRef, useState } from "react";
+import { useAuthStore } from "@/lib/auth-store";
 
 // ============================================================
 // TYPES
@@ -31,7 +32,7 @@ interface FileUploadFieldProps {
 
 const DEFAULT_MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const DEFAULT_ACCEPT = "image/*,application/pdf";
-const DEFAULT_UPLOAD_URL = "/files/upload";
+const DEFAULT_UPLOAD_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api/v1"}/files/upload`;
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 
@@ -160,6 +161,12 @@ export default function FileUploadField({
       });
 
       xhr.open("POST", uploadUrl);
+      
+      const token = useAuthStore.getState().accessToken;
+      if (token) {
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      }
+
       xhr.send(formData);
     },
     [accept, maxSizeBytes, onChange, questionId, uploadUrl],
@@ -213,7 +220,7 @@ export default function FileUploadField({
     <div className="space-y-1.5">
       <label className="flex items-center gap-1 text-sm font-medium text-gray-200">
         {label}
-        {required && <span className="text-red-400">*</span>}
+        {required && <span className="text-error">*</span>}
       </label>
 
       {/* Idle / drag-drop zone (shown when no file is attached or upload errored) */}
@@ -233,14 +240,14 @@ export default function FileUploadField({
               ? "border-blue-500 bg-blue-500/10"
               : isMissingRequired || status === "error"
                 ? "border-red-500/50 bg-red-500/5"
-                : "border-[#30363d] bg-[#0d1117] hover:border-blue-500/50 hover:bg-[#1f242c]"
+                : "border-border bg-background hover:border-blue-500/50 hover:bg-muted"
           }`}>
           <span className="text-2xl">📎</span>
-          <p className="text-sm text-gray-300">
-            <span className="text-blue-400 font-medium">Click to upload</span>{" "}
+          <p className="text-sm text-muted-foreground">
+            <span className="text-primary font-medium">Click to upload</span>{" "}
             or drag and drop
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             Images or PDF, up to {formatBytes(maxSizeBytes)}
           </p>
           <input
@@ -256,12 +263,12 @@ export default function FileUploadField({
       {/* Error message + retry */}
       {status === "error" && (
         <div className="flex items-center justify-between gap-2 text-xs">
-          <span className="text-red-400">⚠️ {errorMsg}</span>
+          <span className="text-error">⚠️ {errorMsg}</span>
           {pendingFile && (
             <button
               type="button"
               onClick={handleRetry}
-              className="shrink-0 px-2 py-1 rounded-md bg-red-500/10 border border-red-500/30 text-red-300 hover:bg-red-500/20 transition-colors">
+              className="shrink-0 px-2 py-1 rounded-md bg-error/15 border border-red-500/30 text-red-300 hover:bg-red-500/20 transition-colors">
               Retry
             </button>
           )}
@@ -270,8 +277,8 @@ export default function FileUploadField({
 
       {/* Uploading / uploaded card with thumbnail */}
       {(status === "uploading" || status === "success") && pendingFile && (
-        <div className="flex items-center gap-3 rounded-xl border border-[#30363d] bg-[#0d1117] p-3">
-          <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-[#161b22] border border-[#30363d] flex items-center justify-center">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
+          <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-card border border-border flex items-center justify-center">
             {previewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -285,13 +292,13 @@ export default function FileUploadField({
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-white truncate">{pendingFile.name}</p>
-            <p className="text-xs text-gray-500">
+            <p className="text-sm text-foreground truncate">{pendingFile.name}</p>
+            <p className="text-xs text-muted-foreground">
               {formatBytes(pendingFile.size)}
             </p>
 
             {status === "uploading" && (
-              <div className="mt-1.5 h-1.5 w-full rounded-full bg-[#30363d] overflow-hidden">
+              <div className="mt-1.5 h-1.5 w-full rounded-full bg-accent overflow-hidden">
                 <div
                   className="h-full bg-blue-500 transition-all duration-150"
                   style={{ width: `${progress}%` }}
@@ -299,7 +306,7 @@ export default function FileUploadField({
               </div>
             )}
             {status === "success" && (
-              <p className="mt-1 text-xs text-green-400">Uploaded ✓</p>
+              <p className="mt-1 text-xs text-success">Uploaded ✓</p>
             )}
           </div>
 
@@ -307,14 +314,14 @@ export default function FileUploadField({
             type="button"
             onClick={handleRemove}
             title={status === "uploading" ? "Cancel upload" : "Remove file"}
-            className="shrink-0 text-gray-500 hover:text-red-400 text-sm transition-colors">
+            className="shrink-0 text-muted-foreground hover:text-error text-sm transition-colors">
             ✕
           </button>
         </div>
       )}
 
       {isMissingRequired && (
-        <p className="text-xs text-red-400">This field is required.</p>
+        <p className="text-xs text-error">This field is required.</p>
       )}
     </div>
   );

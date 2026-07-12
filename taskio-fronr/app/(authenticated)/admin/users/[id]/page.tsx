@@ -233,7 +233,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#0d1117] text-[#c9d1d9] py-10 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+      <main className="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
         <SkeletonCard />
       </main>
     );
@@ -241,7 +241,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
   if (error || !user) {
     return (
-      <main className="min-h-screen bg-[#0d1117] text-[#c9d1d9] py-10 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+      <main className="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
         <div className="w-full max-w-3xl">
           <div className="mb-6">
             <button
@@ -256,14 +256,14 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                   router.push('/admin/users');
                 }
               }}
-              className="text-gray-400 hover:text-white transition-colors text-sm font-medium flex items-center gap-2"
+              className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium flex items-center gap-2"
             >
               ← Back to Users
             </button>
           </div>
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
-            <h2 className="text-xl font-semibold text-red-400 mb-2">Error</h2>
-            <p className="text-gray-300">{error || "User not found"}</p>
+          <div className="bg-error/15 border border-error/20 rounded-xl p-6 text-center">
+            <h2 className="text-xl font-semibold text-error mb-2">Error</h2>
+            <p className="text-muted-foreground">{error || "User not found"}</p>
           </div>
         </div>
       </main>
@@ -284,7 +284,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   };
 
   return (
-    <main className="min-h-screen bg-[#0d1117] text-[#c9d1d9] py-10 px-4 sm:px-6 lg:px-8 flex flex-col items-center relative">
+    <main className="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8 flex flex-col items-center relative">
       <div className="w-full max-w-3xl">
         {/* Header */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -301,11 +301,11 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                   router.push('/admin/users');
                 }
               }}
-              className="text-gray-400 hover:text-white transition-colors text-sm font-medium flex items-center gap-2 mb-4"
+              className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium flex items-center gap-2 mb-4"
             >
               ← Back to Users
             </button>
-            <h2 className="text-3xl font-bold text-white tracking-tight">
+            <h2 className="text-3xl font-bold text-foreground tracking-tight">
               User Details
             </h2>
           </div>
@@ -329,7 +329,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex space-x-1 border-b border-[#30363d] mb-6">
+        <div className="flex space-x-1 border-b border-border mb-6">
           {["Profile", "Roles", "Groups"].map((tab) => (
             <button
               key={tab}
@@ -358,8 +358,8 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
               }}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab
-                  ? "border-primary text-white"
-                  : "border-transparent text-gray-400 hover:text-gray-200 hover:border-[#30363d]"
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               }`}
             >
               {tab}
@@ -368,14 +368,14 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         </div>
 
         {activeTab === "Profile" && (
-          <div className="bg-[#161b22] rounded-3xl shadow-sm border border-[#30363d] overflow-hidden">
+          <div className="bg-card rounded-3xl shadow-sm border border-border overflow-hidden">
             <div className="p-6 sm:p-8">
               <div className="mb-6 flex justify-between items-center">
-                <h3 className="text-xl font-bold text-white">Edit Profile</h3>
+                <h3 className="text-xl font-bold text-foreground">Edit Profile</h3>
               </div>
               
               {editApiError && (
-                <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                <div className="mb-6 p-4 rounded-xl bg-error/15 border border-error/20 text-error text-sm">
                   {editApiError}
                 </div>
               )}
@@ -383,58 +383,58 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
               <form id="editUserForm" onSubmit={handleEditSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">First Name</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">First Name</label>
                     <input
                       type="text"
                       name="firstName"
                       value={editFormData.firstName}
                       onChange={handleEditChange}
-                      className={`w-full bg-[#0d1117] border ${editErrors.firstName ? "border-red-500" : "border-[#30363d]"} rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors`}
+                      className={`w-full bg-background border ${editErrors.firstName ? "border-red-500" : "border-border"} rounded-xl px-4 py-3 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors`}
                     />
-                    {editErrors.firstName && <p className="mt-1 text-sm text-red-400">{editErrors.firstName}</p>}
+                    {editErrors.firstName && <p className="mt-1 text-sm text-error">{editErrors.firstName}</p>}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Last Name</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">Last Name</label>
                     <input
                       type="text"
                       name="lastName"
                       value={editFormData.lastName}
                       onChange={handleEditChange}
-                      className={`w-full bg-[#0d1117] border ${editErrors.lastName ? "border-red-500" : "border-[#30363d]"} rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors`}
+                      className={`w-full bg-background border ${editErrors.lastName ? "border-red-500" : "border-border"} rounded-xl px-4 py-3 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors`}
                     />
-                    {editErrors.lastName && <p className="mt-1 text-sm text-red-400">{editErrors.lastName}</p>}
+                    {editErrors.lastName && <p className="mt-1 text-sm text-error">{editErrors.lastName}</p>}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Username</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Username</label>
                   <input
                     type="text"
                     name="username"
                     value={editFormData.username}
                     onChange={handleEditChange}
-                    className={`w-full bg-[#0d1117] border ${editErrors.username ? "border-red-500" : "border-[#30363d]"} rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors`}
+                    className={`w-full bg-background border ${editErrors.username ? "border-red-500" : "border-border"} rounded-xl px-4 py-3 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors`}
                   />
-                  {editErrors.username && <p className="mt-1 text-sm text-red-400">{editErrors.username}</p>}
+                  {editErrors.username && <p className="mt-1 text-sm text-error">{editErrors.username}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Email</label>
                   <input
                     type="email"
                     name="email"
                     value={editFormData.email}
                     onChange={handleEditChange}
-                    className={`w-full bg-[#0d1117] border ${editErrors.email ? "border-red-500" : "border-[#30363d]"} rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors`}
+                    className={`w-full bg-background border ${editErrors.email ? "border-red-500" : "border-border"} rounded-xl px-4 py-3 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors`}
                   />
-                  {editErrors.email && <p className="mt-1 text-sm text-red-400">{editErrors.email}</p>}
+                  {editErrors.email && <p className="mt-1 text-sm text-error">{editErrors.email}</p>}
                 </div>
 
                 <div className="pt-4 flex justify-end">
                   <button
                     type="submit"
                     disabled={editLoading}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                    className="px-6 py-3 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                   >
                     {editLoading && (
                       <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
@@ -448,31 +448,31 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         )}
 
         {activeTab === "Roles" && (
-          <div className="bg-[#161b22] rounded-3xl shadow-sm border border-[#30363d] p-6 sm:p-8">
-            <h3 className="text-xl font-bold text-white mb-6">User Role</h3>
+          <div className="bg-card rounded-3xl shadow-sm border border-border p-6 sm:p-8">
+            <h3 className="text-xl font-bold text-foreground mb-6">User Role</h3>
             <div className="flex flex-wrap gap-3 mb-8">
               {user.role ? (
                 <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium border ${
                   user.role.toUpperCase() === "ADMIN"
-                    ? "bg-red-500/10 text-red-400 border-red-500/20"
+                    ? "bg-error/15 text-error border-error/20"
                     : user.role.toUpperCase() === "USER"
-                    ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                    : "bg-gray-500/10 text-gray-400 border-gray-500/20"
+                    ? "bg-blue-500/10 text-primary border-blue-500/20"
+                    : "bg-muted0/10 text-muted-foreground border-gray-500/20"
                 }`}>
                   {user.role}
                 </span>
               ) : (
-                <p className="text-gray-400 text-sm">No role assigned.</p>
+                <p className="text-muted-foreground text-sm">No role assigned.</p>
               )}
             </div>
 
-            <div className="border-t border-[#30363d] pt-6">
-              <h4 className="text-sm font-medium text-gray-300 mb-3">Change Role</h4>
+            <div className="border-t border-border pt-6">
+              <h4 className="text-sm font-medium text-muted-foreground mb-3">Change Role</h4>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <select
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value)}
-                  className="bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors flex-1 w-full sm:max-w-xs appearance-none"
+                  className="bg-background border border-border rounded-xl px-4 py-2.5 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors flex-1 w-full sm:max-w-xs appearance-none"
                 >
                   <option value="">Select a role...</option>
                   {roles.map(r => (
@@ -482,7 +482,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                 <button
                   onClick={handleRoleChangeSubmit}
                   disabled={!selectedRole || addRoleLoading || selectedRole === user.role}
-                  className="px-5 py-2.5 bg-primary hover:bg-primary/80 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-2.5 bg-primary hover:bg-primary/80 text-primary-foreground shadow-sm rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {addRoleLoading && (
                     <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
@@ -495,17 +495,17 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         )}
 
         {activeTab === "Groups" && (
-          <div className="bg-[#161b22] rounded-3xl shadow-sm border border-[#30363d] p-6 sm:p-8">
-            <h3 className="text-xl font-bold text-white mb-6">User Groups</h3>
+          <div className="bg-card rounded-3xl shadow-sm border border-border p-6 sm:p-8">
+            <h3 className="text-xl font-bold text-foreground mb-6">User Groups</h3>
             {userGroups.length === 0 ? (
-              <div className="text-center py-8 bg-[#0d1117] rounded-xl border border-[#30363d] border-dashed">
-                <p className="text-gray-400 text-sm">No groups assigned to this user.</p>
+              <div className="text-center py-8 bg-background rounded-xl border border-border border-dashed">
+                <p className="text-muted-foreground text-sm">No groups assigned to this user.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {userGroups.map(group => (
-                  <div key={group.id} className="bg-[#0d1117] border border-[#30363d] rounded-xl p-4 flex items-center justify-between">
-                    <span className="text-gray-200 font-medium">{group.name}</span>
+                  <div key={group.id} className="bg-background border border-border rounded-xl p-4 flex items-center justify-between">
+                    <span className="text-foreground font-medium">{group.name}</span>
                   </div>
                 ))}
               </div>

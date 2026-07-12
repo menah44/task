@@ -74,10 +74,10 @@ export default function OrganizationDetailsPage() {
 
   if (error || !organization) {
     return (
-      <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-6 rounded-xl flex items-center justify-center flex-col gap-4">
+      <div className="bg-error/15 border border-error/20 text-error p-6 rounded-xl flex items-center justify-center flex-col gap-4">
         <AlertCircle className="w-10 h-10" />
         <p>Organization not found or an error occurred.</p>
-        <Link href="/super-admin/organizations" className="text-blue-400 hover:underline">
+        <Link href="/super-admin/organizations" className="text-primary hover:underline">
           Return to Organizations
         </Link>
       </div>
@@ -87,11 +87,11 @@ export default function OrganizationDetailsPage() {
   const adminUser = organization.users?.find((u) => u.role === "ADMIN");
 
   return (
-    <main className="space-y-8 text-[#c9d1d9]" dir="ltr">
+    <main className="space-y-8 text-foreground" dir="ltr">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <Link
               href="/super-admin/organizations"
               className="hover:text-blue-500 transition-colors flex items-center gap-1"
@@ -99,7 +99,7 @@ export default function OrganizationDetailsPage() {
               <ArrowLeft className="w-4 h-4" /> Back to Organizations
             </Link>
           </div>
-          <h2 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+          <h2 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-3">
             <Building2 className="w-8 h-8 text-blue-500" />
             {organization.name}
           </h2>
@@ -107,7 +107,7 @@ export default function OrganizationDetailsPage() {
 
         <button
           onClick={() => router.push(`/super-admin/organizations/${id}/edit`)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#1f242c] hover:bg-[#30363d] border border-[#30363d] text-white rounded-xl transition-all font-semibold shadow-md text-sm"
+          className="flex items-center gap-2 px-5 py-2.5 bg-muted hover:bg-accent border border-border text-foreground rounded-xl transition-all font-semibold shadow-md text-sm"
         >
           <Edit className="w-4 h-4" />
           Edit Organization
@@ -118,29 +118,29 @@ export default function OrganizationDetailsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Details */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-[#161b22] border border-[#30363d] rounded-3xl p-6 shadow-sm">
-            <h3 className="text-xl font-bold mb-4 text-white">Overview</h3>
+          <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
+            <h3 className="text-xl font-bold mb-4 text-foreground">Overview</h3>
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-gray-500 uppercase font-bold tracking-wider">Description</label>
-                <p className="text-gray-300 mt-1">{organization.description || "No description provided."}</p>
+                <label className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Description</label>
+                <p className="text-muted-foreground mt-1">{organization.description || "No description provided."}</p>
               </div>
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#30363d]">
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
                 <div>
-                  <label className="text-xs text-gray-500 uppercase font-bold tracking-wider">Created At</label>
-                  <div className="flex items-center gap-2 mt-1 text-gray-300">
-                    <Calendar className="w-4 h-4 text-gray-500" />
+                  <label className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Created At</label>
+                  <div className="flex items-center gap-2 mt-1 text-muted-foreground">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
                     <span>{organization.createdAt ? new Date(organization.createdAt).toLocaleDateString() : "N/A"}</span>
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 uppercase font-bold tracking-wider">Status</label>
+                  <label className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Status</label>
                   <div className="mt-1">
                     <span
                       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
                         organization.isActive
-                          ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                          : "bg-gray-500/10 text-gray-400 border border-gray-500/20"
+                          ? "bg-success text-success-foreground border-transparent shadow-sm"
+                          : "bg-accent text-accent-foreground border-transparent shadow-sm"
                       }`}
                     >
                       <ShieldCheck className="w-4 h-4" />
@@ -153,32 +153,32 @@ export default function OrganizationDetailsPage() {
           </div>
 
           {/* Admin Details Section */}
-          <div className="bg-[#161b22] border border-[#30363d] rounded-3xl p-6 shadow-sm">
-            <h3 className="text-xl font-bold mb-4 text-white">Organization Admin</h3>
+          <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
+            <h3 className="text-xl font-bold mb-4 text-foreground">Organization Admin</h3>
             {adminUser ? (
-              <div className="bg-[#0d1117] border border-[#30363d] p-4 rounded-xl flex items-center justify-between">
+              <div className="bg-background border border-border p-4 rounded-xl flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-white">
+                  <p className="text-sm font-semibold text-foreground">
                     {adminUser.firstName} {adminUser.lastName}
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">{adminUser.email}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{adminUser.email}</p>
                 </div>
                 <span
                   className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
                     adminUser.isActive
-                      ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                      : "bg-gray-500/10 text-gray-400 border border-gray-500/20"
+                      ? "bg-success text-success-foreground border-transparent shadow-sm"
+                      : "bg-accent text-accent-foreground border-transparent shadow-sm"
                   }`}
                 >
                   {adminUser.isActive ? "Active" : "Inactive"}
                 </span>
               </div>
             ) : (
-              <div className="bg-[#0d1117] border border-[#30363d] p-6 rounded-xl flex flex-col items-center justify-center gap-3 text-center">
-                <p className="text-sm text-gray-400">No Admin assigned</p>
+              <div className="bg-background border border-border p-6 rounded-xl flex flex-col items-center justify-center gap-3 text-center">
+                <p className="text-sm text-muted-foreground">No Admin assigned</p>
                 <button
                   onClick={() => setAdminModalOpen(true)}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-foreground text-sm font-semibold rounded-lg transition-colors shadow-sm"
                 >
                   Create Admin
                 </button>
@@ -189,16 +189,16 @@ export default function OrganizationDetailsPage() {
 
         {/* Sidebar Info */}
         <div className="space-y-6">
-          <div className="bg-[#161b22] border border-[#30363d] rounded-3xl p-6 shadow-sm text-center">
+          <div className="bg-card border border-border rounded-3xl p-6 shadow-sm text-center">
             <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
               <Users className="w-8 h-8 text-blue-500" />
             </div>
-            <h3 className="text-3xl font-bold text-white">{organization.usersCount || 0}</h3>
-            <p className="text-gray-400 text-sm mt-1">Total Users</p>
+            <h3 className="text-3xl font-bold text-foreground">{organization.usersCount || 0}</h3>
+            <p className="text-muted-foreground text-sm mt-1">Total Users</p>
             
             <button
               onClick={() => router.push(`/super-admin/users?orgId=${organization.id}`)}
-              className="mt-6 w-full py-2 bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 border border-blue-500/20 rounded-xl transition-all font-semibold text-sm"
+              className="mt-6 w-full py-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-xl transition-all font-semibold text-sm"
             >
               View Users
             </button>

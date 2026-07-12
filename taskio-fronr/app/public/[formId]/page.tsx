@@ -79,15 +79,15 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   const pct = total === 0 ? 0 : Math.round((current / total) * 100);
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-xs text-gray-400">
+      <div className="flex justify-between text-xs text-muted-foreground">
         <span>
           Section {current} of {total}
         </span>
         <span>{pct}%</span>
       </div>
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
         <div
-          className="h-full bg-blue-600 rounded-full transition-all duration-500"
+          className="h-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm rounded-full transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -185,10 +185,10 @@ export default function PublicFormFillPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-400">Loading form...</p>
+          <p className="text-sm text-muted-foreground">Loading form...</p>
         </div>
       </div>
     );
@@ -196,12 +196,12 @@ export default function PublicFormFillPage() {
 
   if (!form) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 text-lg mb-4">Form not found.</p>
+          <p className="text-muted-foreground text-lg mb-4">Form not found.</p>
           <Link
             href="/public"
-            className="text-blue-600 hover:underline text-sm">
+            className="text-primary hover:underline text-sm">
             ← Back to forms
           </Link>
         </div>
@@ -212,16 +212,16 @@ export default function PublicFormFillPage() {
   // ── Submitted success screen ──
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 max-w-md w-full text-center space-y-4">
+      <div className="min-h-screen bg-muted flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl border border-border shadow-sm p-10 max-w-md w-full text-center space-y-4">
           <div className="text-5xl">✅</div>
-          <h2 className="text-2xl font-bold text-gray-900">Thank You!</h2>
-          <p className="text-gray-500 text-sm">
+          <h2 className="text-2xl font-bold text-foreground">Thank You!</h2>
+          <p className="text-muted-foreground text-sm">
             Your response has been submitted successfully.
           </p>
           <Link
             href="/public"
-            className="inline-block mt-4 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors">
+            className="inline-block mt-4 px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm text-white text-sm font-medium rounded-xl transition-colors">
             Back to Forms
           </Link>
         </div>
@@ -234,12 +234,12 @@ export default function PublicFormFillPage() {
   if (sections.length === 0 || !sections[currentSectionIdx]) {
     return (
       <div className="max-w-2xl mx-auto space-y-6 pb-10">
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 text-center text-gray-500 shadow-sm">
-          <h1 className="text-xl font-bold text-gray-900 mb-2">{form.title}</h1>
+        <div className="bg-white border border-border rounded-2xl p-6 text-center text-muted-foreground shadow-sm">
+          <h1 className="text-xl font-bold text-foreground mb-2">{form.title}</h1>
           <p className="text-sm">This form has no questions yet.</p>
           <button
             onClick={() => router.push("/public")}
-            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors">
+            className="mt-4 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm text-white text-sm font-bold rounded-xl transition-colors">
             Back to Forms
           </button>
         </div>
@@ -313,15 +313,15 @@ export default function PublicFormFillPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted">
       {/* Navbar */}
-      <header className="bg-white border-b border-gray-100 shadow-sm">
+      <header className="bg-white border-b border-border shadow-sm">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/public" className="flex items-center gap-2">
-            <span className="text-blue-600 text-xl font-black">■</span>
-            <span className="text-gray-900 font-bold">FormFlow</span>
+            <span className="text-primary text-xl font-black">■</span>
+            <span className="text-foreground font-bold">FormFlow</span>
           </Link>
-          <span className="text-xs text-gray-400 flex items-center gap-1">
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
             🔓 No login required
           </span>
         </div>
@@ -329,16 +329,16 @@ export default function PublicFormFillPage() {
 
       <div className="max-w-2xl mx-auto px-6 py-10 space-y-6">
         {/* Form Header */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <h1 className="text-2xl font-bold text-gray-900">{form.title}</h1>
+        <div className="bg-white border border-border rounded-2xl p-6 shadow-sm">
+          <h1 className="text-2xl font-bold text-foreground">{form.title}</h1>
           {form.description && (
-            <p className="text-gray-500 text-sm mt-2">{form.description}</p>
+            <p className="text-muted-foreground text-sm mt-2">{form.description}</p>
           )}
         </div>
 
         {/* Progress Bar */}
         {form.showProgress && sections.length > 1 && (
-          <div className="bg-white border border-gray-100 rounded-2xl px-6 py-4 shadow-sm">
+          <div className="bg-white border border-border rounded-2xl px-6 py-4 shadow-sm">
             <ProgressBar
               current={currentSectionIdx + 1}
               total={sections.length}
@@ -348,14 +348,14 @@ export default function PublicFormFillPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">
+          <div className="bg-red-50 border border-red-200 text-error text-sm px-4 py-3 rounded-xl">
             {error}
           </div>
         )}
 
         {/* Current Section */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-6">
-          <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">
+        <div className="bg-white border border-border rounded-2xl p-6 shadow-sm space-y-6">
+          <h2 className="text-lg font-bold text-foreground border-b border-border pb-3">
             {currentSection.title}
           </h2>
 
@@ -378,7 +378,7 @@ export default function PublicFormFillPage() {
           {currentSectionIdx > 0 ? (
             <button
               onClick={handleBack}
-              className="px-5 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+              className="px-5 py-2.5 text-sm font-medium text-muted-foreground border border-border rounded-xl hover:bg-muted transition-colors">
               ← Back
             </button>
           ) : (
@@ -389,19 +389,19 @@ export default function PublicFormFillPage() {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
+              className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
               {isSubmitting ? "Submitting..." : "Submit Form ✓"}
             </button>
           ) : (
             <button
               onClick={handleNext}
-              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
+              className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
               Next →
             </button>
           )}
         </div>
 
-        <p className="text-center text-xs text-gray-400 pb-6">
+        <p className="text-center text-xs text-muted-foreground pb-6">
           Your response will be submitted anonymously.
         </p>
       </div>

@@ -89,31 +89,31 @@ function SortableQuestion({
       className={`group flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
         isSelected
           ? "border-blue-500 bg-blue-500/10"
-          : "border-[#30363d] bg-[#0d1117] hover:border-blue-500/50 hover:bg-[#1f242c]"
+          : "border-border bg-background hover:border-blue-500/50 hover:bg-muted"
       }`}>
       <button
         {...attributes}
         {...listeners}
-        className="mt-0.5 text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing text-lg leading-none"
+        className="mt-0.5 text-muted-foreground hover:text-muted-foreground cursor-grab active:cursor-grabbing text-lg leading-none"
         onClick={(e) => e.stopPropagation()}>
         ⠿
       </button>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm">{qType?.icon}</span>
-          <span className="text-sm font-medium text-white truncate">
+          <span className="text-sm font-medium text-foreground truncate">
             {question.label}
           </span>
-          {question.required && <span className="text-red-400 text-xs">*</span>}
+          {question.required && <span className="text-error text-xs">*</span>}
           {question.conditional && (
             <span
-              className="text-[10px] text-purple-400 border border-purple-400/30 rounded px-1.5 py-0.5"
+              className="text-[10px] text-primary border border-purple-400/30 rounded px-1.5 py-0.5"
               title={`Shown only when another question = "${question.conditional.showWhen}"`}>
               conditional
             </span>
           )}
         </div>
-        <p className="text-xs text-gray-500 mt-0.5">{qType?.label}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{qType?.label}</p>
       </div>
     </div>
   );
@@ -154,14 +154,14 @@ function SortableSection({
       onClick={onClick}
       className={`group flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer text-sm transition-all border ${
         isSelected
-          ? "bg-blue-600/10 text-blue-400 border-blue-600/20"
-          : "text-gray-300 hover:bg-[#21262d] hover:text-white border-transparent"
+          ? "bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground border-transparent"
       }`}>
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <button
           {...attributes}
           {...listeners}
-          className="text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing text-lg leading-none"
+          className="text-muted-foreground hover:text-muted-foreground cursor-grab active:cursor-grabbing text-lg leading-none"
           onClick={(e) => e.stopPropagation()}>
           ⠿
         </button>
@@ -176,8 +176,8 @@ function SortableSection({
         }}
         className={`opacity-0 group-hover:opacity-100 text-xs ml-1 transition-opacity ${
           isSelected
-            ? "text-blue-300 hover:text-white"
-            : "text-gray-500 hover:text-red-400"
+            ? "text-blue-300 hover:text-foreground"
+            : "text-muted-foreground hover:text-error"
         }`}>
         ✕
       </button>
@@ -201,18 +201,18 @@ function PreviewModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#30363d]">
+      <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
-            <h2 className="text-lg font-bold text-white">Form Preview</h2>
-            <p className="text-xs text-gray-500">
+            <h2 className="text-lg font-bold text-foreground">Form Preview</h2>
+            <p className="text-xs text-muted-foreground">
               This is how the form will look to end users. Conditional logic is
               live here too.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-2xl leading-none transition-colors">
+            className="text-muted-foreground hover:text-foreground text-2xl leading-none transition-colors">
             ×
           </button>
         </div>
@@ -226,7 +226,7 @@ function PreviewModal({
             });
             return (
               <div key={sec.id} className="space-y-4">
-                <h3 className="text-base font-bold text-white border-b border-[#30363d] pb-2">
+                <h3 className="text-base font-bold text-foreground border-b border-border pb-2">
                   {sec.title}
                 </h3>
                 {visible.map((q) => (
@@ -240,7 +240,7 @@ function PreviewModal({
                   />
                 ))}
                 {visible.length === 0 && (
-                  <p className="text-xs text-gray-500 italic">
+                  <p className="text-xs text-muted-foreground italic">
                     No questions to show in this section yet.
                   </p>
                 )}
@@ -249,13 +249,13 @@ function PreviewModal({
           })}
         </div>
 
-        <div className="px-6 py-4 border-t border-[#30363d] flex items-center justify-between">
-          <p className="text-xs text-gray-500">
+        <div className="px-6 py-4 border-t border-border flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
             Preview only — answers here are not saved.
           </p>
           <button
             onClick={() => setShowValidation(true)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+            className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-medium rounded-lg transition-colors">
             Test Submit (Check Validation)
           </button>
         </div>
@@ -287,50 +287,50 @@ function FormSettingsPopover({
   onClose: () => void;
 }) {
   return (
-    <div className="absolute right-0 top-full mt-2 w-80 bg-[#161b22] border border-[#30363d] rounded-xl shadow-xl z-40 p-4 space-y-4">
+    <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-xl z-40 p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-white">Form Settings</h3>
+        <h3 className="text-sm font-bold text-foreground">Form Settings</h3>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-white text-lg leading-none">
+          className="text-muted-foreground hover:text-foreground text-lg leading-none">
           ×
         </button>
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-400 mb-1">
+        <label className="block text-xs font-medium text-muted-foreground mb-1">
           Title
         </label>
         <input
           value={title}
           onChange={(e) => onChange({ title: e.target.value })}
-          className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-400 mb-1">
+        <label className="block text-xs font-medium text-muted-foreground mb-1">
           Description
         </label>
         <textarea
           rows={2}
           value={description}
           onChange={(e) => onChange({ description: e.target.value })}
-          className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
       </div>
 
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium text-gray-300">Show progress bar</p>
-          <p className="text-[11px] text-gray-500">
+          <p className="text-xs font-medium text-muted-foreground">Show progress bar</p>
+          <p className="text-[11px] text-muted-foreground">
             Section X of Y + % on the fill page
           </p>
         </div>
         <button
           onClick={() => onChange({ showProgress: !showProgress })}
           className={`relative inline-flex items-center w-11 h-6 rounded-full transition-colors shrink-0 ${
-            showProgress ? "bg-blue-600" : "bg-[#30363d]"
+            showProgress ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" : "bg-accent"
           }`}>
           <span
             className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
@@ -342,17 +342,17 @@ function FormSettingsPopover({
 
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium text-gray-300">
+          <p className="text-xs font-medium text-muted-foreground">
             Requires GPS location
           </p>
-          <p className="text-[11px] text-gray-500">
+          <p className="text-[11px] text-muted-foreground">
             Captures respondent's location; attached on submit
           </p>
         </div>
         <button
           onClick={() => onChange({ hasBoundary: !hasBoundary })}
           className={`relative inline-flex items-center w-11 h-6 rounded-full transition-colors shrink-0 ${
-            hasBoundary ? "bg-blue-600" : "bg-[#30363d]"
+            hasBoundary ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" : "bg-accent"
           }`}>
           <span
             className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
@@ -371,48 +371,7 @@ const DEFAULT_FORM: FormStructure = {
   description: "",
   showProgress: true,
   hasBoundary: false,
-  sections: [
-    {
-      id: "sec-1",
-      title: "Personal Information",
-      questions: [
-        {
-          id: "q-1",
-          type: "text",
-          label: "Full Name",
-          required: true,
-          placeholder: "Enter your full name",
-        },
-        {
-          id: "q-2",
-          type: "email",
-          label: "Email Address",
-          required: true,
-          placeholder: "you@example.com",
-        },
-      ],
-    },
-    {
-      id: "sec-2",
-      title: "Feedback",
-      questions: [
-        {
-          id: "q-3",
-          type: "radio",
-          label: "How did you hear about us?",
-          required: false,
-          options: ["Social Media", "Friend", "Google", "Other"],
-        },
-        {
-          id: "q-4",
-          type: "textarea",
-          label: "Additional Comments",
-          required: false,
-          placeholder: "Your feedback...",
-        },
-      ],
-    },
-  ],
+  sections: [],
 };
 
 export default function FormBuilderPage() {
@@ -727,25 +686,25 @@ export default function FormBuilderPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0d1117] text-white">
+      <div className="flex items-center justify-center h-screen bg-background text-foreground">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-400">Loading form structure...</p>
+          <p className="text-sm text-muted-foreground">Loading form structure...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-[#0d1117] text-[#c9d1d9] overflow-hidden">
-      <aside className="w-56 bg-[#161b22] border-r border-[#30363d] flex flex-col shrink-0">
-        <div className="px-4 py-3 border-b border-[#30363d] flex items-center justify-between">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
+      <aside className="w-56 bg-card border-r border-border flex flex-col shrink-0">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Sections
           </h2>
           <button
             onClick={handleAddSection}
-            className="text-blue-400 hover:text-blue-300 text-xl leading-none font-bold"
+            className="text-primary hover:text-primary/80 text-xl leading-none font-bold"
             title="Add section">
             +
           </button>
@@ -774,7 +733,7 @@ export default function FormBuilderPage() {
             </SortableContext>
           </DndContext>
           {sections.length === 0 && (
-            <p className="text-xs text-gray-500 text-center py-4">
+            <p className="text-xs text-muted-foreground text-center py-4">
               No sections yet. Click + to add.
             </p>
           )}
@@ -794,8 +753,8 @@ export default function FormBuilderPage() {
                   aria-label="Form settings"
                   className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors ${
                     showSettings
-                      ? "bg-[#21262d] border-blue-500/40 text-blue-400"
-                      : "bg-transparent border-[#30363d] text-gray-400 hover:bg-[#21262d] hover:text-gray-200"
+                      ? "bg-muted border-blue-500/40 text-primary"
+                      : "bg-transparent border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}>
                   <Settings2 className="w-4 h-4" />
                 </button>
@@ -822,24 +781,24 @@ export default function FormBuilderPage() {
               <div className="flex items-center gap-2">
                 <Link
                   href={`/studio/forms/${formId}/fill`}
-                  className="flex items-center gap-1.5 h-9 px-3.5 bg-transparent hover:bg-[#21262d] border border-[#30363d] text-gray-300 hover:text-white text-sm font-medium rounded-lg transition-colors">
+                  className="flex items-center gap-1.5 h-9 px-3.5 bg-transparent hover:bg-muted border border-border text-muted-foreground hover:text-foreground text-sm font-medium rounded-lg transition-colors">
                   <ExternalLink className="w-3.5 h-3.5" />
                   Fill Form
                 </Link>
                 <button
                   onClick={() => setShowPreview(true)}
-                  className="flex items-center gap-1.5 h-9 px-3.5 bg-transparent hover:bg-[#21262d] border border-[#30363d] text-gray-300 hover:text-white text-sm font-medium rounded-lg transition-colors">
+                  className="flex items-center gap-1.5 h-9 px-3.5 bg-transparent hover:bg-muted border border-border text-muted-foreground hover:text-foreground text-sm font-medium rounded-lg transition-colors">
                   <Eye className="w-3.5 h-3.5" />
                   Preview
                 </button>
               </div>
 
-              <div className="w-px h-6 bg-[#30363d]" />
+              <div className="w-px h-6 bg-accent" />
 
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex items-center gap-1.5 h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                className="flex items-center gap-1.5 h-9 px-4 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-semibold rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
                 {isSaving ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -857,15 +816,15 @@ export default function FormBuilderPage() {
         />
 
         {error && (
-          <div className="px-6 py-2 bg-yellow-500/10 border-b border-yellow-500/20 text-yellow-500 text-xs flex items-center justify-between">
+          <div className="px-6 py-2 bg-warning/15 border-b border-warning/20 text-warning text-xs flex items-center justify-between">
             <span>⚠️ {error}</span>
-            <button onClick={() => setError(null)} className="hover:text-white">
+            <button onClick={() => setError(null)} className="hover:text-foreground">
               ✕
             </button>
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-6 bg-[#0d1117]">
+        <div className="flex-1 overflow-y-auto p-6 bg-background">
           {selectedSection ? (
             <div className="max-w-2xl mx-auto space-y-3">
               <input
@@ -882,7 +841,7 @@ export default function FormBuilderPage() {
                 onBlur={(e) =>
                   handleSectionTitleBlur(selectedSection.id, e.target.value)
                 }
-                className="w-full text-xl font-bold text-white bg-transparent border-b-2 border-transparent focus:border-blue-500 focus:outline-none pb-1 transition-colors"
+                className="w-full text-xl font-bold text-foreground bg-transparent border-b-2 border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background focus:outline-none pb-1 transition-colors"
               />
 
               <DndContext
@@ -902,7 +861,7 @@ export default function FormBuilderPage() {
                         />
                         <button
                           onClick={() => handleDeleteQuestion(q.id)}
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-xs text-gray-500 hover:text-red-400 transition-all">
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-xs text-muted-foreground hover:text-error transition-all">
                           ✕
                         </button>
                       </div>
@@ -912,8 +871,8 @@ export default function FormBuilderPage() {
               </DndContext>
 
               {showTypePickerFor === selectedSectionId ? (
-                <div className="border border-[#30363d] rounded-xl bg-[#161b22] p-4 shadow-sm">
-                  <p className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">
+                <div className="border border-border rounded-xl bg-card p-4 shadow-sm">
+                  <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">
                     Pick Question Type
                   </p>
                   <div className="grid grid-cols-4 gap-2">
@@ -921,9 +880,9 @@ export default function FormBuilderPage() {
                       <button
                         key={qt.type}
                         onClick={() => handleAddQuestion(qt.type)}
-                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-blue-600/10 hover:border-blue-500/30 border border-transparent transition-all text-center">
+                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm/10 hover:border-blue-500/30 border border-transparent transition-all text-center">
                         <span className="text-xl">{qt.icon}</span>
-                        <span className="text-xs text-gray-300">
+                        <span className="text-xs text-muted-foreground">
                           {qt.label}
                         </span>
                       </button>
@@ -931,20 +890,20 @@ export default function FormBuilderPage() {
                   </div>
                   <button
                     onClick={() => setShowTypePickerFor(null)}
-                    className="mt-3 text-xs text-gray-500 hover:text-gray-300">
+                    className="mt-3 text-xs text-muted-foreground hover:text-muted-foreground">
                     Cancel
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={() => setShowTypePickerFor(selectedSectionId)}
-                  className="w-full py-2.5 border-2 border-dashed border-[#30363d] rounded-xl text-sm text-gray-500 hover:border-blue-500/50 hover:text-blue-400 transition-all">
+                  className="w-full py-2.5 border-2 border-dashed border-border rounded-xl text-sm text-muted-foreground hover:border-blue-500/50 hover:text-primary/80 transition-all">
                   + Add Question
                 </button>
               )}
             </div>
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-500">
+            <div className="flex items-center justify-center h-full text-muted-foreground">
               {sections.length === 0
                 ? "Add a section to start building your form."
                 : "Select a section to start"}
@@ -953,13 +912,13 @@ export default function FormBuilderPage() {
         </div>
       </main>
 
-      <aside className="w-64 bg-[#161b22] border-l border-[#30363d] flex flex-col overflow-y-auto shrink-0">
-        <div className="px-4 py-3 border-b border-[#30363d] flex items-center justify-between">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+      <aside className="w-64 bg-card border-l border-border flex flex-col overflow-y-auto shrink-0">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Properties
           </h2>
           {savedFieldFlash && (
-            <span className="text-[10px] text-green-400 font-medium animate-pulse">
+            <span className="text-[10px] text-success font-medium animate-pulse">
               Saved ✓
             </span>
           )}
@@ -968,23 +927,23 @@ export default function FormBuilderPage() {
         {selectedQuestion ? (
           <div className="p-4 space-y-4">
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1">
                 Label
               </label>
               <input
                 value={selectedQuestion.label}
                 onChange={(e) => updateQuestion("label", e.target.value)}
                 onBlur={(e) => handleFieldBlur("label", e.target.value)}
-                className={`w-full bg-[#0d1117] border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                className={`w-full bg-background border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                   savedFieldFlash === "label"
                     ? "border-green-500/50"
-                    : "border-[#30363d]"
+                    : "border-border"
                 }`}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1">
                 Type
               </label>
               <select
@@ -994,7 +953,7 @@ export default function FormBuilderPage() {
                   updateQuestion("type", newType);
                   handleFieldBlur("type", newType);
                 }}
-                className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {QUESTION_TYPES.map((qt) => (
                   <option key={qt.type} value={qt.type}>
                     {qt.icon} {qt.label}
@@ -1007,7 +966,7 @@ export default function FormBuilderPage() {
               selectedQuestion.type,
             ) && (
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
                   Placeholder
                 </label>
                 <input
@@ -1016,10 +975,10 @@ export default function FormBuilderPage() {
                     updateQuestion("placeholder", e.target.value)
                   }
                   onBlur={(e) => handleFieldBlur("placeholder", e.target.value)}
-                  className={`w-full bg-[#0d1117] border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                  className={`w-full bg-background border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                     savedFieldFlash === "placeholder"
                       ? "border-green-500/50"
-                      : "border-[#30363d]"
+                      : "border-border"
                   }`}
                 />
               </div>
@@ -1029,7 +988,7 @@ export default function FormBuilderPage() {
               selectedQuestion.type,
             ) && (
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
                   Options (one per line)
                 </label>
                 <textarea
@@ -1041,10 +1000,10 @@ export default function FormBuilderPage() {
                   onBlur={(e) =>
                     handleFieldBlur("options", e.target.value.split("\n"))
                   }
-                  className={`w-full bg-[#0d1117] border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-colors ${
+                  className={`w-full bg-background border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-colors ${
                     savedFieldFlash === "options"
                       ? "border-green-500/50"
-                      : "border-[#30363d]"
+                      : "border-border"
                   }`}
                 />
               </div>
@@ -1053,7 +1012,7 @@ export default function FormBuilderPage() {
             {selectedQuestion.type === "file" && (
               <div className="space-y-3 pt-1">
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Max file size (MB)
                   </label>
                   <input
@@ -1079,20 +1038,20 @@ export default function FormBuilderPage() {
                       );
                       handleFieldBlur("maxSizeBytes", mb * 1024 * 1024);
                     }}
-                    className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <p className="text-[11px] text-gray-500 mt-1">
+                  <p className="text-[11px] text-muted-foreground mt-1">
                     Hard cap is 100MB per the platform upload limit.
                   </p>
                 </div>
-                <p className="text-[11px] text-gray-500">
+                <p className="text-[11px] text-muted-foreground">
                   Accepted file types: images and PDF (fixed).
                 </p>
               </div>
             )}
 
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-gray-400">
+              <label className="text-xs font-medium text-muted-foreground">
                 Required
               </label>
               <button
@@ -1102,7 +1061,7 @@ export default function FormBuilderPage() {
                   handleFieldBlur("required", newVal);
                 }}
                 className={`relative inline-flex items-center w-11 h-6 rounded-full transition-colors shrink-0 ${
-                  selectedQuestion.required ? "bg-blue-600" : "bg-[#30363d]"
+                  selectedQuestion.required ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" : "bg-accent"
                 }`}>
                 <span
                   className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
@@ -1114,20 +1073,20 @@ export default function FormBuilderPage() {
               </button>
             </div>
 
-            <div className="pt-2 border-t border-[#30363d]">
+            <div className="pt-2 border-t border-border">
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-medium text-gray-400">
+                <label className="text-xs font-medium text-muted-foreground">
                   Conditional Logic
                 </label>
                 {selectedQuestion.conditional && (
                   <button
                     onClick={() => handleConditionalDependsOnChange("")}
-                    className="text-[10px] text-red-400 hover:text-red-300">
+                    className="text-[10px] text-error hover:text-red-300">
                     Clear
                   </button>
                 )}
               </div>
-              <p className="text-[11px] text-gray-500 mb-2">
+              <p className="text-[11px] text-muted-foreground mb-2">
                 Only show this question when another question has a specific
                 answer.
               </p>
@@ -1137,7 +1096,7 @@ export default function FormBuilderPage() {
                 onChange={(e) =>
                   handleConditionalDependsOnChange(e.target.value)
                 }
-                className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
                 <option value="">Always show</option>
                 {allQuestions
                   .filter((q) => q.id !== selectedQuestion.id)
@@ -1159,7 +1118,7 @@ export default function FormBuilderPage() {
                       onChange={(e) =>
                         handleConditionalShowWhenChange(e.target.value)
                       }
-                      className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <option value="">Select a value…</option>
                       {optionValues.map((val) => (
                         <option key={val} value={val}>
@@ -1174,7 +1133,7 @@ export default function FormBuilderPage() {
                         handleConditionalShowWhenChange(e.target.value)
                       }
                       placeholder="Exact answer value…"
-                      className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   );
                 })()}
@@ -1182,7 +1141,7 @@ export default function FormBuilderPage() {
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center p-6 text-center">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Select a question to edit its properties
             </p>
           </div>

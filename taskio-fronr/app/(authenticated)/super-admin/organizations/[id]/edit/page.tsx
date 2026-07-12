@@ -87,10 +87,10 @@ export default function EditOrganizationPage() {
 
   if (error || !organization) {
     return (
-      <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-6 rounded-xl flex items-center justify-center flex-col gap-4">
+      <div className="bg-error/15 border border-error/20 text-error p-6 rounded-xl flex items-center justify-center flex-col gap-4">
         <AlertCircle className="w-10 h-10" />
         <p>Organization not found or an error occurred.</p>
-        <Link href="/super-admin/organizations" className="text-blue-400 hover:underline">
+        <Link href="/super-admin/organizations" className="text-primary hover:underline">
           Return to Organizations
         </Link>
       </div>
@@ -98,11 +98,11 @@ export default function EditOrganizationPage() {
   }
 
   return (
-    <main className="space-y-8 text-[#c9d1d9]" dir="ltr">
+    <main className="space-y-8 text-foreground" dir="ltr">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <Link
               href={`/super-admin/organizations/${id}`}
               className="hover:text-blue-500 transition-colors flex items-center gap-1"
@@ -110,29 +110,29 @@ export default function EditOrganizationPage() {
               <ArrowLeft className="w-4 h-4" /> Back to Organization
             </Link>
           </div>
-          <h2 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+          <h2 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-3">
             <Building2 className="w-8 h-8 text-blue-500" />
             Edit Organization
           </h2>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             Update details for {organization.name}.
           </p>
         </div>
       </div>
 
       {/* Form Content */}
-      <div className="max-w-2xl bg-[#161b22] border border-[#30363d] rounded-3xl p-8 shadow-sm">
+      <div className="max-w-2xl bg-card border border-border rounded-3xl p-8 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-6">
           
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-300">
-              Organization Name <span className="text-red-500">*</span>
+            <label className="text-sm font-semibold text-muted-foreground">
+              Organization Name <span className="text-error">*</span>
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors"
               placeholder="e.g. Acme Corporation"
               required
             />
@@ -140,18 +140,18 @@ export default function EditOrganizationPage() {
 
 
 
-          <div className="pt-4 border-t border-[#30363d] flex justify-end gap-3">
+          <div className="pt-4 border-t border-border flex justify-end gap-3">
             <button
               type="button"
               onClick={() => router.push(`/super-admin/organizations/${id}`)}
-              className="px-5 py-2.5 rounded-xl font-semibold text-sm text-gray-300 bg-[#1f242c] hover:bg-[#30363d] transition-colors"
+              className="px-5 py-2.5 rounded-xl font-semibold text-sm text-muted-foreground bg-muted hover:bg-accent transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-primary-foreground shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save Changes

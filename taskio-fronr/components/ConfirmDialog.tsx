@@ -22,24 +22,24 @@ export default function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onCancel(); }}>
-      <DialogContent className="bg-[#161b22] border border-[#30363d] text-white">
+      <DialogContent className="bg-card border border-border text-foreground">
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold text-white">{title}</DialogTitle>
-          <DialogDescription className="text-sm text-gray-400">
+          <DialogTitle className="text-lg font-bold text-foreground">{title}</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
             {description}
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="bg-[#161b22] border-t border-[#30363d] pt-4 flex gap-2 justify-end">
+        <DialogFooter className="bg-muted/30 border-t border-border mt-4 -mx-6 -mb-6 p-4 flex gap-3 justify-end rounded-b-xl">
           <Button
             variant="outline"
             onClick={onCancel}
-            className="border-[#30363d] text-gray-300 hover:text-white hover:bg-[#30363d]"
+            className="border-border text-muted-foreground hover:text-foreground hover:bg-accent"
           >
             {cancelText}
           </Button>
           <Button
             onClick={onConfirm}
-            className="bg-primary hover:bg-primary/80 text-white font-medium"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-sm"
           >
             {confirmText}
           </Button>

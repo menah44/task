@@ -67,32 +67,32 @@ function VersionCard({
   const router = useRouter();
 
   return (
-    <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-5 hover:border-blue-500/30 transition-all flex flex-col gap-4">
+    <div className="bg-card border border-border rounded-2xl p-5 hover:border-blue-500/30 transition-all flex flex-col gap-4">
       {/* Top row */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           {/* Version badge */}
-          <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-blue-600/10 border border-blue-600/20 shrink-0">
-            <span className="text-xs text-blue-400 font-semibold leading-none">
+          <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm/10 border border-blue-600/20 shrink-0">
+            <span className="text-xs text-primary font-semibold leading-none">
               v
             </span>
-            <span className="text-lg text-blue-400 font-bold leading-none">
+            <span className="text-lg text-primary font-bold leading-none">
               {version.versionNumber}
             </span>
           </div>
 
           <div>
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-white">
+              <p className="text-sm font-semibold text-foreground">
                 {version.label}
               </p>
               {isLatest && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-success text-success-foreground border-transparent shadow-sm">
                   LATEST
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {formatDate(version.createdAt)} · by {version.createdBy}
             </p>
           </div>
@@ -101,19 +101,19 @@ function VersionCard({
         {/* Stats */}
         <div className="flex gap-3 shrink-0">
           <div className="text-center">
-            <p className="text-sm font-bold text-white">
+            <p className="text-sm font-bold text-foreground">
               {version.sectionCount}
             </p>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
               Sections
             </p>
           </div>
-          <div className="w-px bg-[#30363d]" />
+          <div className="w-px bg-accent" />
           <div className="text-center">
-            <p className="text-sm font-bold text-white">
+            <p className="text-sm font-bold text-foreground">
               {version.questionCount}
             </p>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
               Questions
             </p>
           </div>
@@ -121,7 +121,7 @@ function VersionCard({
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-2 pt-1 border-t border-[#30363d]/60">
+      <div className="flex gap-2 pt-1 border-t border-border/60">
         {/* View read-only snapshot */}
         <button
           onClick={() =>
@@ -129,14 +129,14 @@ function VersionCard({
               `/studio/forms/${formId}/versions/${version.versionNumber}`,
             )
           }
-          className="flex-1 py-2 rounded-lg text-xs font-medium border border-[#30363d] text-gray-300 hover:border-blue-500/50 hover:text-blue-400 transition-all">
+          className="flex-1 py-2 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:border-blue-500/50 hover:text-primary/80 transition-all">
           👁 View Snapshot
         </button>
 
         {/* Create a copy → generates new editable form */}
         <button
           onClick={() => onCopy(version.versionNumber)}
-          className="flex-1 py-2 rounded-lg text-xs font-medium border border-[#30363d] text-gray-300 hover:border-purple-500/50 hover:text-purple-400 transition-all">
+          className="flex-1 py-2 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:border-purple-500/50 hover:text-primary/80 transition-all">
           📋 Copy as New Form
         </button>
       </div>
@@ -255,13 +255,13 @@ export default function FormVersionsPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-[#c9d1d9] p-6">
+    <div className="min-h-screen bg-background text-foreground p-6">
       <div className="max-w-3xl mx-auto space-y-6">
         {/* ── Header ── */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Version History</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-2xl font-bold text-foreground">Version History</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Form ID: {params.formId} · {versions.length} snapshot
               {versions.length !== 1 ? "s" : ""}
             </p>
@@ -271,7 +271,7 @@ export default function FormVersionsPage({
           {!showLabelInput ? (
             <button
               onClick={() => setShowLabelInput(true)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+              className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-medium rounded-lg transition-colors">
               + Create Snapshot
             </button>
           ) : (
@@ -286,17 +286,17 @@ export default function FormVersionsPage({
                   if (e.key === "Escape") setShowLabelInput(false);
                 }}
                 placeholder="Snapshot label..."
-                className="bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-52"
+                className="bg-background border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 w-52"
               />
               <button
                 onClick={handleCreateSnapshot}
                 disabled={isCreating || !snapshotLabel.trim()}
-                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
+                className="px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50 text-sm font-medium rounded-lg transition-colors">
                 {isCreating ? "..." : "Save"}
               </button>
               <button
                 onClick={() => setShowLabelInput(false)}
-                className="text-gray-400 hover:text-white text-lg leading-none">
+                className="text-muted-foreground hover:text-foreground text-lg leading-none">
                 ×
               </button>
             </div>
@@ -308,8 +308,8 @@ export default function FormVersionsPage({
           <div
             className={`px-4 py-2.5 rounded-lg text-sm border ${
               toast.type === "success"
-                ? "bg-green-500/10 border-green-500/20 text-green-400"
-                : "bg-red-500/10 border-red-500/20 text-red-400"
+                ? "bg-success/15 border-success/20 text-success"
+                : "bg-error/15 border-error/20 text-error"
             }`}>
             {toast.message}
           </div>
@@ -321,16 +321,16 @@ export default function FormVersionsPage({
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="bg-[#161b22] border border-[#30363d] rounded-2xl h-28 animate-pulse"
+                className="bg-card border border-border rounded-2xl h-28 animate-pulse"
               />
             ))}
           </div>
         ) : versions.length === 0 ? (
-          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-12 text-center">
-            <p className="text-gray-400 text-sm font-medium">
+          <div className="bg-card border border-border rounded-2xl p-12 text-center">
+            <p className="text-muted-foreground text-sm font-medium">
               No snapshots yet
             </p>
-            <p className="text-gray-600 text-xs mt-1">
+            <p className="text-muted-foreground text-xs mt-1">
               Create your first snapshot to start tracking versions.
             </p>
           </div>
@@ -339,8 +339,8 @@ export default function FormVersionsPage({
             {versions.map((v, idx) => (
               <div key={v.versionNumber} className="relative">
                 {isCopying === v.versionNumber && (
-                  <div className="absolute inset-0 bg-[#0d1117]/60 rounded-2xl flex items-center justify-center z-10">
-                    <p className="text-sm text-blue-400">Creating copy...</p>
+                  <div className="absolute inset-0 bg-background/60 rounded-2xl flex items-center justify-center z-10">
+                    <p className="text-sm text-primary">Creating copy...</p>
                   </div>
                 )}
                 <VersionCard

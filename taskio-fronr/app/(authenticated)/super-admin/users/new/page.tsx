@@ -120,16 +120,16 @@ export default function CreateUserPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0d1117] text-[#c9d1d9] py-10 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+    <main className="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-3xl font-bold text-white tracking-tight">
+          <h2 className="text-3xl font-bold text-foreground tracking-tight">
             Create New User
           </h2>
           <Link
             href="/super-admin/users"
-            className="text-gray-400 hover:text-white transition-colors text-sm font-medium flex items-center gap-2"
+            className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium flex items-center gap-2"
           >
             ← Back to Users
           </Link>
@@ -137,20 +137,20 @@ export default function CreateUserPage() {
 
         {/* Top Alert Error Box */}
         {apiError && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          <div className="mb-6 p-4 rounded-xl bg-error/15 border border-error/20 text-error text-sm">
             {apiError}
           </div>
         )}
 
         {/* Card Form */}
-        <div className="bg-[#161b22] rounded-3xl p-6 sm:p-8 shadow-sm border border-[#30363d]">
+        <div className="bg-card rounded-3xl p-6 sm:p-8 shadow-sm border border-border">
           <form onSubmit={handleSubmit} className="space-y-6">
             
             {/* Grid for First/Last Name */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  First Name <span className="text-red-400">*</span>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
+                  First Name <span className="text-error">*</span>
                 </label>
                 <input
                   type="text"
@@ -158,19 +158,19 @@ export default function CreateUserPage() {
                   value={formData.firstName}
                   onChange={handleChange}
                   required
-                  className={`w-full bg-[#0d1117] border ${
-                    fieldErrors.firstName ? "border-red-500" : "border-[#30363d]"
-                  } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all`}
+                  className={`w-full bg-background border ${
+                    fieldErrors.firstName ? "border-red-500" : "border-border"
+                  } rounded-xl px-4 py-3 text-foreground placeholder-gray-500 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background focus:ring-1 focus:ring-blue-500 transition-all`}
                   placeholder="John"
                 />
                 {fieldErrors.firstName && (
-                  <p className="mt-1 text-sm text-red-400">{fieldErrors.firstName}</p>
+                  <p className="mt-1 text-sm text-error">{fieldErrors.firstName}</p>
                 )}
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Last Name <span className="text-red-400">*</span>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
+                  Last Name <span className="text-error">*</span>
                 </label>
                 <input
                   type="text"
@@ -178,20 +178,20 @@ export default function CreateUserPage() {
                   value={formData.lastName}
                   onChange={handleChange}
                   required
-                  className={`w-full bg-[#0d1117] border ${
-                    fieldErrors.lastName ? "border-red-500" : "border-[#30363d]"
-                  } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all`}
+                  className={`w-full bg-background border ${
+                    fieldErrors.lastName ? "border-red-500" : "border-border"
+                  } rounded-xl px-4 py-3 text-foreground placeholder-gray-500 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background focus:ring-1 focus:ring-blue-500 transition-all`}
                   placeholder="Doe"
                 />
                 {fieldErrors.lastName && (
-                  <p className="mt-1 text-sm text-red-400">{fieldErrors.lastName}</p>
+                  <p className="mt-1 text-sm text-error">{fieldErrors.lastName}</p>
                 )}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Username <span className="text-red-400">*</span>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
+                Username <span className="text-error">*</span>
               </label>
               <input
                 type="text"
@@ -199,19 +199,19 @@ export default function CreateUserPage() {
                 value={formData.username}
                 onChange={handleChange}
                 required
-                className={`w-full bg-[#0d1117] border ${
-                  fieldErrors.username ? "border-red-500" : "border-[#30363d]"
-                } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all`}
+                className={`w-full bg-background border ${
+                  fieldErrors.username ? "border-red-500" : "border-border"
+                } rounded-xl px-4 py-3 text-foreground placeholder-gray-500 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background focus:ring-1 focus:ring-blue-500 transition-all`}
                 placeholder="johndoe123"
               />
               {fieldErrors.username && (
-                <p className="mt-1 text-sm text-red-400">{fieldErrors.username}</p>
+                <p className="mt-1 text-sm text-error">{fieldErrors.username}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email <span className="text-red-400">*</span>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
+                Email <span className="text-error">*</span>
               </label>
               <input
                 type="email"
@@ -219,19 +219,19 @@ export default function CreateUserPage() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className={`w-full bg-[#0d1117] border ${
-                  fieldErrors.email ? "border-red-500" : "border-[#30363d]"
-                } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all`}
+                className={`w-full bg-background border ${
+                  fieldErrors.email ? "border-red-500" : "border-border"
+                } rounded-xl px-4 py-3 text-foreground placeholder-gray-500 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background focus:ring-1 focus:ring-blue-500 transition-all`}
                 placeholder="john@example.com"
               />
               {fieldErrors.email && (
-                <p className="mt-1 text-sm text-red-400">{fieldErrors.email}</p>
+                <p className="mt-1 text-sm text-error">{fieldErrors.email}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Password <span className="text-red-400">*</span>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
+                Password <span className="text-error">*</span>
               </label>
               <input
                 type="password"
@@ -240,47 +240,47 @@ export default function CreateUserPage() {
                 onChange={handleChange}
                 required
                 minLength={6}
-                className={`w-full bg-[#0d1117] border ${
-                  fieldErrors.password ? "border-red-500" : "border-[#30363d]"
-                } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all`}
+                className={`w-full bg-background border ${
+                  fieldErrors.password ? "border-red-500" : "border-border"
+                } rounded-xl px-4 py-3 text-foreground placeholder-gray-500 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background focus:ring-1 focus:ring-blue-500 transition-all`}
                 placeholder="••••••••"
               />
               {fieldErrors.password && (
-                <p className="mt-1 text-sm text-red-400">{fieldErrors.password}</p>
+                <p className="mt-1 text-sm text-error">{fieldErrors.password}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Role <span className="text-red-400">*</span>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
+                Role <span className="text-error">*</span>
               </label>
               <select
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
                 required
-                className={`w-full bg-[#0d1117] border ${
-                  fieldErrors.role ? "border-red-500" : "border-[#30363d]"
-                } rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all appearance-none uppercase`}
+                className={`w-full bg-background border ${
+                  fieldErrors.role ? "border-red-500" : "border-border"
+                } rounded-xl px-4 py-3 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background focus:ring-1 focus:ring-blue-500 transition-all appearance-none uppercase`}
               >
                 {roles.map(r => (
                   <option key={r.id} value={r.name}>{r.name}</option>
                 ))}
               </select>
               {fieldErrors.role && (
-                <p className="mt-1 text-sm text-red-400">{fieldErrors.role}</p>
+                <p className="mt-1 text-sm text-error">{fieldErrors.role}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 Group
               </label>
               <select
                 name="groupId"
                 value={formData.groupId}
                 onChange={handleChange}
-                className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all appearance-none"
+                className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background focus:ring-1 focus:ring-blue-500 transition-all appearance-none"
               >
                 <option value="">Select a group (optional)...</option>
                 {groups.map(g => (
@@ -289,11 +289,11 @@ export default function CreateUserPage() {
               </select>
             </div>
 
-            <div className="pt-4 border-t border-[#30363d]">
+            <div className="pt-4 border-t border-border">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm font-semibold py-3 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
               >
                 {loading ? (
                   <>

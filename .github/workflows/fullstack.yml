@@ -97,10 +97,31 @@ jobs:
             then
 
               echo "Backend deployment failed!"
-              echo "Rolling back backend..."
 
-              kubectl rollout undo deployment/backend \
-              -n form-app
+              echo "========== Pods =========="
+              kubectl get pods -n form-app -o wide
+
+              echo "========== ReplicaSets =========="
+              kubectl get rs -n form-app
+
+              echo "========== Deployment =========="
+              kubectl describe deployment backend -n form-app
+
+              echo "========== Events =========="
+              kubectl get events -n form-app --sort-by=.lastTimestamp
+
+              echo "========== Backend Pods =========="
+              kubectl get pods -n form-app -l app=backend
+
+              for pod in $(kubectl get pods -n form-app -l app=backend -o jsonpath='{.items[*].metadata.name}')
+              do
+                  echo "========== Logs for $pod =========="
+                  kubectl logs $pod -n form-app --tail=100 || true
+                  kubectl logs $pod -n form-app --previous --tail=100 || true
+              done
+
+              echo "Rolling back backend..."
+              kubectl rollout undo deployment/backend -n form-app
 
               exit 1
 

@@ -228,7 +228,7 @@ export default function FormFillPage() {
 
   const backLink = React.useMemo(() => {
     if (role === "SUPER_ADMIN") return "/super-admin/dashboard";
-    if (role === "ADMIN" || role === "STUDIO") return "/studio/forms";
+    if (role === "ADMIN") return "/studio/forms";
     return "/userForms";
   }, [role]);
 

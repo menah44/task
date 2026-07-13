@@ -239,7 +239,7 @@ export default function SnapshotViewPage({
           <button
             onClick={handleCopy}
             disabled={isCopying}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-foreground text-sm font-medium rounded-lg transition-colors shrink-0">
+            className="px-4 py-2 bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground text-sm font-medium rounded-lg transition-colors shrink-0">
             {isCopying ? "Creating..." : "📋 Copy as New Form"}
           </button>
         </div>

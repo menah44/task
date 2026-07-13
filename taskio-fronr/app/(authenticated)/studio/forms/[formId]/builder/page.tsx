@@ -107,7 +107,7 @@ function SortableQuestion({
           {question.required && <span className="text-error text-xs">*</span>}
           {question.conditional && (
             <span
-              className="text-[10px] text-primary border border-purple-400/30 rounded px-1.5 py-0.5"
+              className="text-[10px] text-primary border border-primary/30 rounded px-1.5 py-0.5"
               title={`Shown only when another question = "${question.conditional.showWhen}"`}>
               conditional
             </span>

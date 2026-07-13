@@ -6,6 +6,7 @@ import {
   Param,
   UseGuards,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { SpatialService } from './spatial.service';
@@ -47,5 +48,13 @@ export class SpatialController {
     @CurrentUser() user: User,
   ) {
     return this.spatialService.getFormBoundary(formId, user);
+  }
+
+  @Get('reverse-geocode')
+  reverseGeocode(
+    @Query('lat') lat: string,
+    @Query('lng') lng: string,
+  ) {
+    return this.spatialService.reverseGeocode(Number(lat), Number(lng));
   }
 }

@@ -32,6 +32,14 @@ export class UsersController {
     return this.usersService.findMe(user.id);
   }
 
+  @Patch('me/preferences')
+  async updateMyPreferences(
+    @CurrentUser() user: User,
+    @Body('theme') theme: string,
+  ) {
+    return this.usersService.updateTheme(user.id, theme);
+  }
+
   @Get()
   async getAllUsers(
     @CurrentUser() user: User,

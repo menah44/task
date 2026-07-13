@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
+import { useTheme } from "next-themes";
 
 export default function AuthenticatedLayout({
   children,
@@ -108,6 +109,15 @@ export default function AuthenticatedLayout({
 
     return () => clearInterval(interval);
   }, [currentUser, refreshAccessToken, accessToken]);
+
+  const { setTheme } = useTheme();
+
+  // Sync theme with next-themes when currentUser changes
+  useEffect(() => {
+    if (currentUser && currentUser.theme) {
+      setTheme(currentUser.theme);
+    }
+  }, [currentUser, setTheme]);
 
   // 4. Determine if we are in a loading/checking state
   const token = accessToken;

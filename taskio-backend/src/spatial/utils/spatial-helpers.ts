@@ -43,6 +43,48 @@ function isPointInRing(x: number, y: number, ring: number[][]): boolean {
 }
 
 /**
+ * Unified geofence validation.
+ * Extracts polygon coordinates from various boundary structures and validates if a point is inside.
+ * Supports: FeatureCollection, Feature, Polygon, and { geojson, areaKm2 } wrapper.
+ */
+export function isPointInBoundary(point: [number, number], boundaryObj: any): boolean {
+  if (!boundaryObj) return false;
+
+  const geojson = boundaryObj.geojson ?? boundaryObj;
+  
+  if (
+    geojson.type === 'FeatureCollection' &&
+    Array.isArray(geojson.features) &&
+    geojson.features.length > 0
+  ) {
+    for (const feature of geojson.features) {
+      if (feature.geometry?.type === 'Polygon') {
+        if (isPointInPolygon(point, feature.geometry.coordinates)) return true;
+      } else if (feature.geometry?.type === 'MultiPolygon') {
+        for (const polygon of feature.geometry.coordinates) {
+          if (isPointInPolygon(point, polygon)) return true;
+        }
+      }
+    }
+    return false;
+  }
+  
+  if (
+    geojson.type === 'Feature' &&
+    geojson.geometry &&
+    geojson.geometry.type === 'Polygon'
+  ) {
+    return isPointInPolygon(point, geojson.geometry.coordinates);
+  }
+  
+  if (geojson.type === 'Polygon') {
+    return isPointInPolygon(point, geojson.coordinates);
+  }
+  
+  return false;
+}
+
+/**
  * Validates whether the GeoJSON input is a structurally sound Polygon.
  */
 export function validateGeoJsonPolygon(polygon: any): boolean {

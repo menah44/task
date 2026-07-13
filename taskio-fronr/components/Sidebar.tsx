@@ -14,10 +14,10 @@ export default function Sidebar({ userRole, pathname, logout }: SidebarProps) {
         {/* Logo Section */}
         <div className="text-xl font-bold text-foreground mb-8 flex items-center justify-between border-b border-border pb-5 px-2">
           <span className="tracking-tight flex items-center gap-2">
-            <span className="text-purple-600 text-2xl font-black">■</span> 
+            <span className="text-primary text-2xl font-black">■</span> 
             <span className="text-lg">Form</span>
           </span>
-          <span className="text-[10px] tracking-wider uppercase font-extrabold bg-purple-100 text-purple-700 shadow-sm px-2.5 py-1 rounded-md">
+          <span className="text-[10px] tracking-wider uppercase font-extrabold bg-primary/10 text-primary shadow-sm px-2.5 py-1 rounded-md">
             {userRole === "ADMIN" || userRole === "SUPER_ADMIN" ? "Admin" : "User"}
           </span>
         </div>
@@ -67,10 +67,10 @@ export default function Sidebar({ userRole, pathname, logout }: SidebarProps) {
                   <Link
                     href="/super-admin/audit"
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium text-sm group ${
-                      pathname?.startsWith("/super-admin/audit") ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      pathname?.startsWith("/super-admin/audit") ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
-                    <ClipboardList className={`w-5 h-5 transition-colors ${pathname?.startsWith("/super-admin/audit") ? "text-purple-600 dark:text-purple-400" : "group-hover:text-purple-500"}`} />
+                    <ClipboardList className={`w-5 h-5 transition-colors ${pathname?.startsWith("/super-admin/audit") ? "text-primary" : "group-hover:text-primary"}`} />
                     <span>Audit Logs</span>
                   </Link>
                 </div>
@@ -82,10 +82,10 @@ export default function Sidebar({ userRole, pathname, logout }: SidebarProps) {
                   <Link
                     href="/super-admin/settings"
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium text-sm group ${
-                      pathname?.startsWith("/super-admin/settings") ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      pathname?.startsWith("/super-admin/settings") ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
-                    <Settings className={`w-5 h-5 transition-colors ${pathname?.startsWith("/super-admin/settings") ? "text-indigo-600 dark:text-indigo-400" : "group-hover:text-indigo-500"}`} />
+                    <Settings className={`w-5 h-5 transition-colors ${pathname?.startsWith("/super-admin/settings") ? "text-primary" : "group-hover:text-primary"}`} />
                     <span>Settings</span>
                   </Link>
                 </div>
@@ -124,10 +124,10 @@ export default function Sidebar({ userRole, pathname, logout }: SidebarProps) {
                   <Link
                     href="/studio/forms"
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium text-sm group ${
-                      pathname === "/studio/forms" ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      pathname === "/studio/forms" ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
-                    <ClipboardList className={`w-5 h-5 transition-colors ${pathname === "/studio/forms" ? "text-purple-600 dark:text-purple-400" : "group-hover:text-purple-500"}`} />
+                    <ClipboardList className={`w-5 h-5 transition-colors ${pathname === "/studio/forms" ? "text-primary" : "group-hover:text-primary"}`} />
                     <span>Forms</span>
                   </Link>
 
@@ -169,20 +169,20 @@ export default function Sidebar({ userRole, pathname, logout }: SidebarProps) {
                   <Link
                     href="/admin/groups"
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium text-sm group ${
-                      pathname?.startsWith("/admin/groups") ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      pathname?.startsWith("/admin/groups") ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
-                    <Folder className={`w-5 h-5 transition-colors ${pathname?.startsWith("/admin/groups") ? "text-indigo-600 dark:text-indigo-400" : "group-hover:text-indigo-500"}`} />
+                    <Folder className={`w-5 h-5 transition-colors ${pathname?.startsWith("/admin/groups") ? "text-primary" : "group-hover:text-primary"}`} />
                     <span>Groups</span>
                   </Link>
 
                   <Link
                     href="/admin/audit"
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium text-sm group ${
-                      pathname?.startsWith("/admin/audit") ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      pathname?.startsWith("/admin/audit") ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
-                    <ClipboardList className={`w-5 h-5 transition-colors ${pathname?.startsWith("/admin/audit") ? "text-purple-600 dark:text-purple-400" : "group-hover:text-purple-500"}`} />
+                    <ClipboardList className={`w-5 h-5 transition-colors ${pathname?.startsWith("/admin/audit") ? "text-primary" : "group-hover:text-primary"}`} />
                     <span>Audit Logs</span>
                   </Link>
                 </div>

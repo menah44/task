@@ -4,19 +4,10 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import maplibregl, { StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import {
-  TerraDraw,
-  TerraDrawPolygonMode,
-  TerraDrawSelectMode,
-} from "terra-draw";
-import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
-import area from "@turf/area";
-import type { Feature, FeatureCollection, Polygon } from "geojson";
+import * as turf from "@turf/turf";
 import apiClient from "@/lib/api/client";
 import BuilderTopNav from "@/components/builder/BuilderTopNav";
 import {
-  PenLine,
-  MousePointer2,
   Trash2,
   Save,
   Loader2,
@@ -25,9 +16,9 @@ import {
   Ruler,
   Map as MapIconLucide,
   Satellite,
+  MapPin,
 } from "lucide-react";
 
-type DrawMode = "polygon" | "select" | "static";
 type Basemap = "streets" | "satellite";
 
 // ============================================================
@@ -35,7 +26,7 @@ type Basemap = "streets" | "satellite";
 // ============================================================
 const STREETS_STYLE_URL = "https://demotiles.maplibre.org/style.json";
 
-// Esri World Imagery — free, no API key required, real satellite/aerial photography
+// Esri World Imagery
 const SATELLITE_STYLE: StyleSpecification = {
   version: 8,
   sources: {
@@ -63,125 +54,197 @@ export default function FormBoundaryMapPage() {
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const drawRef = useRef<TerraDraw | null>(null);
+  const markerRef = useRef<maplibregl.Marker | null>(null);
 
   const [basemap, setBasemap] = useState<Basemap>("satellite");
-  const [activeMode, setActiveMode] = useState<DrawMode>("static");
+  const [center, setCenter] = useState<[number, number] | null>(null);
+  const [radiusMeters, setRadiusMeters] = useState<number>(100);
   const [areaKm2, setAreaKm2] = useState<number>(0);
-  const [hasPolygon, setHasPolygon] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [isSwitchingBasemap, setIsSwitchingBasemap] = useState(false);
   const [isLoadingBoundary, setIsLoadingBoundary] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [address, setAddress] = useState<string | null>(null);
+  const [isGeocoding, setIsGeocoding] = useState(false);
 
-  // ============================================================
-  // Recompute the displayed area from the current draw snapshot
-  // ============================================================
-  const recomputeArea = useCallback(() => {
-    const draw = drawRef.current;
-    if (!draw) return;
+  // Keep a ref to the latest radius for fast access in drag events without stale closures
+  const radiusMetersRef = useRef(radiusMeters);
+  useEffect(() => {
+    radiusMetersRef.current = radiusMeters;
+  }, [radiusMeters]);
 
-    const snapshot = draw.getSnapshot() as Feature<Polygon>[];
-    const polygons = snapshot.filter((f) => f.geometry?.type === "Polygon");
+  // Generate GeoJSON circle
+  const getCircleFeature = useCallback(
+    (c: [number, number], r: number): turf.helpers.Feature<turf.helpers.Polygon> => {
+      return turf.circle(c, r, { steps: 64, units: "meters" });
+    },
+    []
+  );
 
-    if (polygons.length === 0) {
-      setAreaKm2(0);
-      setHasPolygon(false);
+  // Recompute area based on radius
+  const recomputeArea = useCallback((r: number) => {
+    // Area of a circle = pi * r^2
+    const totalSqMeters = Math.PI * Math.pow(r, 2);
+    setAreaKm2(totalSqMeters / 1_000_000);
+  }, []);
+
+  // Update Map UI with marker and circle
+  const updateMapUI = useCallback(
+    (c: [number, number] | null, r: number) => {
+      const map = mapRef.current;
+      if (!map) return;
+
+      if (c) {
+        if (!markerRef.current) {
+          markerRef.current = new maplibregl.Marker({ draggable: true })
+            .setLngLat(c)
+            .addTo(map);
+
+          markerRef.current.on("drag", () => {
+            const lngLat = markerRef.current!.getLngLat();
+            // Instant circle preview update without React re-rendering
+            if (map.isStyleLoaded()) {
+              const source = map.getSource("radius-circle") as maplibregl.GeoJSONSource;
+              if (source) {
+                source.setData(getCircleFeature([lngLat.lng, lngLat.lat], radiusMetersRef.current));
+              }
+            }
+          });
+
+          markerRef.current.on("dragend", () => {
+            const lngLat = markerRef.current!.getLngLat();
+            setCenter([lngLat.lng, lngLat.lat]);
+            setIsDirty(true);
+          });
+        } else {
+          markerRef.current.setLngLat(c);
+        }
+
+        const circle = getCircleFeature(c, r);
+
+        if (map.isStyleLoaded()) {
+          const source = map.getSource("radius-circle") as maplibregl.GeoJSONSource;
+          if (source) {
+            source.setData(circle);
+          } else {
+            map.addSource("radius-circle", {
+              type: "geojson",
+              data: circle,
+            });
+            map.addLayer({
+              id: "radius-circle-fill",
+              type: "fill",
+              source: "radius-circle",
+              paint: {
+                "fill-color": "#3b82f6",
+                "fill-opacity": 0.2,
+              },
+            });
+            map.addLayer({
+              id: "radius-circle-outline",
+              type: "line",
+              source: "radius-circle",
+              paint: {
+                "line-color": "#3b82f6",
+                "line-width": 2,
+              },
+            });
+          }
+        }
+      } else {
+        if (markerRef.current) {
+          markerRef.current.remove();
+          markerRef.current = null;
+        }
+        if (map.isStyleLoaded()) {
+          const source = map.getSource("radius-circle") as maplibregl.GeoJSONSource;
+          if (source) {
+            source.setData(turf.featureCollection([]));
+          }
+        }
+      }
+    },
+    [getCircleFeature]
+  );
+
+  // Sync state to Map UI
+  useEffect(() => {
+    if (isMapReady) {
+      updateMapUI(center, radiusMeters);
+      recomputeArea(radiusMeters);
+    }
+  }, [center, radiusMeters, isMapReady, updateMapUI, recomputeArea]);
+
+  // Handle map click
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isMapReady) return;
+
+    const onClick = (e: maplibregl.MapMouseEvent) => {
+      setCenter([e.lngLat.lng, e.lngLat.lat]);
+      setIsDirty(true);
+    };
+
+    map.on("click", onClick);
+    return () => {
+      map.off("click", onClick);
+    };
+  }, [isMapReady]);
+
+  // Reverse Geocoding
+  useEffect(() => {
+    if (!center) {
+      setAddress(null);
       return;
     }
 
-    const totalSqMeters = polygons.reduce(
-      (sum, feature) => sum + area(feature),
-      0,
-    );
-    setAreaKm2(totalSqMeters / 1_000_000);
-    setHasPolygon(true);
-  }, []);
+    const [lng, lat] = center;
+    setIsGeocoding(true);
 
-  // ============================================================
-  // Build a fresh TerraDraw instance bound to the current map/style
-  // and restore any previously drawn features into it
-  // ============================================================
-  const attachDraw = useCallback(
-    (map: maplibregl.Map, restoreFeatures?: Feature[]) => {
-      const draw = new TerraDraw({
-        adapter: new TerraDrawMapLibreGLAdapter({ map }),
-        modes: [
-          new TerraDrawPolygonMode(),
-          new TerraDrawSelectMode({
-            flags: {
-              polygon: {
-                feature: {
-                  draggable: true,
-                  coordinates: {
-                    midpoints: true,
-                    draggable: true,
-                    deletable: true,
-                  },
-                },
-              },
-            },
-          }),
-        ],
-      });
-
-      draw.start();
-
-      draw.on("finish", () => {
-        recomputeArea();
-        setIsDirty(true);
-        draw.setMode("select");
-        setActiveMode("select");
-      });
-
-      draw.on("change", () => {
-        recomputeArea();
-        setIsDirty(true);
-      });
-
-      drawRef.current = draw;
-
-      if (restoreFeatures?.length) {
-        draw.addFeatures(
-          restoreFeatures as unknown as Parameters<typeof draw.addFeatures>[0],
-        );
-        draw.setMode("select");
-        setActiveMode("select");
-      } else {
-        draw.setMode("static");
-        setActiveMode("static");
+    const fetchAddress = async () => {
+      try {
+        const res = await apiClient.get(`/spatial/reverse-geocode?lat=${lat}&lng=${lng}`);
+        
+        if (res.data && res.data.address) {
+          setAddress(res.data.address);
+        } else {
+          setAddress(null);
+        }
+      } catch (err) {
+        console.error("Geocoding error:", err);
+        setAddress(null);
+      } finally {
+        setIsGeocoding(false);
       }
+    };
 
-      recomputeArea();
-    },
-    [recomputeArea],
-  );
+    // Debounce to prevent spamming while dragging
+    const timeout = setTimeout(fetchAddress, 600);
+    return () => clearTimeout(timeout);
+  }, [center]);
 
-  // ============================================================
-  // Initialize the map canvas (starts on satellite imagery by default)
-  // ============================================================
+  // Initialize the map canvas
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
       style: SATELLITE_STYLE,
-      center: [31.2357, 30.0444], // default center, replaced by fitBounds once a boundary loads
+      center: [31.2357, 30.0444],
       zoom: 5,
       attributionControl: false,
     });
 
     map.addControl(
       new maplibregl.NavigationControl({ showCompass: false }),
-      "top-right",
+      "top-right"
     );
     map.addControl(new maplibregl.AttributionControl({ compact: true }));
 
     map.on("load", () => {
-      attachDraw(map);
       mapRef.current = map;
       setIsMapReady(true);
     });
@@ -189,40 +252,28 @@ export default function FormBoundaryMapPage() {
     return () => {
       map.remove();
       mapRef.current = null;
-      drawRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ============================================================
-  // Toggle between the satellite imagery basemap and the vector
-  // streets basemap, preserving any drawn polygon across the switch
-  // ============================================================
+  // Toggle basemap
   const handleToggleBasemap = () => {
     const map = mapRef.current;
-    if (!map || isSwitchingBasemap) return;
+    if (!map) return;
 
     const nextBasemap: Basemap =
       basemap === "satellite" ? "streets" : "satellite";
-    const snapshot = (drawRef.current?.getSnapshot() as Feature[]) ?? [];
-
-    setIsSwitchingBasemap(true);
-    drawRef.current = null;
 
     map.once("styledata", () => {
-      attachDraw(map, snapshot);
-      setIsSwitchingBasemap(false);
+      updateMapUI(center, radiusMeters);
     });
 
     map.setStyle(
-      nextBasemap === "satellite" ? SATELLITE_STYLE : STREETS_STYLE_URL,
+      nextBasemap === "satellite" ? SATELLITE_STYLE : STREETS_STYLE_URL
     );
     setBasemap(nextBasemap);
   };
 
-  // ============================================================
-  // Load the previously saved boundary (GeoJSON) once ready
-  // ============================================================
+  // Load boundary
   useEffect(() => {
     if (!isMapReady || !formId) return;
 
@@ -232,46 +283,30 @@ export default function FormBoundaryMapPage() {
 
       try {
         const response = await apiClient.get(`/spatial/forms/${formId}/boundary`);
-        const geojson: FeatureCollection | null =
-          response.data?.geojson || response.data || null;
+        const geojson = response.data?.geojson || response.data || null;
 
-        if (geojson?.features?.length && drawRef.current && mapRef.current) {
-          drawRef.current.addFeatures(
-            geojson.features.map((feature) => ({
-              ...feature,
-              properties: { ...feature.properties, mode: "polygon" },
-            })) as unknown as Parameters<typeof drawRef.current.addFeatures>[0],
-          );
-
-          recomputeArea();
-          setIsDirty(false);
-          drawRef.current.setMode("select");
-          setActiveMode("select");
-
-          const bounds = new maplibregl.LngLatBounds();
-          geojson.features.forEach((feature) => {
-            if (feature.geometry.type === "Polygon") {
-              feature.geometry.coordinates[0].forEach((coord) => {
-                bounds.extend(coord as [number, number]);
-              });
-            }
-          });
-          if (!bounds.isEmpty()) {
-            mapRef.current.fitBounds(bounds, {
-              padding: 60,
-              maxZoom: 14,
-              duration: 0,
-            });
+        if (geojson?.features?.length) {
+          const feature = geojson.features[0] as turf.helpers.Feature<turf.helpers.Polygon>;
+          const centerPoint = turf.centroid(feature);
+          const c = centerPoint.geometry.coordinates as [number, number];
+          
+          let r = 100;
+          if (feature.geometry.coordinates[0]?.length) {
+            const firstCoord = feature.geometry.coordinates[0][0];
+            r = turf.distance(centerPoint, turf.point(firstCoord), { units: "meters" });
           }
+
+          setCenter(c);
+          setRadiusMeters(Math.round(r));
+          setIsDirty(false);
+
+          mapRef.current?.flyTo({ center: c, zoom: 14, duration: 0 });
         }
       } catch (err: unknown) {
         const axiosError = err as { response?: { status?: number } };
-        // No boundary saved yet is expected on first visit — not a real error
         if (axiosError.response?.status !== 404) {
           console.error("Failed to load form boundary:", err);
-          setError(
-            "Couldn't load the saved boundary. You can still draw a new one.",
-          );
+          setError("Couldn't load the saved boundary. You can still set a new one.");
         }
       } finally {
         setIsLoadingBoundary(false);
@@ -279,40 +314,68 @@ export default function FormBoundaryMapPage() {
     };
 
     loadBoundary();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMapReady, formId]);
 
-  const handleSetMode = (mode: DrawMode) => {
-    if (!drawRef.current) return;
-    drawRef.current.setMode(mode);
-    setActiveMode(mode);
+  const handleCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsLocating(true);
+    setError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setIsLocating(false);
+        const { latitude, longitude } = position.coords;
+        const newCenter: [number, number] = [longitude, latitude];
+        setCenter(newCenter);
+        setIsDirty(true);
+        mapRef.current?.flyTo({ center: newCenter, zoom: 14, duration: 1500 });
+      },
+      (geoError) => {
+        setIsLocating(false);
+        switch (geoError.code) {
+          case geoError.PERMISSION_DENIED:
+            setError("Location permission denied. Please allow location access in your browser.");
+            break;
+          case geoError.POSITION_UNAVAILABLE:
+            setError("Location information is unavailable.");
+            break;
+          case geoError.TIMEOUT:
+            setError("The request to get user location timed out.");
+            break;
+          default:
+            setError("An unknown error occurred while requesting location.");
+            break;
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
   };
 
   const handleClear = () => {
-    if (!drawRef.current) return;
-    drawRef.current.clear();
-    drawRef.current.setMode("static");
-    setActiveMode("static");
+    setCenter(null);
     setAreaKm2(0);
-    setHasPolygon(false);
     setIsDirty(true);
   };
 
   const handleSave = async () => {
-    if (!drawRef.current || !hasPolygon || !formId) return;
+    if (!center || !formId) return;
 
     setIsSaving(true);
     setError(null);
 
     try {
-      const snapshot = drawRef.current.getSnapshot() as Feature<Polygon>[];
-      const featureCollection: FeatureCollection = {
+      const circleFeature = getCircleFeature(center, radiusMeters);
+      const featureCollection = {
         type: "FeatureCollection",
-        features: snapshot.map((feature) => ({
-          type: "Feature",
-          geometry: feature.geometry,
-          properties: {},
-        })),
+        features: [circleFeature],
       };
 
       await apiClient.put(`/forms/${formId}/boundary`, {
@@ -328,7 +391,7 @@ export default function FormBoundaryMapPage() {
       const axiosError = err as { response?: { data?: { message?: string } } };
       setError(
         axiosError.response?.data?.message ||
-          "Couldn't save the boundary. Try again.",
+          "Couldn't save the boundary. Try again."
       );
     } finally {
       setIsSaving(false);
@@ -338,17 +401,17 @@ export default function FormBoundaryMapPage() {
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
       <BuilderTopNav
-        formId={formId}
-        subtitle={`Form ID: ${formId} — ${hasPolygon ? `${areaKm2.toFixed(3)} km² covered` : "no boundary set"}`}
+        formId={formId as string}
+        subtitle={`Form ID: ${formId} — ${center ? `${areaKm2.toFixed(3)} km² covered` : "no boundary set"}`}
         actions={
           <>
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 text-primary text-sm font-medium rounded-lg">
               <Ruler className="w-4 h-4" />
-              {hasPolygon ? `${areaKm2.toFixed(3)} km²` : "0 km²"}
+              {center ? `${areaKm2.toFixed(3)} km²` : "0 km²"}
             </div>
             <button
               onClick={handleSave}
-              disabled={!hasPolygon || !isDirty || isSaving}
+              disabled={!center || !isDirty || isSaving}
               className="px-4 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-medium rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5">
               {isSaving ? (
                 <>
@@ -368,7 +431,6 @@ export default function FormBoundaryMapPage() {
         }
       />
 
-      {/* Warning / error banner, matching the Builder page's inline banner style */}
       {error && (
         <div className="px-6 py-2 bg-warning/15 border-b border-warning/20 text-warning text-xs flex items-center justify-between shrink-0">
           <span className="flex items-center gap-1.5">
@@ -382,63 +444,85 @@ export default function FormBoundaryMapPage() {
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 px-6 py-3 bg-background border-b border-border shrink-0">
-        <button
-          type="button"
-          onClick={() => handleSetMode("polygon")}
-          disabled={!isMapReady}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
-            activeMode === "polygon"
-              ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm border-blue-500/20"
-              : "bg-card text-muted-foreground border-border hover:bg-muted"
-          } disabled:opacity-50 disabled:cursor-not-allowed`}>
-          <PenLine className="w-4 h-4" /> Draw Polygon
-        </button>
+        
+        {center && (
+          <div className="flex flex-col gap-3 p-3 bg-card border border-border rounded-lg shadow-sm min-w-[280px]">
+            <div className="flex items-center justify-between gap-4">
+              <label className="text-sm font-medium text-muted-foreground">Radius (meters)</label>
+              <input
+                type="number"
+                min="50"
+                max="5000"
+                step="10"
+                value={radiusMeters}
+                onChange={(e) => {
+                  let val = Number(e.target.value);
+                  if (val > 5000) val = 5000;
+                  if (val < 50) val = 50;
+                  setRadiusMeters(val);
+                  setIsDirty(true);
+                }}
+                className="bg-background border border-border rounded px-2 py-1 text-sm w-24 text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-right"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min="50"
+                max="5000"
+                step="10"
+                value={radiusMeters}
+                onChange={(e) => {
+                  setRadiusMeters(Number(e.target.value));
+                  setIsDirty(true);
+                }}
+                className="flex-1 accent-primary cursor-pointer"
+              />
+              <span className="text-sm font-medium text-muted-foreground w-12 text-right shrink-0">
+                {radiusMeters} m
+              </span>
+            </div>
+          </div>
+        )}
 
         <button
           type="button"
-          onClick={() => handleSetMode("select")}
-          disabled={!isMapReady || !hasPolygon}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
-            activeMode === "select"
-              ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm border-blue-500/20"
-              : "bg-card text-muted-foreground border-border hover:bg-muted"
-          } disabled:opacity-50 disabled:cursor-not-allowed`}>
-          <MousePointer2 className="w-4 h-4" /> Edit Vertices
+          onClick={handleCurrentLocation}
+          disabled={isLocating || !isMapReady}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-muted-foreground bg-card border border-border hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          {isLocating ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <MapPin className="w-4 h-4" />
+          )}
+          Use Current Location
         </button>
 
         <button
           type="button"
           onClick={handleClear}
-          disabled={!isMapReady || !hasPolygon}
+          disabled={!center}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-error bg-card border border-border hover:bg-error/15 hover:border-error/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           <Trash2 className="w-4 h-4" /> Clear
         </button>
 
         <div className="w-px h-5 bg-accent mx-1" />
 
-        {/* Basemap toggle — Streets (vector) vs Satellite (real aerial imagery) */}
         <button
           type="button"
           onClick={handleToggleBasemap}
-          disabled={!isMapReady || isSwitchingBasemap}
+          disabled={!isMapReady}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-muted-foreground bg-card border border-border hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-          {isSwitchingBasemap ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : basemap === "satellite" ? (
+          {basemap === "satellite" ? (
             <MapIconLucide className="w-4 h-4" />
           ) : (
             <Satellite className="w-4 h-4" />
           )}
-          {basemap === "satellite"
-            ? "Switch to Streets"
-            : "Switch to Satellite"}
+          {basemap === "satellite" ? "Switch to Streets" : "Switch to Satellite"}
         </button>
 
         <p className="text-xs text-muted-foreground ml-2">
-          Click <span className="text-muted-foreground font-medium">Draw Polygon</span>,
-          place vertices, and double-click to finish. Use{" "}
-          <span className="text-muted-foreground font-medium">Edit Vertices</span> to
-          drag points afterward.
+          Click anywhere on the map to place the center marker, then adjust the radius.
         </p>
       </div>
 
@@ -449,7 +533,7 @@ export default function FormBoundaryMapPage() {
         {(isLoadingBoundary || !isMapReady) && (
           <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
-              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
               <p className="text-sm text-muted-foreground">
                 {isMapReady ? "Loading saved boundary..." : "Loading map..."}
               </p>
@@ -457,6 +541,35 @@ export default function FormBoundaryMapPage() {
           </div>
         )}
       </div>
+
+      {/* Address Display */}
+      {center && (
+        <div className="bg-card border-t border-border p-5 flex items-start gap-4 shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-10">
+          <div className="p-2.5 bg-blue-500/10 text-blue-500 rounded-xl shrink-0 mt-0.5">
+            <MapPin className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            {isGeocoding ? (
+              <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> Resolving address...
+              </p>
+            ) : address ? (
+              <>
+                <p className="text-sm font-bold text-foreground">
+                  {address.split(',')[0]}
+                </p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {address.split(',').slice(1).join(',').trim()}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm font-medium text-foreground">
+                {center[1].toFixed(6)}, {center[0].toFixed(6)}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

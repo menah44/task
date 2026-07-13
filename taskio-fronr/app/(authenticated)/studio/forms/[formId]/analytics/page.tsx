@@ -44,6 +44,48 @@ interface FullResponseDetail {
   sections: ResponseSection[];
 }
 
+const TableRowLocationCell = ({ lat, lng }: { lat: number; lng: number }) => {
+  const [address, setAddress] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    apiClient.get(`/spatial/reverse-geocode?lat=${lat}&lng=${lng}`)
+    .then(res => {
+      if (isMounted && res.data && res.data.address) {
+        setAddress(res.data.address);
+      }
+    })
+    .catch(() => {});
+    return () => { isMounted = false; };
+  }, [lat, lng]);
+
+  const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+
+  return (
+    <a 
+      href={mapsUrl} 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className="inline-flex items-start gap-1.5 hover:bg-black/5 dark:hover:bg-white/5 p-1.5 -ml-1.5 rounded-lg transition-colors group max-w-full"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+      <div className="flex flex-col text-left overflow-hidden">
+        {address ? (
+          <>
+            <span className="text-sm font-semibold text-foreground truncate">{address.split(',')[0]}</span>
+            <span className="text-[11px] text-muted-foreground truncate">{address.split(',').slice(1).join(',').trim()}</span>
+          </>
+        ) : (
+          <span className="text-xs text-muted-foreground font-mono">
+            {lat.toFixed(5)}, {lng.toFixed(5)}
+          </span>
+        )}
+      </div>
+    </a>
+  );
+};
+
 export default function AnalyticsPage() {
   const params = useParams<{ formId: string }>();
   const router = useRouter();
@@ -273,10 +315,7 @@ export default function AnalyticsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {res.latitude && res.longitude ? (
-                        <span className="inline-flex items-center gap-1 text-primary bg-blue-500/5 px-2.5 py-0.5 rounded border border-blue-500/10 text-xs font-medium">
-                          <MapPin className="w-3.5 h-3.5" />
-                          {res.latitude.toFixed(4)}, {res.longitude.toFixed(4)}
-                        </span>
+                        <TableRowLocationCell lat={res.latitude} lng={res.longitude} />
                       ) : (
                         <span className="text-muted-foreground italic text-xs">No GPS Data</span>
                       )}

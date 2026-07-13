@@ -247,7 +247,7 @@ export default function OrganizationsManagementPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => router.push(`/super-admin/organizations/${org.id}`)}
-                            className="px-3 py-1.5 rounded-full text-xs font-semibold text-primary border border-blue-500/10 bg-blue-500/5 hover:bg-blue-500/10 transition-all"
+                            className="px-3 py-1.5 rounded-full text-xs font-semibold text-primary border border-primary/10 bg-primary/5 hover:bg-primary/10 transition-all"
                           >
                             View Details
                           </button>
@@ -257,7 +257,7 @@ export default function OrganizationsManagementPage() {
                               setSelectedOrgName(org.name);
                               setAdminModalOpen(true);
                             }}
-                            className="px-3 py-1.5 rounded-full text-xs font-semibold text-primary border border-purple-500/10 bg-purple-500/5 hover:bg-purple-500/10 transition-all"
+                            className="px-3 py-1.5 rounded-full text-xs font-semibold text-primary border border-primary/10 bg-primary/5 hover:bg-primary/10 transition-all"
                           >
                             Create Admin
                           </button>

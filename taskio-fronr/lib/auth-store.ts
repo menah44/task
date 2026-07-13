@@ -27,6 +27,7 @@ export interface UserType {
   id?: string | number;
   name?: string;
   email?: string;
+  theme?: string;
   role?: "SUPER_ADMIN" | "ADMIN" | "USER";
   [key: string]: unknown;
 }
@@ -88,6 +89,15 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const res = await apiClient.get(`/users/me?t=${new Date().getTime()}`);
+
+          if (res.data.theme) {
+            if (typeof window !== "undefined") {
+              localStorage.setItem("theme", res.data.theme);
+              const html = document.documentElement;
+              html.classList.remove("light", "dark");
+              html.classList.add(res.data.theme);
+            }
+          }
 
           set({
             currentUser: res.data,
@@ -187,7 +197,11 @@ export const useAuthStore = create<AuthState>()(
 
           // Clear storage keys as a fail-safe
           if (typeof window !== "undefined") {
+            const currentTheme = localStorage.getItem("theme");
             localStorage.clear();
+            if (currentTheme) {
+              localStorage.setItem("theme", currentTheme);
+            }
             sessionStorage.clear();
 
             // Clear all cookies

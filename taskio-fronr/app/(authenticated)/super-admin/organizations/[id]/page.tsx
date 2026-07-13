@@ -178,7 +178,7 @@ export default function OrganizationDetailsPage() {
                 <p className="text-sm text-muted-foreground">No Admin assigned</p>
                 <button
                   onClick={() => setAdminModalOpen(true)}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-foreground text-sm font-semibold rounded-lg transition-colors shadow-sm"
+                  className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold rounded-lg transition-colors shadow-sm"
                 >
                   Create Admin
                 </button>

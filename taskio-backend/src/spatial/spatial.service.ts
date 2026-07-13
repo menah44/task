@@ -14,6 +14,7 @@ import { User } from '../auth/entities/user.entity';
 import {
   isPointInPolygon,
   validateGeoJsonPolygon,
+  isPointInBoundary,
 } from './utils/spatial-helpers';
 
 interface CacheEntry {
@@ -39,6 +40,8 @@ export class SpatialService {
     dto: ValidateGeofenceDto,
     user: User,
   ): Promise<{ inside: boolean }> {
+    console.log("Incoming DTO:", dto);
+
     // 1. Fetch form to verify it exists
     const form = await this.formsService.findOne(dto.formId, user);
 
@@ -47,37 +50,23 @@ export class SpatialService {
       return { inside: true };
     }
 
-    // 3. Extract polygon geometry from boundary GeoJSON (FeatureCollection/Feature)
-    let coordinates: number[][][] | null = null;
-    try {
-      const geojson = form.boundary;
-      if (
-        geojson.type === 'FeatureCollection' &&
-        Array.isArray(geojson.features) &&
-        geojson.features.length > 0
-      ) {
-        const feature = geojson.features[0];
-        if (feature.geometry && feature.geometry.type === 'Polygon') {
-          coordinates = feature.geometry.coordinates;
-        }
-      } else if (
-        geojson.type === 'Feature' &&
-        geojson.geometry &&
-        geojson.geometry.type === 'Polygon'
-      ) {
-        coordinates = geojson.geometry.coordinates;
-      } else if (geojson.type === 'Polygon') {
-        coordinates = geojson.coordinates;
-      }
-    } catch {
-      // If parsing fails, fall back to true
-    }
+    console.log("Boundary from DB:", form.boundary);
+    console.log("Latitude:", dto.latitude);
+    console.log("Longitude:", dto.longitude);
 
-    if (!coordinates) {
-      return { inside: true };
+    // 3. Evaluate point intersection using the shared helper
+    const inside = isPointInBoundary([dto.longitude, dto.latitude], form.boundary);
+    
+    console.log("Validation result:", inside);
+    
+    if (!inside) {
+      const boundary = form.boundary;
+      const geojson = boundary?.geojson ?? boundary;
+      console.log("User:", dto.latitude, dto.longitude);
+      console.log("Polygon:", geojson);
+      console.log("Inside:", inside);
     }
-
-    const inside = isPointInPolygon([dto.longitude, dto.latitude], coordinates);
+    
     return { inside };
   }
 
@@ -159,5 +148,31 @@ export class SpatialService {
       boundary,
       expiresAt: Date.now() + this.TTL_MS,
     });
+  }
+
+  async reverseGeocode(lat: number, lng: number): Promise<{ address: string }> {
+    try {
+      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+      const response = await fetch(url, {
+        headers: {
+          'Accept-Language': 'en',
+          'User-Agent': 'Taskio-Backend/1.0 (contact@taskio.example.com)',
+        },
+      });
+
+      if (!response.ok) {
+        console.error(`[Reverse Geocoding] Nominatim failed with status: ${response.status}`);
+        return { address: '' };
+      }
+
+      const data = await response.json();
+      if (data && data.display_name) {
+        return { address: data.display_name };
+      }
+      return { address: '' };
+    } catch (error) {
+      console.error('[Reverse Geocoding] Error:', error);
+      return { address: '' };
+    }
   }
 }

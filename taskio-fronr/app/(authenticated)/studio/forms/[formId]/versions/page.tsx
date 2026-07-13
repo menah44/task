@@ -136,7 +136,7 @@ function VersionCard({
         {/* Create a copy → generates new editable form */}
         <button
           onClick={() => onCopy(version.versionNumber)}
-          className="flex-1 py-2 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:border-purple-500/50 hover:text-primary/80 transition-all">
+          className="flex-1 py-2 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:border-primary/50 hover:text-primary/80 transition-all">
           📋 Copy as New Form
         </button>
       </div>

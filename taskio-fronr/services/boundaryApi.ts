@@ -1,9 +1,4 @@
-import axios from "axios";
-
-const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api/v1",
-  headers: { "Content-Type": "application/json" },
-});
+import apiClient from "@/lib/api/client";
 
 export const boundaryApi = {
   // جلب البيانات (GET)
@@ -13,4 +8,8 @@ export const boundaryApi = {
   // حفظ البيانات (PUT)
   saveBoundary: (formId: string, data: GeoJSON.FeatureCollection) =>
     apiClient.put(`/forms/${formId}/boundary`, data),
+
+  // التحقق من الموقع
+  validateGeofence: (formId: number, latitude: number, longitude: number) =>
+    apiClient.post<{ inside: boolean }>(`/spatial/geofence/validate`, { formId, latitude, longitude }),
 };

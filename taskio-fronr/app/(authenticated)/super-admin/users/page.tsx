@@ -249,7 +249,7 @@ export default function UserManagementPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
                             user.role?.toUpperCase() === "SUPER_ADMIN" 
-                              ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 shadow-sm" 
+                              ? "bg-primary/10 text-primary border border-primary/20 shadow-sm" 
                               : user.role?.toUpperCase() === "ADMIN" 
                                 ? "bg-error/10 text-error border border-error/20 shadow-sm"
                                 : user.role?.toUpperCase() === "MANAGER" || user.role?.toUpperCase() === "MANGER"

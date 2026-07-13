@@ -288,15 +288,25 @@ export default function FormFillPage() {
   const createDraftIfNeeded = useCallback(async () => {
     if (responseId) return responseId;
     try {
+      console.log("[Fill Form] Draft creation started for form", formId);
+      console.log("[Fill Form] Browser coords:", gpsCoords?.lat, gpsCoords?.lng);
+      console.log("[Fill Form] API payload:", { status: "DRAFT", gps: gpsCoords });
+      
       const res = await apiClient.post(`/responses/forms/${formId}`, {
         status: "DRAFT",
         gps: gpsCoords,
       });
+      
+      console.log("[Fill Form] API response:", res.data);
+      console.log("[Fill Form] Validation result (inside?):", true); // since it didn't throw 403
+      
       const id = res.data.id;
       setResponseId(id);
       return id;
     } catch (err: any) {
+      console.log("[Fill Form] API error:", err?.response?.status, err?.response?.data);
       if (err?.response?.status === 403) {
+        console.log("[Fill Form] Validation result (inside?): false (403 Forbidden)");
         setLocationBlocked(true);
         setLocationErrorMsg(
           err?.response?.data?.message || "You must be inside the configured location to submit this form."

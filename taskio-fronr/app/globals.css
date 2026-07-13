@@ -11,60 +11,66 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%; /* slate-50 */
-    --foreground: 222.2 47.4% 11.2%; /* slate-800 */
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
+    /* StrategizeIT Brand — Light Theme */
+    --background: 0 0% 100%;            /* #FFFFFF */
+    --foreground: 210 60% 11%;          /* #0D1B2A — Text Primary */
+    --card: 0 0% 100%;                  /* #FFFFFF */
+    --card-foreground: 210 60% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
-    --primary: 221.2 83.2% 53.3%;
+    --popover-foreground: 210 60% 11%;
+    --primary: 1 78% 55%;               /* #E53935 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%; /* slate-100 */
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%; /* slate-100 */
-    --muted-foreground: 215 16.3% 46.9%; /* slate-500 */
-    --accent: 210 40% 96.1%; /* slate-100 */
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 214.3 31.8% 91.4%; /* slate-200 */
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --secondary: 210 40% 98%;           /* #F8FAFC — Surface */
+    --secondary-foreground: 210 60% 11%;
+    --muted: 210 40% 98%;               /* #F8FAFC */
+    --muted-foreground: 215 16% 47%;    /* #64748B — Text Secondary */
+    --accent: 210 40% 96%;              /* slightly deeper surface */
+    --accent-foreground: 210 60% 11%;
+    --destructive: 0 63% 50%;           /* #D32F2F — Primary Hover */
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;              /* #E2E8F0 */
+    --input: 214 32% 91%;
+    --ring: 1 78% 55%;                  /* #E53935 — focus ring matches primary */
     --radius: 0.625rem;
-    --success: 142.1 76.2% 36.3%;
+    --success: 160 84% 39%;             /* #10B981 */
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 38 92% 50%;              /* #F59E0B */
     --warning-foreground: 0 0% 100%;
-    --error: 0 84.2% 60.2%;
+    --error: 0 91% 59%;                 /* #EF4444 */
     --error-foreground: 0 0% 100%;
+    --info: 217 91% 60%;                /* #3B82F6 */
+    --info-foreground: 0 0% 100%;
   }
 
   .dark {
-    --background: 216 28% 7%;
-    --foreground: 210 20% 82%;
-    --card: 215 21% 11%;
-    --card-foreground: 210 20% 82%;
-    --popover: 215 21% 11%;
-    --popover-foreground: 210 20% 82%;
-    --primary: 217 90% 61%;
+    /* StrategizeIT Brand — Dark Theme */
+    --background: 210 60% 11%;          /* #0D1B2A — Layout Background */
+    --foreground: 210 40% 98%;          /* #F1F5F9 — Primary Text */
+    --card: 215 28% 17%;                /* #1E293B — Card Background */
+    --card-foreground: 210 40% 98%;
+    --popover: 215 28% 17%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 1 78% 55%;               /* #E53935 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 217 17% 15%;
-    --secondary-foreground: 210 20% 82%;
-    --muted: 217 17% 15%;
-    --muted-foreground: 215 16% 65%;
-    --accent: 217 17% 15%;
-    --accent-foreground: 210 20% 82%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 212 12% 21%;
-    --input: 212 12% 21%;
-    --ring: 217 90% 61%;
-    --success: 142.1 70% 45%;
-    --success-foreground: 144.9 80.4% 10%;
-    --warning: 48 96% 53%;
-    --warning-foreground: 38 92% 10%;
-    --error: 0 84.2% 60.2%;
-    --error-foreground: 0 85% 10%;
+    --secondary: 215 25% 27%;           /* #334155 — Secondary Card */
+    --secondary-foreground: 215 16% 65%;/* #94A3B8 — Secondary Text */
+    --muted: 215 25% 27%;               /* #334155 */
+    --muted-foreground: 215 16% 65%;    /* #94A3B8 */
+    --accent: 215 25% 27%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 91% 59%;           /* #EF4444 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 25% 27%;              /* #334155 */
+    --input: 215 25% 27%;
+    --ring: 1 78% 55%;                  /* #E53935 */
+    --success: 160 84% 39%;             /* #10B981 */
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;              /* #F59E0B */
+    --warning-foreground: 0 0% 100%;
+    --error: 0 91% 59%;                 /* #EF4444 */
+    --error-foreground: 0 0% 100%;
+    --info: 217 91% 60%;                /* #3B82F6 */
+    --info-foreground: 0 0% 100%;
   }
 }
 

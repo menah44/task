@@ -392,4 +392,16 @@ export class UsersService {
     const { password: _password, ...result } = user;
     return result;
   }
+
+  async updateTheme(id: number, theme: string) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    user.theme = theme;
+    await this.userRepository.save(user);
+
+    const { password: _password, ...result } = user;
+    return result;
+  }
 }

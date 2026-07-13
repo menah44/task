@@ -109,12 +109,12 @@ export default function LoginPage() {
         className="w-full max-w-md bg-card p-8 rounded-xl border border-border shadow-2xl relative overflow-hidden"
         dir="ltr">
         {/* Decorative soft background glow */}
-        <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm/10 border border-blue-500/30 flex items-center justify-center mb-3">
-            <Lock className="w-6 h-6 text-blue-500" />
+          <div className="w-12 h-12 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm/10 border border-primary/30 flex items-center justify-center mb-3">
+            <Lock className="w-6 h-6 text-primary-foreground" />
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
             Sign In
@@ -187,7 +187,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm disabled:opacity-50 text-white py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2 border border-blue-500/20">
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm disabled:opacity-50 text-white py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2 border border-primary/20">
             {isLoading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />

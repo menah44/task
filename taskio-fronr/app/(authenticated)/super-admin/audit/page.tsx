@@ -162,12 +162,12 @@ export default function AuditLogsPage() {
       return "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
     }
     if (act.startsWith("UPDATE") || act.startsWith("ASSIGN")) {
-      return "bg-blue-500/10 border-blue-500/20 text-primary";
+      return "bg-primary/10 border-primary/20 text-primary";
     }
     if (act.startsWith("DELETE") || act.startsWith("DEACTIVATE") || act.startsWith("REMOVE")) {
       return "bg-rose-500/10 border-rose-500/20 text-rose-400";
     }
-    return "bg-purple-500/10 border-purple-500/20 text-primary";
+    return "bg-primary/10 border-primary/20 text-primary";
   };
 
   const getResourceTypeColor = (resType: string) => {
@@ -234,7 +234,7 @@ export default function AuditLogsPage() {
                   setSelectedActorId(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-purple-500 transition-colors"
+                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-primary transition-colors"
               >
                 <option value="">All Actors</option>
                 {allUsers.map((u) => (
@@ -257,7 +257,7 @@ export default function AuditLogsPage() {
                   setSelectedResourceType(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-purple-500 transition-colors"
+                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-primary transition-colors"
               >
                 <option value="ALL">All Types</option>
                 <option value="USER">USER</option>
@@ -280,7 +280,7 @@ export default function AuditLogsPage() {
                   setStartDate(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer"
+                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-primary transition-colors cursor-pointer"
               />
             </div>
 
@@ -298,7 +298,7 @@ export default function AuditLogsPage() {
                     setEndDate(e.target.value);
                     setPage(1);
                   }}
-                  className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer"
+                  className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-primary transition-colors cursor-pointer"
                 />
                 {(selectedActorId || selectedResourceType !== "ALL" || startDate || endDate) && (
                   <button
@@ -419,7 +419,7 @@ export default function AuditLogsPage() {
                               e.stopPropagation();
                               handleViewDetails(log.id);
                             }}
-                            className="p-1.5 text-muted-foreground hover:text-primary/80 hover:bg-purple-500/10 rounded-lg transition-all"
+                            className="p-1.5 text-muted-foreground hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-all"
                           >
                             <Eye className="w-4 h-4" />
                           </button>

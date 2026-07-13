@@ -74,7 +74,7 @@ export default function AdminDashboard() {
         </div>
         <Link
           href="/studio/forms/new"
-          className="px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-0.5 shadow-[0_4px_14px_0_rgba(59,130,246,0.39)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.23)] text-sm font-semibold rounded-full transition-all duration-200 border border-transparent ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center gap-2">
+          className="px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-0.5 shadow-[0_4px_14px_0_rgba(229,57,53,0.39)] hover:shadow-[0_6px_20px_rgba(229,57,53,0.23)] text-sm font-semibold rounded-full transition-all duration-200 border border-transparent ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center gap-2">
           + Create Form
         </Link>
       </div>
@@ -166,7 +166,7 @@ export default function AdminDashboard() {
                 <div className="mt-5 pt-4 border-t border-border flex justify-end gap-3 flex-wrap">
                   <Link
                     href={`/studio/forms/${form.id}/builder`}
-                    className="text-purple-600 dark:text-purple-400 font-bold text-xs hover:bg-purple-500/10 transition-colors px-3 py-1.5 rounded-md">
+                    className="text-primary font-bold text-xs hover:bg-primary/10 transition-colors px-3 py-1.5 rounded-md">
                     Open Builder →
                   </Link>
                   <Link

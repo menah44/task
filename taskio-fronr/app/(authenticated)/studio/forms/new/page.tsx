@@ -213,13 +213,13 @@ export default function NewFormPage() {
               {/* Use Template */}
               <button
                 onClick={() => setStep("template")}
-                className="flex flex-col items-center justify-center gap-3 p-8 border border-border rounded-[20px] bg-background hover:shadow-md hover:border-purple-500/40 hover:-translate-y-0.5 transition-all group text-center"
+                className="flex flex-col items-center justify-center gap-3 p-8 border border-border rounded-[20px] bg-background hover:shadow-md hover:border-primary/40 hover:-translate-y-0.5 transition-all group text-center"
               >
-                <div className="w-14 h-14 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/20 group-hover:scale-110 transition-transform">
-                  <Layout className="w-7 h-7 text-purple-600" />
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:scale-110 transition-transform">
+                  <Layout className="w-7 h-7 text-primary" />
                 </div>
                 <div className="mt-2">
-                  <p className="font-bold text-foreground text-lg group-hover:text-purple-600 transition-colors tracking-tight">Use Template</p>
+                  <p className="font-bold text-foreground text-lg group-hover:text-primary transition-colors tracking-tight">Use Template</p>
                   <p className="text-sm text-muted-foreground mt-1">Start from pre-made cards</p>
                 </div>
               </button>
@@ -246,8 +246,8 @@ export default function NewFormPage() {
                   onClick={() => setSelectedTemplate(template.id)}
                   className={`text-left p-4 rounded-xl border transition-all flex items-start gap-3 ${
                     selectedTemplate === template.id
-                      ? "border-purple-500 bg-purple-500/10 text-foreground"
-                      : "border-border bg-background hover:border-purple-500/30 hover:bg-purple-500/5"
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border bg-background hover:border-primary/30 hover:bg-primary/5"
                   }`}
                 >
                   <div className="w-10 h-10 rounded-lg bg-muted0/5 flex items-center justify-center border border-border">
@@ -267,7 +267,7 @@ export default function NewFormPage() {
               disabled={!selectedTemplate || isLoading}
               className={`w-full py-3 rounded-xl font-bold text-sm transition-all border ${
                 selectedTemplate
-                  ? "bg-purple-600 border-purple-500 hover:bg-purple-500 text-foreground shadow-md"
+                  ? "bg-primary border-primary hover:bg-primary/90 text-primary-foreground shadow-md"
                   : "bg-muted border-border text-muted-foreground cursor-not-allowed"
               }`}
             >

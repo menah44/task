@@ -42,7 +42,7 @@ async function bootstrap() {
       email: 'admin@taskio.com',
       // Correct bcrypt hash of '123456'
       password: '$2b$10$qCVz09lo4SwOYUmkxEdf.unz.CEmw6yZDOcKiJ2c.rDtmxcJ6clD.',
-      role: 'ADMIN',
+      role: 'SUPER_ADMIN',
     });
     await userRepository.save(defaultAdmin);
     console.log('✅ Default Admin created successfully via Seed Script!');
@@ -50,7 +50,7 @@ async function bootstrap() {
     // If admin exists, ensure their password is correct hash of '123456'
     adminExists.password =
       '$2b$10$qCVz09lo4SwOYUmkxEdf.unz.CEmw6yZDOcKiJ2c.rDtmxcJ6clD.';
-    adminExists.role = 'ADMIN';
+    adminExists.role = 'SUPER_ADMIN';
     await userRepository.save(adminExists);
     console.log(
       '✅ Default Admin password/role verified & updated successfully!',

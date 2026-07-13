@@ -35,10 +35,14 @@ export class AppService implements OnModuleInit {
         // Correct bcrypt hash of '123456'
         password:
           '$2b$10$qCVz09lo4SwOYUmkxEdf.unz.CEmw6yZDOcKiJ2c.rDtmxcJ6clD.',
-        role: 'ADMIN',
+        role: 'SUPER_ADMIN',
       });
       await userRepository.save(defaultAdmin);
-      console.log('✅ Default Admin created successfully via Code!');
+      console.log('✅ Default Super Admin created successfully via Code!');
+    } else if (adminExists.role !== 'SUPER_ADMIN') {
+      adminExists.role = 'SUPER_ADMIN';
+      await userRepository.save(adminExists);
+      console.log('✅ Default Super Admin role corrected to SUPER_ADMIN!');
     }
   }
 

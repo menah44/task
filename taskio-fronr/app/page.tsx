@@ -41,12 +41,12 @@ export default function HomePage() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex items-center justify-center p-6 relative">
-        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="max-w-xl w-full">
           <div className="bg-card rounded-3xl border border-border shadow-2xl p-10 md:p-14 text-center space-y-8 relative overflow-hidden">
-            <div className="w-20 h-20 mx-auto rounded-3xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm/10 border border-blue-500/20 flex items-center justify-center text-4xl shadow-inner">
-              <ClipboardCheck className="w-10 h-10 text-blue-500" />
+            <div className="w-20 h-20 mx-auto rounded-3xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm/10 border border-primary/20 flex items-center justify-center text-4xl shadow-inner">
+              <ClipboardCheck className="w-10 h-10 text-primary-foreground" />
             </div>
 
             <div className="space-y-3">

@@ -11,38 +11,7 @@ import { Form } from '../forms/entities/form.entity';
 import { User } from '../auth/entities/user.entity';
 import { AuditService } from '../audit/audit.service';
 
-// Helper functions for point-in-polygon
-function isPointInPolygon(point: [number, number], vs: [number, number][]) {
-  const x = point[0], y = point[1];
-  let inside = false;
-  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-    const xi = vs[i][0], yi = vs[i][1];
-    const xj = vs[j][0], yj = vs[j][1];
-    const intersect = ((yi > y) !== (yj > y))
-        && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-    if (intersect) inside = !inside;
-  }
-  return inside;
-}
-
-function isPointInFeatureCollection(point: [number, number], boundaryObj: any): boolean {
-  // The boundary is saved as { geojson: FeatureCollection, areaKm2: ... }
-  const geojson = boundaryObj?.geojson || boundaryObj;
-  
-  if (!geojson || !geojson.features) return false;
-  for (const feature of geojson.features) {
-    if (feature.geometry?.type === 'Polygon') {
-      const exteriorRing = feature.geometry.coordinates[0];
-      if (isPointInPolygon(point, exteriorRing)) return true;
-    } else if (feature.geometry?.type === 'MultiPolygon') {
-      for (const polygon of feature.geometry.coordinates) {
-        const exteriorRing = polygon[0];
-        if (isPointInPolygon(point, exteriorRing)) return true;
-      }
-    }
-  }
-  return false;
-}
+import { isPointInBoundary } from '../spatial/utils/spatial-helpers';
 
 @Injectable()
 export class ResponsesService {
@@ -109,10 +78,12 @@ export class ResponsesService {
       const point: [number, number] = [lng, lat]; // GeoJSON expects [lng, lat]
       
       let isInside = false;
-      if (form.boundary) {
+      if (!form.boundary) {
+        isInside = true;
+      } else {
         // Output debug logs closer to the format requested
-        console.log(`Calculated Position (GeoJSON check): executing isPointInFeatureCollection...`);
-        isInside = isPointInFeatureCollection(point, form.boundary);
+        console.log(`Calculated Position (GeoJSON check): executing isPointInBoundary...`);
+        isInside = isPointInBoundary(point, form.boundary);
       }
       
       console.log(`Validation Result: ${isInside ? 'INSIDE' : 'OUTSIDE'}`);
@@ -244,11 +215,13 @@ export class ResponsesService {
       const point: [number, number] = [lng, lat];
       
       let isInside = false;
-      if (form.boundary) {
+      if (!form.boundary) {
+        isInside = true;
+      } else {
         // Log boundary check details
         const geojson = form.boundary?.geojson || form.boundary;
         console.log(`Boundary Type:`, geojson?.type, `Features:`, geojson?.features?.length);
-        isInside = isPointInFeatureCollection(point, form.boundary);
+        isInside = isPointInBoundary(point, form.boundary);
       }
       
       console.log(`Validation Result: ${isInside ? 'INSIDE' : 'OUTSIDE'}`);

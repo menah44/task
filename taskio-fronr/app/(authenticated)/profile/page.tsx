@@ -34,7 +34,7 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* User Card */}
         <div className="bg-card border border-border rounded-3xl p-6 flex flex-col items-center text-center space-y-4">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-500 to-purple-600 flex items-center justify-center text-foreground font-extrabold text-3xl shadow-lg border-2 border-border">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-extrabold text-3xl shadow-lg border-2 border-border">
             {email ? email[0].toUpperCase() : "U"}
           </div>
 

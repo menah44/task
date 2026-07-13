@@ -42,6 +42,9 @@ export class User {
   @Column({ default: true })
   isActive!: boolean;
 
+  @Column({ nullable: true, default: 'dark' })
+  theme?: string;
+
   @CreateDateColumn()
   createdAt!: Date;
 

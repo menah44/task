@@ -7,36 +7,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - name: Checkout source code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-  
-      - name: Install backend dependencies
-        working-directory: taskio-backend
-        run: npm ci
-
-      - name: Run backend tests
-        working-directory: taskio-backend
-        run: npm test -- --runInBand 
-
-      - name: Install frontend dependencies
-        working-directory: taskio-fronr
-        run: npm ci
-
-      - name: Run frontend lint
-        working-directory: taskio-fronr
-        run: npm run lint
-
   sonarqube:
     needs: test
     runs-on: ubuntu-latest

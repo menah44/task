@@ -86,7 +86,7 @@ jobs:
         with:
           scan-type: image
           image-ref: ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }}
-          format: tabble
+          format: table
           exit-code: 1
           ignore-unfixed: true
           severity: CRITICAL
@@ -96,7 +96,7 @@ jobs:
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }}
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }}
           format: sarif
           output: trivy-frontend.sarif
           exit-code: '0'

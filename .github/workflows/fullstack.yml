@@ -77,7 +77,8 @@ jobs:
         with:
           scan-type: image
           image-ref: ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }}
-          format: table
+          format: sarif
+          output: trivy-frontend.sarif
           exit-code: 0
           ignore-unfixed: true
           severity: CRITICAL,HIGH
@@ -87,8 +88,8 @@ jobs:
       - name: Upload Trivy Report
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-backend-report
-          path: trivy-backend.sarif
+          name: trivy-frontend-report
+          path: trivy-frontend.sarif
 
  
       - name: Push frontend image

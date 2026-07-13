@@ -100,7 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     steps: 
 
-      - name: Deploy to Kubernetes
+      - name: Deploy with helm
         uses: appleboy/ssh-action@v1.0.3
 
         with:
@@ -110,116 +110,16 @@ jobs:
 
           script: |
 
-            cd ~/task/k8s
+            cd ~/task
+            git pull origin main
+            cd helm
 
-
-            echo "Updating backend image..."
-
-            kubectl set image deployment/backend \
-            backend=${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }} \
-            -n form-app
-
-
-
-            echo "Updating frontend image..."
-
-            kubectl set image deployment/frontend \
-            frontend=${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }} \
-            -n form-app
-
-
-
-            echo "Waiting for backend rollout..."
-
-            if ! kubectl rollout status deployment/backend \
-            -n form-app \
-            --timeout=300s
-            then
-
-              echo "Backend deployment failed!"
-
-              echo "========== Pods =========="
-              kubectl get pods -n form-app -o wide
-
-              echo "========== ReplicaSets =========="
-              kubectl get rs -n form-app
-
-              echo "========== Deployment =========="
-              kubectl describe deployment backend -n form-app
-
-              echo "========== Events =========="
-              kubectl get events -n form-app --sort-by=.lastTimestamp
-
-              echo "========== Backend Pods =========="
-              kubectl get pods -n form-app -l app=backend
-
-              for pod in $(kubectl get pods -n form-app -l app=backend -o jsonpath='{.items[*].metadata.name}')
-              do
-                  echo "========== Logs for $pod =========="
-                  kubectl logs $pod -n form-app --tail=100 || true
-                  kubectl logs $pod -n form-app --previous --tail=100 || true
-              done
-
-              echo "Rolling back backend..."
-              kubectl rollout undo deployment/backend -n form-app
-
-              exit 1
-
-            fi
-
-
-
-            echo "Waiting for frontend rollout..."
-
-            if ! kubectl rollout status deployment/frontend \
-            -n form-app \
-            --timeout=300s
-            then
-
-              echo "Frontend deployment failed!"
-              echo "========== Frontend Pods =========="
-              kubectl get pods -n form-app -l app=frontend -o wide
-
-              echo "========== Frontend Deployment =========="
-              kubectl describe deployment frontend -n form-app
-
-              echo "========== Events =========="
-              kubectl get events -n form-app --sort-by=.lastTimestamp
-
-              echo "========== Frontend Pods =========="
-              kubectl get pods -n form-app -l app=frontend
-
-              for pod in $(kubectl get pods -n form-app -l app=frontend -o jsonpath='{.items[*].metadata.name}')
-              do
-                  echo "========== Logs for $pod =========="
-                  kubectl logs $pod -n form-app --tail=100 || true
-                  kubectl logs $pod -n form-app --previous --tail=100 || true
-              done
-              echo "Rolling back frontend..."
-
-              kubectl rollout undo deployment/frontend \
-              -n form-app
-
-              exit 1
-
-            fi
-
-
-
-            echo "Deployment successful"
-
-
-
-            echo "Backend rollout history:"
-            kubectl rollout history deployment/backend \
-            -n form-app
-
-
-            echo "Frontend rollout history:"
-            kubectl rollout history deployment/frontend \
-            -n form-app
-
-
-
-            echo "Current pods status:"
-            kubectl get pods -n form-app
+            helm upgrade --install taskio . \
+              -f values-prod.yaml \
+              -n form-app \
+              --create-namespace \
+              --set backend.image.tag=${{ github.sha }} \
+              --set frontend.image.tag=${{ github.sha }} \
+              --wait \
+              --timeout 5m \
+              --atomic

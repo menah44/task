@@ -1,0 +1,91 @@
+backend:
+  replicaCount: 2
+
+  image:
+    repository: emanabosamra/taskio-backend
+    tag: latest
+
+  containerPort: 5000
+  service:
+    port: 5000
+    type: ClusterIP
+
+  startupProbe:
+    path: /
+    failureThreshold: 30
+    periodSeconds: 10
+
+  livenessProbe:
+    path: /
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+  readinessProbe:
+    path: /
+    initialDelaySeconds: 30
+    periodSeconds: 5
+ 
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+frontend:
+  replicaCount: 2
+
+  image:
+    repository: emanabosamra/taskio-frontend
+    tag: latest
+
+  service:
+    port: 3000
+    type: ClusterIP
+
+  containerPort: 3000
+
+  startupProbe:
+    path: /
+    failureThreshold: 30
+    periodSeconds: 10
+
+  livenessProbe:
+    path: /
+    initialDelaySeconds: 60
+    periodSeconds: 10
+
+  readinessProbe:
+    path: /
+    initialDelaySeconds: 30
+    periodSeconds: 5
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+config:
+  dbHost: postgres-ha-rw
+  dbPort: "5432"
+  dbUsername: taskio_user
+  dbName: taskio
+  port: "5000"
+  nextPublicApiUrl: ""
+
+ingress:
+  className: nginx
+
+postgres:
+  instances: 3
+
+  storage:
+    size: 5Gi
+    class: local-path
+
+  database: taskio
+  owner: taskio_user

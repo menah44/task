@@ -1,0 +1,7 @@
+config:
+  nextPublicApiUrl: "http://20.47.65.42/api/v1"
+backend:
+  replicaCount: 2
+
+frontend:
+  replicaCount: 2

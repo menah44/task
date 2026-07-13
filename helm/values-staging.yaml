@@ -1,0 +1,8 @@
+config:
+  nextPublicApiUrl: "http://staging.example.com/api/v1"
+
+backend:
+  replicaCount: 1
+
+frontend:
+  replicaCount: 1

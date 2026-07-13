@@ -46,9 +46,8 @@ jobs:
         with:
           scan-type: image
           image-ref: ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }}
-          format: sarif
-          output: trivy-backend.sarif
-          exit-code: 0
+          format: table
+          exit-code: 1
           ignore-unfixed: true
           severity: CRITICAL
           scanners: vuln

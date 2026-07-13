@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  test:
 
     runs-on: ubuntu-latest
 
@@ -16,8 +16,36 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+  
+      - name: Install backend dependencies
+        working-directory: taskio-backend
+        run: npm ci
+
+      - name: Run backend tests
+        working-directory: taskio-backend
+        run: npm test -- --runInBand 
+
+      - name: Install frontend dependencies
+        working-directory: taskio-fronr
+        run: npm ci
+
+      - name: Run frontend lint
+        working-directory: taskio-fronr
+        run: npm run lint
+
+  sonarqube:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+    
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
            SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -28,24 +56,47 @@ jobs:
         env:
            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+  build:
+    name: Build (${{ matrix.app }})
+    needs: sonarqube
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - app: backend
+            context: ./taskio-backend
+            image: taskio-backend
+            build_args: ""
+
+          - app: frontend
+            context: ./taskio-fronr
+            image: taskio-frontend
+            build_args: --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.LOAD_BALANCER_IP }}/api/v1
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build backend image
+      - name: Build ${{ matrix.app }} image
         run: |
           docker build --pull \
-          -t ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }} \
-          ./taskio-backend
+          ${{ matrix.build_args }} \
+          -t ${{ secrets.DOCKER_USERNAME }}/${{ matrix.image }}:${{ github.sha }} \
+          ${{ matrix.context }}
  
 
-      - name: Scan backend image with Trivy
+      - name: Scan ${{ matrix.app }} image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }}
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
           format: table
           exit-code: 1
           ignore-unfixed: true
@@ -56,64 +107,27 @@ jobs:
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }}
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
           format: sarif
-          output: trivy-backend.sarif
+          output: trivy-${{ matrix.app }}.sarif
           exit-code: '0'
           scanners: vuln
 
       - name: Upload Trivy Report
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-backend-report
-          path: trivy-backend.sarif
+          name: trivy-${{ matrix.app }}-report
+          path: trivy-${{ matrix.app }}.sarif
 
-      - name: Push backend image
+      - name: Push ${{ matrix.app }} image
         run: |
           docker push \
-          ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }}
+          ${{ secrets.DOCKER_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
 
-      - name: Build frontend image
-        run: |
-          docker build --pull \
-          --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.LOAD_BALANCER_IP }}/api/v1 \
-          -t ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }} \
-          ./taskio-fronr
-
-
-      - name: Scan frontend image with Trivy
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: image
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }}
-          format: table
-          exit-code: 1
-          ignore-unfixed: true
-          severity: CRITICAL
-          scanners: vuln
-
-      - name: Generate Trivy SARIF Report
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: image
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }}
-          format: sarif
-          output: trivy-frontend.sarif
-          exit-code: '0'
-          scanners: vuln
-
-      - name: Upload Trivy Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-frontend-report
-          path: trivy-frontend.sarif
-
- 
-      - name: Push frontend image
-        run: |
-          docker push \
-          ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }}
-  
+  deploy:   
+    needs: build
+    runs-on: ubuntu-latest
+    steps: 
 
       - name: Deploy to Kubernetes
         uses: appleboy/ssh-action@v1.0.3
@@ -192,6 +206,24 @@ jobs:
             then
 
               echo "Frontend deployment failed!"
+              echo "========== Frontend Pods =========="
+              kubectl get pods -n form-app -l app=frontend -o wide
+
+              echo "========== Frontend Deployment =========="
+              kubectl describe deployment frontend -n form-app
+
+              echo "========== Events =========="
+              kubectl get events -n form-app --sort-by=.lastTimestamp
+
+              echo "========== Frontend Pods =========="
+              kubectl get pods -n form-app -l app=frontend
+
+              for pod in $(kubectl get pods -n form-app -l app=frontend -o jsonpath='{.items[*].metadata.name}')
+              do
+                  echo "========== Logs for $pod =========="
+                  kubectl logs $pod -n form-app --tail=100 || true
+                  kubectl logs $pod -n form-app --previous --tail=100 || true
+              done
               echo "Rolling back frontend..."
 
               kubectl rollout undo deployment/frontend \

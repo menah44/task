@@ -78,7 +78,7 @@ export default function FormBoundaryMapPage() {
 
   // Generate GeoJSON circle
   const getCircleFeature = useCallback(
-    (c: [number, number], r: number): turf.helpers.Feature<turf.helpers.Polygon> => {
+    (c: [number, number], r: number) => {
       return turf.circle(c, r, { steps: 64, units: "meters" });
     },
     []

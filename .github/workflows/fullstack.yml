@@ -66,12 +66,10 @@ jobs:
           - app: backend
             context: ./taskio-backend
             image: taskio-backend
-            build_args: ""
 
           - app: frontend
             context: ./taskio-fronr
             image: taskio-frontend
-            build_args: --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.LOAD_BALANCER_IP }}/api/v1
 
     steps:
       - name: Checkout source code
@@ -86,12 +84,16 @@ jobs:
 
       - name: Build ${{ matrix.app }} image
         run: |
-          docker build --pull \
-          ${{ matrix.build_args }} \
-          -t ${{ secrets.DOCKER_USERNAME }}/${{ matrix.image }}:${{ github.sha }} \
-          ${{ matrix.context }}
- 
-
+          if [ "${{ matrix.app }}" = "frontend" ]; then
+            docker build --pull \
+            --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.LOAD_BALANCER_IP }}/api/v1 \
+            -t ${{ secrets.DOCKER_USERNAME }}/${{ matrix.image }}:${{ github.sha }} \
+            ${{ matrix.context }}
+          else
+            docker build --pull \
+            -t ${{ secrets.DOCKER_USERNAME }}/${{ matrix.image }}:${{ github.sha }} \
+            ${{ matrix.context }}
+          fi
       - name: Scan ${{ matrix.app }} image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import maplibregl, { StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import * as turf from "@turf/turf";
+import type { Feature, Polygon } from "geojson";
 import apiClient from "@/lib/api/client";
 import BuilderTopNav from "@/components/builder/BuilderTopNav";
 import {
@@ -286,7 +287,7 @@ export default function FormBoundaryMapPage() {
         const geojson = response.data?.geojson || response.data || null;
 
         if (geojson?.features?.length) {
-          const feature = geojson.features[0] as turf.helpers.Feature<turf.helpers.Polygon>;
+          const feature = geojson.features[0] as Feature<Polygon>;
           const centerPoint = turf.centroid(feature);
           const c = centerPoint.geometry.coordinates as [number, number];
           

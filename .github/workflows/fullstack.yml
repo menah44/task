@@ -86,7 +86,7 @@ jobs:
         with:
           scan-type: image
           image-ref: ${{ secrets.DOCKER_USERNAME }}/taskio-frontend:${{ github.sha }}
-          format: sarif
+          format: tabble
           exit-code: 1
           ignore-unfixed: true
           severity: CRITICAL
@@ -94,13 +94,13 @@ jobs:
 
       - name: Generate Trivy SARIF Report
         uses: aquasecurity/trivy-action@v0.36.0
-         with:
-           scan-type: image
-           image-ref: ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }}
-           format: sarif
-           output: trivy-frontend.sarif
-           exit-code: '0'
-           scanners: vuln
+        with:
+          scan-type: image
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/taskio-backend:${{ github.sha }}
+          format: sarif
+          output: trivy-frontend.sarif
+          exit-code: '0'
+          scanners: vuln
 
       - name: Upload Trivy Report
         uses: actions/upload-artifact@v4

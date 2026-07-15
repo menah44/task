@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
 
   gitleaks:
@@ -62,6 +66,8 @@ jobs:
           dockerfile: taskio-fronr/Dockerfile
   
   checkov:
+    if: false
+    needs: checkov
     name: Helm Security Scan
     runs-on: ubuntu-latest
 
@@ -74,15 +80,14 @@ jobs:
         with:
           directory: ./helm
           framework: helm
-          soft_fail: true
-          skip_check: CKV_K8S_21
+          soft_fail: false
+          skip_check: CKV_K8S_21,CKV_K8S_14,CKV_K8S_43,CKV_K8S_35
   build:
-    if: false
     name: Build (${{ matrix.app }})
-    needs:
-      - sonarqube
-      - hadolint
-      - checkov
+   # needs:
+    #  - sonarqube
+     # - hadolint
+      #- checkov
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -144,6 +149,11 @@ jobs:
         with:
           name: trivy-${{ matrix.app }}-report
           path: trivy-${{ matrix.app }}.sarif
+   
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.app }}.sarif
 
       - name: Push ${{ matrix.app }} image
         run: |

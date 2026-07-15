@@ -67,7 +67,7 @@ jobs:
   
   checkov:
     if: false
-    needs: checkov
+    needs: hadolint
     name: Helm Security Scan
     runs-on: ubuntu-latest
 

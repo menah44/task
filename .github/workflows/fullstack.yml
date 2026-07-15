@@ -62,7 +62,6 @@ jobs:
           dockerfile: taskio-fronr/Dockerfile
   
   checkov:
-    needs: hadolint
     name: Helm Security Scan
     runs-on: ubuntu-latest
 

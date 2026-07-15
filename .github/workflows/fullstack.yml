@@ -156,8 +156,7 @@ jobs:
           docker push \
           ${{ secrets.DOCKER_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
 
-  deploy:   
-    if: false
+  deploy:  
     needs: build
     runs-on: ubuntu-latest
     steps: 

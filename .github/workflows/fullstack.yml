@@ -57,12 +57,28 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: taskio-fronr/Dockerfile
+  
+  checkov:
+    name: Helm Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: ./helm
+          framework: helm
+          soft_fail: true
 
   build:
     name: Build (${{ matrix.app }})
     needs:
       - sonarqube
       - hadolint
+      - checkov
     runs-on: ubuntu-latest
     strategy:
       matrix:

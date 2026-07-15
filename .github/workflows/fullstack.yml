@@ -69,7 +69,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   build:
-   if: false
+    if: false
     name: Build (${{ matrix.app }})
    # needs:
     #  - sonarqube

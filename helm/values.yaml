@@ -89,3 +89,9 @@ postgres:
 
   database: taskio
   owner: taskio_user
+
+secret:
+  jwtSecret: ""
+
+config:
+  nextPublicApiUrl: ""

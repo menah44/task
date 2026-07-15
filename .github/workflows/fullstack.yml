@@ -59,6 +59,7 @@ jobs:
           dockerfile: taskio-fronr/Dockerfile
   
   checkov:
+    needs: hadolint
     name: Helm Security Scan
     runs-on: ubuntu-latest
 
@@ -71,9 +72,10 @@ jobs:
         with:
           directory: ./helm
           framework: helm
-          soft_fail: true
+          soft_fail: false
 
   build:
+    if: false
     name: Build (${{ matrix.app }})
     needs:
       - sonarqube
@@ -147,6 +149,7 @@ jobs:
           ${{ secrets.DOCKER_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
 
   deploy:   
+    if: false
     needs: build
     runs-on: ubuntu-latest
     steps: 

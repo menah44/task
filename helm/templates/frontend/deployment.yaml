@@ -15,6 +15,7 @@ spec:
         app: frontend
 
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001

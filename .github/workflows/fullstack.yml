@@ -41,22 +41,22 @@ jobs:
            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   hadolint:
-  needs: sonarqube
-  name: Dockerfile Lint
-  runs-on: ubuntu-latest
+    needs: sonarqube
+    name: Dockerfile Lint
+    runs-on: ubuntu-latest
 
-  steps:
-    - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Lint Backend Dockerfile
-      uses: hadolint/hadolint-action@v3.1.0
-      with:
-        dockerfile: taskio-backend/Dockerfile
+      - name: Lint Backend Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: taskio-backend/Dockerfile
 
-    - name: Lint Frontend Dockerfile
-      uses: hadolint/hadolint-action@v3.1.0
-      with:
-        dockerfile: taskio-fronr/Dockerfile
+      - name: Lint Frontend Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: taskio-fronr/Dockerfile
 
   build:
     name: Build (${{ matrix.app }})

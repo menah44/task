@@ -12,68 +12,29 @@ permissions:
 
 jobs:
 
-  gitleaks:
-    if: false
-    name: Secret Scan
+  quality-security:
+    name: Quality & Security Checks
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
 
+   
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  sonarqube:
-    if: false
-    needs: gitleaks
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-    
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v6
-        env:
-           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
    
-      - name: SonarQube Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1
-        timeout-minutes: 5
-        env:
-           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-  hadolint:
-    if: false
-    needs: sonarqube
-    name: Dockerfile Lint
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Lint Backend Dockerfile
+      - name: Run Hadolint
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: taskio-backend/Dockerfile
 
-      - name: Lint Frontend Dockerfile
+      - name: Run Hadolint Frontend
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: taskio-fronr/Dockerfile
-  
-  checkov:
-    if: false
-    needs: hadolint
-    name: Helm Security Scan
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
 
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@v12
@@ -82,7 +43,33 @@ jobs:
           framework: helm
           soft_fail: false
           skip_check: CKV_K8S_21,CKV_K8S_14,CKV_K8S_43,CKV_K8S_35
+
+   
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Helm Lint
+        run: helm lint ./helm
+
+      - name: Helm Template Validation
+        run: |
+          helm template taskio ./helm \
+            -f helm/values-prod.yaml > /dev/null
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: SonarQube Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   build:
+   if: false
     name: Build (${{ matrix.app }})
    # needs:
     #  - sonarqube

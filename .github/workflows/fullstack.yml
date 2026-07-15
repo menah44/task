@@ -12,7 +12,7 @@ permissions:
 
 jobs:
 
-  quality-security:
+  quality-gates:
     name: Quality & Security Checks
     runs-on: ubuntu-latest
     steps:
@@ -149,11 +149,11 @@ jobs:
           format: spdx-json
           output: sbom-${{ matrix.app }}.spdx.json
 
-     - name: Upload SBOM
-       uses: actions/upload-artifact@v4
-       with:
-         name: sbom-${{ matrix.app }}
-         path: sbom-${{ matrix.app }}.spdx.json
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.app }}
+          path: sbom-${{ matrix.app }}.spdx.json
 
       - name: Push ${{ matrix.app }} image
         run: |

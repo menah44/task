@@ -14,6 +14,13 @@ spec:
         app: frontend
 
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
 
       containers:
         - name: frontend
@@ -22,6 +29,12 @@ spec:
           ports:
             - containerPort: {{ .Values.frontend.containerPort }}
 
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: NEXT_PUBLIC_API_URL
               valueFrom:

@@ -69,12 +69,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   build:
-    if: false
     name: Build (${{ matrix.app }})
-   # needs:
-    #  - sonarqube
-     # - hadolint
-      #- checkov
+    needs: quality-gates
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -180,6 +176,8 @@ jobs:
             git pull origin main
             cd helm
 
+            echo "Deploying application..."
+
             helm upgrade --install taskio . \
               -f values-prod.yaml \
               -n form-app \
@@ -190,3 +188,17 @@ jobs:
               --wait \
               --timeout 5m \
               --atomic
+
+            echo "Running Smoke Test..."
+
+            curl -f http://${{ secrets.LOAD_BALANCER_IP }}/api/v1
+
+            echo "Smoke Test Passed"
+
+            echo "Running Kubescape..."
+
+            kubescape scan framework nsa \
+              --format json \
+              --output kubescape-report.json || true
+
+            echo "Kubescape Scan Finished"

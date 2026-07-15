@@ -135,6 +135,7 @@ jobs:
               --create-namespace \
               --set backend.image.tag=${{ github.sha }} \
               --set frontend.image.tag=${{ github.sha }} \
+              --set secret.jwtSecret="${{ secrets.JWT_SECRET }}" \
               --wait \
               --timeout 5m \
               --atomic

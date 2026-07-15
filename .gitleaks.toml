@@ -1,0 +1,8 @@
+[allowlist]
+description = "Ignore CircleCI badge token"
+
+regexTarget = "match"
+
+regexes = [
+  '''abc123def456'''
+]

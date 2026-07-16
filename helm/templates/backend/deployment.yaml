@@ -80,9 +80,9 @@ spec:
                   name: secret
                   key: JWT_SECRET
 
-            volumeMounts:
-              - name: uploads
-                mountPath: /app/uploads
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
           startupProbe:
             httpGet:
               path: /health

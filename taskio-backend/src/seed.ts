@@ -50,11 +50,19 @@ async function bootstrap() {
   console.log('Roles completed.');
 
   console.log('Checking Super Admin...');
-  // Check if any SUPER_ADMIN already exists
-  const superAdminExists = await userRepository.findOne({
-    where: { role: 'SUPER_ADMIN' },
+  // Check if the configured SUPER_ADMIN exists by email
+  let superAdminExists = await userRepository.findOne({
+    where: { email: superAdminEmail },
     relations: ['roles'],
   });
+
+  // Fallback: check if ANY SUPER_ADMIN exists to prevent creating a second one
+  if (!superAdminExists) {
+    superAdminExists = await userRepository.findOne({
+      where: { role: 'SUPER_ADMIN' },
+      relations: ['roles'],
+    });
+  }
 
   if (superAdminExists) {
     console.log('ℹ️ Super Admin already exists.');

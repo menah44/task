@@ -79,6 +79,10 @@ spec:
                 secretKeyRef:
                   name: secret
                   key: JWT_SECRET
+
+            volumeMounts:
+              - name: uploads
+                mountPath: /app/uploads
           startupProbe:
             httpGet:
               path: /health
@@ -107,3 +111,6 @@ spec:
             limits:
               memory: {{ .Values.backend.resources.limits.memory }}
               cpu: {{ .Values.backend.resources.limits.cpu }}
+          volumes:
+            - name: uploads
+              emptyDir: {}

@@ -1,0 +1,83 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-seed
+  namespace: {{ .Release.Namespace }}
+
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+
+      containers:
+        - name: seed
+
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+
+          command:
+            - npm
+            - run
+            - seed:prod
+
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DB_HOST
+
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DB_PORT
+
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-ha-app
+                  key: username
+
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-ha-app
+                  key: dbname
+
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-ha-app
+                  key: password
+
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: JWT_SECRET
+
+            - name: SUPER_ADMIN_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: SUPER_ADMIN_NAME
+
+            - name: SUPER_ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: SUPER_ADMIN_EMAIL
+
+            - name: SUPER_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: SUPER_ADMIN_PASSWORD

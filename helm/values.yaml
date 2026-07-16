@@ -4,6 +4,7 @@ backend:
   image:
     repository: emanabosamra/taskio-backend
     tag: latest
+    pullPolicy: IfNotPresent
 
   containerPort: 5000
   service:
@@ -92,6 +93,7 @@ postgres:
 
 secret:
   jwtSecret: ""
-
-config:
-  nextPublicApiUrl: ""
+  superAdmin:
+    name: ""
+    email: ""
+    password: ""

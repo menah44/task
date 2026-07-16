@@ -1,5 +1,10 @@
 secret:
   jwtSecret: ""
+  superAdmin:
+    name: Super Admin
+    email: super@taskio.com
+    password: SuperSecret123!
+
 config:
   nextPublicApiUrl: "http://20.47.65.42/api/v1"
 backend:
@@ -7,3 +12,4 @@ backend:
 
 frontend:
   replicaCount: 2
+

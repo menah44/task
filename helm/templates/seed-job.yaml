@@ -15,9 +15,21 @@ spec:
   template:
     spec:
       restartPolicy: Never
-
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: seed
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10001
+
+            capabilities:
+              drop:
+                - ALL
 
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
@@ -81,3 +93,11 @@ spec:
                 secretKeyRef:
                   name: secret
                   key: SUPER_ADMIN_PASSWORD
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

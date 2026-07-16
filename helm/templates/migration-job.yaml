@@ -14,7 +14,10 @@ spec:
   template:
     spec:
       restartPolicy: Never
-     
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: migration
 
@@ -23,6 +26,8 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10001
             capabilities:
               drop:
                 - ALL
@@ -67,3 +72,11 @@ spec:
                 secretKeyRef:
                   name: secret
                   key: JWT_SECRET
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

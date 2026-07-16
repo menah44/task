@@ -44,7 +44,7 @@ jobs:
           directory: ./helm
           framework: helm
           soft_fail: false
-          skip_check: CKV_K8S_21,CKV_K8S_14,CKV_K8S_43,CKV_K8S_35
+          skip_check: CKV_K8S_21,CKV_K8S_14,CKV_K8S_43,CKV_K8S_35,CKV_K8S_21
 
    
       - name: Install Helm

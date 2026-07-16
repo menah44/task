@@ -48,7 +48,7 @@ export class FormsController {
     @Query('search') search?: string,
   ) {
     const pageNumber = page ? parseInt(page, 10) : 1;
-    const limitNumber = limit ? parseInt(limit, 10) : 10;
+    const limitNumber = limit ? parseInt(limit, 10) : 0;
     return this.formsService.findAll(
       user,
       pageNumber,

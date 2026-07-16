@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { ClipboardList, ExternalLink, Play, Square, ShieldAlert, BarChart3, Trash } from "lucide-react";
 import { hasQuestions } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
+import { formatNumber } from "@/lib/formatters";
 
 interface FormPermissions {
   canEdit: boolean;
@@ -33,6 +35,7 @@ const fetchStudioForms = async (): Promise<FormItem[]> => {
 };
 
 export default function StudioFormsPage() {
+  const { t, i18n } = useTranslation();
   const { data: forms, isLoading } = useQuery<FormItem[]>({
     queryKey: ["accessible-forms"],
     queryFn: fetchStudioForms,
@@ -50,7 +53,7 @@ export default function StudioFormsPage() {
     },
     onError: (err: any) => {
       console.error("Failed to update status", err);
-      const msg = err?.response?.data?.message || "Failed to update status.";
+      const msg = err?.response?.data?.message || t("studioForms.failedUpdateStatus");
       alert(msg);
     }
   });
@@ -64,7 +67,7 @@ export default function StudioFormsPage() {
     },
     onError: (err) => {
       console.error("Failed to delete form", err);
-      alert("Failed to delete form.");
+      alert(t("studioForms.failedDelete"));
     }
   });
 
@@ -77,34 +80,34 @@ export default function StudioFormsPage() {
   }
 
   return (
-    <div className="space-y-6 text-foreground" dir="ltr">
+    <div className="space-y-6 text-foreground">
       <div className="flex justify-between items-center border-b border-border pb-5">
         <div>
           <h1 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
             <ClipboardList className="w-8 h-8 text-blue-500" />
-            Studio Forms
+            {t("studioForms.title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your created forms, check statuses, and open response builders.
+            {t("studioForms.desc")}
           </p>
         </div>
         <Link
           href="/studio/forms/new"
           className="px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-0.5 shadow-[0_4px_14px_0_rgba(59,130,246,0.39)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.23)] text-sm font-semibold rounded-full transition-all duration-200 border border-transparent ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center gap-2"
         >
-          + Create New Form
+          {t("studioForms.createNewForm")}
         </Link>
       </div>
 
       <div className="bg-card rounded-2xl border border-border/60 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
+          <table className="min-w-full text-start text-sm">
             <thead className="bg-muted/30 text-muted-foreground uppercase text-xs font-semibold tracking-wider border-b border-border/60">
               <tr>
-                <th className="px-6 py-5">Title</th>
-                <th className="px-6 py-5">Status</th>
-                <th className="px-6 py-5">Updated</th>
-                <th className="px-6 py-5 text-right">Actions</th>
+                <th className="px-6 py-5 ltr:text-start rtl:text-end">{t("studioForms.tableTitle")}</th>
+                <th className="px-6 py-5 ltr:text-start rtl:text-end">{t("studioForms.tableStatus")}</th>
+                <th className="px-6 py-5 ltr:text-start rtl:text-end">{t("studioForms.tableUpdated")}</th>
+                <th className="px-6 py-5 ltr:text-end rtl:text-start">{t("studioForms.tableActions")}</th>
               </tr>
             </thead>
             <tbody className="text-sm text-muted-foreground">
@@ -135,38 +138,38 @@ export default function StudioFormsPage() {
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">
-                      {form.updatedAt ? new Date(form.updatedAt).toLocaleDateString("en-US", {
+                      {form.updatedAt ? new Intl.DateTimeFormat(i18n.language, {
                         year: "numeric",
                         month: "short",
                         day: "numeric",
-                      }) : "N/A"}
+                      }).format(new Date(form.updatedAt)) : "N/A"}
                     </td>
 
 
 
                     {/* Actions */}
-                    <td className="px-6 py-5 whitespace-nowrap text-right flex items-center justify-end gap-2 opacity-100 transition-opacity">
+                    <td className="px-6 py-5 whitespace-nowrap text-end flex items-center justify-end gap-2 opacity-100 transition-opacity">
                       <Link
                         href={`/studio/forms/${form.id}/builder`}
                         className="px-3 py-1.5 rounded-full bg-blue-500/10 text-primary hover:bg-primary hover:text-primary-foreground border border-transparent transition-all inline-flex items-center gap-1.5 text-xs font-semibold"
                       >
-                        <ExternalLink className="w-3.5 h-3.5" /> Builder
+                        <ExternalLink className="w-3.5 h-3.5" /> {t("studioForms.builder")}
                       </Link>
 
                       {form.status?.toUpperCase() !== "PUBLISHED" ? (
                         <button
                           onClick={() => {
                             if (!hasQuestions(form)) {
-                              alert("A form must contain at least one question before it can be published.");
+                              alert(t("studioForms.publishRequirement"));
                               return;
                             }
                             statusMutation.mutate({ id: form.id, status: "PUBLISHED" });
                           }}
                           disabled={statusMutation.isPending || !hasQuestions(form)}
-                          title={!hasQuestions(form) ? "A form must contain at least one question before it can be published." : "Publish"}
+                          title={!hasQuestions(form) ? t("studioForms.publishRequirement") : t("studioForms.publish")}
                           className="px-3 py-1.5 rounded-full bg-success/10 text-success hover:bg-success hover:text-white border border-transparent transition-all inline-flex items-center gap-1.5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Play className="w-3.5 h-3.5" /> Publish
+                          <Play className="w-3.5 h-3.5" /> {t("studioForms.publish")}
                         </button>
                       ) : (
                         <button
@@ -174,14 +177,14 @@ export default function StudioFormsPage() {
                           disabled={statusMutation.isPending}
                           className="px-3 py-1.5 rounded-full bg-warning/10 text-warning hover:bg-warning hover:text-white border border-transparent transition-all inline-flex items-center gap-1.5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Square className="w-3.5 h-3.5" /> Unpublish
+                          <Square className="w-3.5 h-3.5" /> {t("studioForms.unpublish")}
                         </button>
                       )}
 
                       <button
                         disabled={!form.permissions?.canDelete || deleteMutation.isPending}
                         onClick={() => {
-                          if (window.confirm("Are you sure you want to delete this form? This action cannot be undone.")) {
+                          if (window.confirm(t("studioForms.deleteConfirm"))) {
                             deleteMutation.mutate(form.id);
                           }
                         }}
@@ -191,7 +194,7 @@ export default function StudioFormsPage() {
                             : "bg-muted text-muted-foreground cursor-not-allowed"
                         }`}
                       >
-                        <Trash className="w-3.5 h-3.5" /> Delete
+                        <Trash className="w-3.5 h-3.5" /> {t("studioForms.delete")}
                       </button>
                     </td>
                   </tr>
@@ -202,7 +205,7 @@ export default function StudioFormsPage() {
                     colSpan={5}
                     className="px-6 py-12 text-center text-muted-foreground"
                   >
-                    No permitted forms found.
+                    {t("studioForms.noFormsFound")}
                   </td>
                 </tr>
               )}

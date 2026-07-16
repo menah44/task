@@ -2,22 +2,24 @@
 
 import { useRouter } from "next/navigation";
 import { ClipboardCheck, Sparkles, Layout } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function HomePage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen flex bg-background text-foreground" dir="ltr">
+    <div className="min-h-screen flex bg-background text-foreground">
       {/* Sidebar Info Section */}
-      <aside className="hidden md:flex w-80 bg-card border-r border-border flex-col justify-between p-8 relative overflow-hidden">
+      <aside className="hidden md:flex w-80 bg-card border-e border-border flex-col justify-between p-8 relative overflow-hidden">
         {/* Soft decorative glow */}
-        <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -top-10 -start-10 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="border-b border-border pb-6">
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <span className="text-blue-500 text-3xl font-black">■</span> Form
+            <span className="text-blue-500 text-3xl font-black">■</span> FormFlow
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Form & Workflow Management</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("landing.tagline", "Form & Workflow Management")}</p>
         </div>
 
         <div className="flex-1 flex flex-col justify-center py-10 space-y-6">
@@ -26,22 +28,22 @@ export default function HomePage() {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-foreground leading-tight mb-3">
-              Smart Form Operations
+              {t("landing.feature1Title", "Smart Form Operations")}
             </h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Create dynamic questionnaires, allocate items to responders, and track submissions from a single premium console.
+              {t("landing.feature1Desc", "Create dynamic questionnaires, allocate items to responders, and track submissions from a single premium console.")}
             </p>
           </div>
         </div>
 
         <div className="text-xs text-muted-foreground">
-          © 2026 Form. All privileges reserved.
+          {t("landing.copyright", "© 2026 FormFlow. All privileges reserved.")}
         </div>
       </aside>
 
       {/* Main Content Area */}
       <main className="flex-1 flex items-center justify-center p-6 relative">
-        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-10 -end-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="max-w-xl w-full">
           <div className="bg-card rounded-3xl border border-border shadow-2xl p-10 md:p-14 text-center space-y-8 relative overflow-hidden">
@@ -51,10 +53,10 @@ export default function HomePage() {
 
             <div className="space-y-3">
               <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight">
-                Welcome to Form
+                {t("landing.welcome", "Welcome to FormFlow")}
               </h1>
               <p className="text-muted-foreground text-sm max-w-md mx-auto leading-relaxed">
-                A premium, modern workspace for designing beautiful responsive forms, managing role permissions, and reviewing logs.
+                {t("landing.description", "A premium, modern workspace for designing beautiful responsive forms, managing role permissions, and reviewing logs.")}
               </p>
             </div>
 
@@ -63,7 +65,7 @@ export default function HomePage() {
                 onClick={() => router.push("/login")}
                 className="px-8 py-4 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm text-white font-bold rounded-xl transition-all shadow-lg border border-blue-500/20 flex items-center gap-2"
               >
-                <Layout className="w-5 h-5" /> Get Started
+                <Layout className="w-5 h-5" /> {t("landing.getStarted", "Get Started")}
               </button>
             </div>
           </div>

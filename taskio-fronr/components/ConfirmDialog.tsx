@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -17,9 +18,10 @@ export default function ConfirmDialog({
   description,
   onConfirm,
   onCancel,
-  confirmText = "Confirm",
-  cancelText = "Cancel",
+  confirmText,
+  cancelText,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation();
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onCancel(); }}>
       <DialogContent className="bg-card border border-border text-foreground">
@@ -35,13 +37,13 @@ export default function ConfirmDialog({
             onClick={onCancel}
             className="border-border text-muted-foreground hover:text-foreground hover:bg-accent"
           >
-            {cancelText}
+            {cancelText || t("shared.cancel")}
           </Button>
           <Button
             onClick={onConfirm}
             className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-sm"
           >
-            {confirmText}
+            {confirmText || t("shared.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

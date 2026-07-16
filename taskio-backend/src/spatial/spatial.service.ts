@@ -15,6 +15,7 @@ import {
   isPointInPolygon,
   validateGeoJsonPolygon,
   isPointInBoundary,
+  haversineDistance,
 } from './utils/spatial-helpers';
 
 interface CacheEntry {
@@ -39,35 +40,82 @@ export class SpatialService {
   async validateGeofence(
     dto: ValidateGeofenceDto,
     user: User,
-  ): Promise<{ inside: boolean }> {
-    console.log("Incoming DTO:", dto);
-
-    // 1. Fetch form to verify it exists
+  ): Promise<any> {
     const form = await this.formsService.findOne(dto.formId, user);
+    const settings = (form.settings || {}) as any;
 
-    // 2. Check if boundary exists
+    console.log('\n======= VALIDATE GEOFENCE DEBUG =======');
+    console.log('[1] Full settings from DB:', JSON.stringify(settings, null, 2));
+    console.log('[2] restrictByLocation:', settings.restrictByLocation);
+    console.log('[3] validationMode:', settings.validationMode);
+    console.log('[4] allowedRadius:', settings.allowedRadius, '| type:', typeof settings.allowedRadius);
+    console.log('[5] graceRadius:', settings.graceRadius, '| type:', typeof settings.graceRadius);
+    console.log('[6] location:', settings.location);
+    console.log('[7] Has boundary in DB:', !!form.boundary);
+    console.log('[8] User coords: lat=', dto.latitude, 'lng=', dto.longitude);
+    console.log('========================================\n');
+
+    if (!settings.restrictByLocation && !form.boundary) {
+      console.log('[RESULT] No restriction configured => AVAILABLE');
+      return { inside: true, status: 'AVAILABLE' };
+    }
+
+    const lat = dto.latitude;
+    const lng = dto.longitude;
+
+    // 1. Point + Radius check (preferred, more precise)
+    if (settings.location && settings.allowedRadius) {
+      const distance = haversineDistance(lat, lng, settings.location.lat, settings.location.lng);
+      const mode = (settings.validationMode as string) || 'STRICT';
+      const allowedRadius = Number(settings.allowedRadius);
+      const graceRadius = settings.graceRadius ? Number(settings.graceRadius) : null;
+
+      console.log('[CALC] distance:', distance.toFixed(1), 'm');
+      console.log('[CALC] mode:', mode, '| allowedRadius:', allowedRadius, '| graceRadius:', graceRadius);
+
+      let status = 'AVAILABLE';
+      let inside = true;
+
+      if (distance > allowedRadius) {
+        if (mode === 'ALLOW_NEARBY' && graceRadius && distance <= graceRadius) {
+          status = 'NEARBY';
+          console.log('[RESULT] NEARBY — outside allowedRadius but inside graceRadius');
+        } else if (mode === 'DIRECTIONS') {
+          status = 'BLOCKED_DIRECTIONS';
+          inside = false;
+          console.log('[RESULT] BLOCKED_DIRECTIONS');
+        } else {
+          status = 'BLOCKED';
+          inside = false;
+          console.log('[RESULT] BLOCKED — outside allowedRadius in STRICT mode');
+        }
+      } else {
+        console.log('[RESULT] AVAILABLE — inside allowedRadius');
+      }
+
+      return {
+        inside,
+        distance: Math.round(distance),
+        validationMode: mode,
+        status,
+        location: settings.location,
+        allowedRadius,
+        graceRadius,
+      };
+    }
+
+    // 2. Fallback: GeoJSON polygon boundary
     if (!form.boundary) {
-      return { inside: true };
+      console.log('[RESULT] No location config and no boundary => AVAILABLE');
+      return { inside: true, status: 'AVAILABLE' };
     }
 
-    console.log("Boundary from DB:", form.boundary);
-    console.log("Latitude:", dto.latitude);
-    console.log("Longitude:", dto.longitude);
-
-    // 3. Evaluate point intersection using the shared helper
-    const inside = isPointInBoundary([dto.longitude, dto.latitude], form.boundary);
-    
-    console.log("Validation result:", inside);
-    
-    if (!inside) {
-      const boundary = form.boundary;
-      const geojson = boundary?.geojson ?? boundary;
-      console.log("User:", dto.latitude, dto.longitude);
-      console.log("Polygon:", geojson);
-      console.log("Inside:", inside);
-    }
-    
-    return { inside };
+    const inside = isPointInBoundary([lng, lat], form.boundary);
+    console.log('[RESULT] GeoJSON boundary check => inside:', inside);
+    return {
+      inside,
+      status: inside ? 'AVAILABLE' : 'BLOCKED',
+    };
   }
 
   /**
@@ -93,7 +141,6 @@ export class SpatialService {
       throw new BadRequestException('Radius must be a non-negative number');
     }
 
-    // Using Haversine formula for distance calculation in PostgreSQL
     const responses = await this.responseRepository
       .createQueryBuilder('response')
       .where(
@@ -121,13 +168,11 @@ export class SpatialService {
    * Retrieve the form boundary, proxying the request and utilizing local cache.
    */
   async getFormBoundary(formId: number, user: User): Promise<any> {
-    // Check cache first
     const cached = this.getCachedBoundary(formId);
     if (cached !== null) {
       return cached;
     }
 
-    // Cache miss - retrieve from forms service
     const boundary = await this.formsService.getBoundary(formId, user);
     this.setCachedBoundary(formId, boundary);
     return boundary;
@@ -150,29 +195,15 @@ export class SpatialService {
     });
   }
 
-  async reverseGeocode(lat: number, lng: number): Promise<{ address: string }> {
-    try {
-      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-      const response = await fetch(url, {
-        headers: {
-          'Accept-Language': 'en',
-          'User-Agent': 'Taskio-Backend/1.0 (contact@taskio.example.com)',
-        },
-      });
-
-      if (!response.ok) {
-        console.error(`[Reverse Geocoding] Nominatim failed with status: ${response.status}`);
-        return { address: '' };
-      }
-
-      const data = await response.json();
-      if (data && data.display_name) {
-        return { address: data.display_name };
-      }
-      return { address: '' };
-    } catch (error) {
-      console.error('[Reverse Geocoding] Error:', error);
-      return { address: '' };
+  async reverseGeocode(lat: number, lng: number): Promise<any> {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'taskio-app/1.0' },
+    });
+    if (!response.ok) {
+      throw new BadRequestException('Reverse geocoding failed');
     }
+    const data = await response.json() as any;
+    return { address: data.display_name || null };
   }
 }

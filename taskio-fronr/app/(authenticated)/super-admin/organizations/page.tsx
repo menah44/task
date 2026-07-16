@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Search, ArrowRight, Building2, PlusCircle, Loader2, AlertCircle } from "lucide-react";
+import { Search, ArrowRight, Building2, PlusCircle, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import apiClient from "@/lib/api/client";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,8 @@ import { toast } from "react-hot-toast";
 import SkeletonTable from "@/components/SkeletonTable";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import CreateAdminModal from "@/components/CreateAdminModal";
+import { formatNumber } from "@/lib/formatters";
+import { useTranslation } from "react-i18next";
 
 interface Organization {
   id: number;
@@ -21,6 +23,7 @@ interface Organization {
 
 export default function OrganizationsManagementPage() {
   const router = useRouter();
+  const { t, i18n } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -139,7 +142,7 @@ export default function OrganizationsManagementPage() {
   const safeOrgs = Array.isArray(organizations) ? organizations : [];
 
   return (
-    <main className="space-y-8 text-foreground" dir="ltr">
+    <main className="space-y-8 text-foreground">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -148,26 +151,26 @@ export default function OrganizationsManagementPage() {
               href="/super-admin/dashboard"
               className="hover:text-blue-500 transition-colors flex items-center gap-1"
             >
-              Dashboard <ArrowRight className="w-4 h-4 rotate-180" />
+              Dashboard <ArrowRight className="w-4 h-4 rotate-180 rtl:rotate-0" />
             </Link>
             <span>/</span>
-            <span className="text-foreground font-medium">Organizations</span>
+            <span className="text-foreground font-medium">{t("superAdmin.organizations")}</span>
           </div>
           <h2 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
             <Building2 className="w-8 h-8 text-blue-500" />
-            Organizations Management
+            {t("superAdmin.organizations")}
           </h2>
           <p className="text-muted-foreground text-sm mt-1">
-            View, edit, and manage organizations across the system.
+            {t("superAdmin.orgsDesc")}
           </p>
         </div>
 
         <button
           onClick={() => router.push("/super-admin/organizations/new")}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-xl transition-all font-semibold shadow-md text-sm border border-blue-500/20"
+          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-xl transition-all font-semibold text-sm border border-blue-500/20"
         >
           <PlusCircle className="w-4 h-4" />
-          Add Organization
+          {t("superAdmin.addOrg")}
         </button>
       </div>
 
@@ -184,7 +187,7 @@ export default function OrganizationsManagementPage() {
         <Search className="w-5 h-5 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Search organizations..."
+          placeholder={t("superAdmin.searchOrgs")}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="bg-transparent border-none text-foreground text-sm focus:outline-none w-full placeholder-gray-500"
@@ -197,14 +200,14 @@ export default function OrganizationsManagementPage() {
       ) : (
         <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-start border-collapse">
               <thead>
                 <tr className="border-b border-border bg-card/50 text-muted-foreground text-xs font-bold uppercase tracking-wider">
-                  <th className="px-6 py-4">Name</th>
-                  <th className="px-6 py-4">Slug</th>
+                  <th className="px-6 py-4">{t("superAdmin.name")}</th>
+                  <th className="px-6 py-4">{t("superAdmin.domain")}</th>
                   <th className="px-6 py-4">Users</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4">{t("superAdmin.status")}</th>
+                  <th className="px-6 py-4 ltr:text-end rtl:text-start">{t("superAdmin.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60 text-sm">
@@ -214,7 +217,7 @@ export default function OrganizationsManagementPage() {
                       colSpan={4}
                       className="px-6 py-12 text-center text-muted-foreground"
                     >
-                      No organizations found matching your search criteria.
+                      {t("superAdmin.noOrgs")}
                     </td>
                   </tr>
                 ) : (
@@ -237,19 +240,19 @@ export default function OrganizationsManagementPage() {
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
                             org.isActive
                               ? "bg-success/15 text-success border-success/20"
-                              : "bg-muted0/10 text-muted-foreground border-gray-500/20"
+                              : "bg-muted text-muted-foreground border-border"
                           }`}
                         >
-                          {org.isActive ? "Active" : "Inactive"}
+                          {org.isActive ? t("superAdmin.active") : t("superAdmin.inactive")}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right whitespace-nowrap">
+                      <td className="px-6 py-4 ltr:text-end rtl:text-start whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => router.push(`/super-admin/organizations/${org.id}`)}
-                            className="px-3 py-1.5 rounded-full text-xs font-semibold text-primary border border-primary/10 bg-primary/5 hover:bg-primary/10 transition-all"
+                            className="px-3 py-1.5 rounded-full text-xs font-semibold text-primary border border-blue-500/10 bg-blue-500/5 hover:bg-blue-500/10 transition-all"
                           >
-                            View Details
+                            {t("superAdmin.view")}
                           </button>
                           <button
                             onClick={() => {
@@ -259,21 +262,21 @@ export default function OrganizationsManagementPage() {
                             }}
                             className="px-3 py-1.5 rounded-full text-xs font-semibold text-primary border border-primary/10 bg-primary/5 hover:bg-primary/10 transition-all"
                           >
-                            Create Admin
+                            {t("superAdmin.setupAdmin")}
                           </button>
                           {org.isActive ? (
                             <button
                               onClick={() => handleDeactivate(org.id, org.name)}
                               className="px-3 py-1.5 rounded-full text-xs font-semibold text-error border border-red-500/10 bg-red-500/5 hover:bg-error/15 transition-all"
                             >
-                              Deactivate
+                              {t("superAdmin.deactivate")}
                             </button>
                           ) : (
                             <button
                               onClick={() => handleActivate(org.id, org.name)}
                               className="px-3 py-1.5 rounded-full text-xs font-semibold text-success border border-green-500/10 bg-green-500/5 hover:bg-success/15 transition-all"
                             >
-                              Activate
+                              {t("superAdmin.activate")}
                             </button>
                           )}
                         </div>
@@ -289,24 +292,24 @@ export default function OrganizationsManagementPage() {
 
       {/* Pagination Controls */}
       {!isLoading && totalPages > 1 && (
-        <div className="flex justify-between items-center bg-card border border-border rounded-2xl p-4">
+        <div className="flex justify-between items-center bg-card border border-border rounded-2xl p-4 shadow-sm">
           <span className="text-sm text-muted-foreground">
-            Showing Page {page} of {totalPages} (Total: {total} organizations)
+            {t("superAdmin.showingPage", { page: formatNumber(page, i18n.language), totalPages: formatNumber(totalPages, i18n.language), total: formatNumber(total, i18n.language) })}
           </span>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
               disabled={page === 1}
-              className="px-4 py-2 bg-background border border-border rounded-xl text-[11px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="px-4 py-2 bg-background border border-border rounded-xl text-sm font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              Previous
+              {t("superAdmin.previous")}
             </button>
             <button
               onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={page === totalPages}
-              className="px-4 py-2 bg-background border border-border rounded-xl text-[11px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="px-4 py-2 bg-background border border-border rounded-xl text-sm font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              Next
+              {t("superAdmin.next")}
             </button>
           </div>
         </div>

@@ -5,6 +5,8 @@ import apiClient from "@/lib/api/client";
 import { toast } from "react-hot-toast";
 import SkeletonTable from "@/components/SkeletonTable";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useTranslation } from "react-i18next";
+import { formatNumber } from "@/lib/formatters";
 
 interface Role {
   id: number;
@@ -13,6 +15,7 @@ interface Role {
 }
 
 export default function RolesPage() {
+  const { t, i18n } = useTranslation();
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +54,7 @@ export default function RolesPage() {
       const res = await apiClient.get('/roles');
       setRoles(res.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load roles");
+      setError(err.response?.data?.message || t("adminRoles.failedLoad"));
     } finally {
       setLoading(false);
     }
@@ -73,7 +76,7 @@ export default function RolesPage() {
       setNewRoleName("");
       await fetchRoles();
     } catch (err: any) {
-      setAddError(err.response?.data?.message || "Failed to add role");
+      setAddError(err.response?.data?.message || t("adminRoles.failedAdd"));
     } finally {
       setAddLoading(false);
     }
@@ -81,17 +84,17 @@ export default function RolesPage() {
 
   const handleDeleteRole = async (roleId: number, roleName: string) => {
     triggerConfirm(
-      "Delete Role",
-      `Are you sure you want to delete role '${roleName}'? This action cannot be undone.`,
+      t("adminRoles.deleteTitle"),
+      t("adminRoles.deleteDesc", { roleName }),
       async () => {
         setLoading(true);
         setError(null);
         try {
           await apiClient.delete(`/roles/${roleId}`);
-          toast.success("Role deleted successfully");
+          toast.success(t("adminRoles.deleteSuccess"));
           await fetchRoles();
         } catch (err: any) {
-          toast.error(err.response?.data?.message || "Failed to delete role");
+          toast.error(err.response?.data?.message || t("adminRoles.failedDelete"));
         } finally {
           setLoading(false);
         }
@@ -111,7 +114,7 @@ export default function RolesPage() {
       setEditRoleId(null);
       await fetchRoles();
     } catch (err: any) {
-      setEditError(err.response?.data?.message || "Failed to update role");
+      setEditError(err.response?.data?.message || t("adminRoles.failedUpdate"));
     } finally {
       setEditLoading(false);
     }
@@ -121,12 +124,12 @@ export default function RolesPage() {
     <main className="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-foreground">Roles Management</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t("adminRoles.title")}</h1>
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="px-4 py-2 bg-primary hover:bg-primary/80 text-primary-foreground shadow-sm rounded-xl text-sm font-medium transition-colors"
           >
-            Add Role
+            {t("adminRoles.addRole")}
           </button>
         </div>
         
@@ -141,23 +144,23 @@ export default function RolesPage() {
         {!loading && !error && (
           <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
             <div className="p-6 border-b border-border flex justify-between items-center bg-card">
-              <h2 className="text-lg font-semibold text-foreground">All Roles</h2>
+              <h2 className="text-lg font-semibold text-foreground">{t("adminRoles.allRoles")}</h2>
             </div>
             
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-start border-collapse">
                 <thead>
                   <tr className="bg-muted border-b border-border text-muted-foreground text-[11px] font-semibold uppercase tracking-wider">
-                    <th className="p-4 py-3">Role Name</th>
-                    <th className="p-4 py-3">Users Count</th>
-                    <th className="p-4 py-3 text-right">Actions</th>
+                    <th className="p-4 py-3 ltr:text-start rtl:text-end">{t("adminRoles.roleName")}</th>
+                    <th className="p-4 py-3 ltr:text-start rtl:text-end">{t("adminRoles.usersCount")}</th>
+                    <th className="p-4 py-3 ltr:text-end rtl:text-start">{t("adminRoles.actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60 text-sm text-muted-foreground">
                   {roles.length === 0 ? (
                     <tr>
                       <td colSpan={3} className="p-8 text-center text-muted-foreground">
-                        No roles found.
+                        {t("adminRoles.noRoles")}
                       </td>
                     </tr>
                   ) : (
@@ -177,7 +180,7 @@ export default function RolesPage() {
                                   type="text"
                                   value={editRoleName}
                                   onChange={(e) => setEditRoleName(e.target.value)}
-                                  placeholder="e.g. EDITOR"
+                                  placeholder={t("adminRoles.roleNamePlaceholder")}
                                   className="w-full bg-background border border-blue-500 rounded-xl px-3 py-1.5 text-foreground focus:outline-none focus:border-blue-400 transition-colors uppercase sm:max-w-xs"
                                   required
                                   disabled={editLoading}
@@ -189,23 +192,23 @@ export default function RolesPage() {
                               </form>
                             </td>
                             <td className="p-4 text-muted-foreground">
-                              {role.usersCount ?? 0} {(role.usersCount ?? 0) === 1 ? "user" : "users"}
+                              {formatNumber(role.usersCount ?? 0, i18n.language)} {(role.usersCount ?? 0) === 1 ? t("adminRoles.user") : t("adminRoles.users")}
                             </td>
-                            <td className="p-4 text-right">
+                            <td className="p-4 ltr:text-end rtl:text-start">
                               <div className="flex items-center justify-end gap-3">
                                 <button 
                                   onClick={() => handleEditRole()}
                                   disabled={editLoading || !editRoleName.trim() || editRoleName.toUpperCase() === role.name.toUpperCase()}
                                   className="text-success hover:text-green-300 font-medium transition-colors disabled:opacity-50"
                                 >
-                                  {editLoading ? "Saving..." : "Save"}
+                                  {editLoading ? t("adminRoles.saving") : t("adminRoles.save")}
                                 </button>
                                 <button 
                                   onClick={() => setEditRoleId(null)}
                                   disabled={editLoading}
                                   className="text-muted-foreground hover:text-muted-foreground font-medium transition-colors"
                                 >
-                                  Cancel
+                                  {t("adminRoles.cancel")}
                                 </button>
                               </div>
                             </td>
@@ -216,9 +219,9 @@ export default function RolesPage() {
                               {role.name}
                             </td>
                             <td className="p-4 text-muted-foreground">
-                              {role.usersCount ?? 0} {(role.usersCount ?? 0) === 1 ? "user" : "users"}
+                              {formatNumber(role.usersCount ?? 0, i18n.language)} {(role.usersCount ?? 0) === 1 ? t("adminRoles.user") : t("adminRoles.users")}
                             </td>
-                            <td className="p-4 text-right">
+                            <td className="p-4 ltr:text-end rtl:text-start">
                               <div className="flex items-center justify-end gap-3">
                                 <button 
                                   onClick={() => {
@@ -228,13 +231,13 @@ export default function RolesPage() {
                                   }}
                                   className="text-primary hover:text-primary/80 font-medium transition-colors"
                                 >
-                                  Edit
+                                  {t("adminRoles.edit")}
                                 </button>
                                 <button 
                                   onClick={() => handleDeleteRole(role.id, role.name)}
                                   className="text-error hover:text-red-300 font-medium transition-colors"
                                 >
-                                  Delete
+                                  {t("adminRoles.delete")}
                                 </button>
                               </div>
                             </td>
@@ -254,7 +257,7 @@ export default function RolesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-card rounded-3xl w-full max-w-md border border-border overflow-hidden shadow-2xl flex flex-col">
             <div className="p-6 border-b border-border flex justify-between items-center bg-card">
-              <h3 className="text-xl font-bold text-foreground">Add New Role</h3>
+              <h3 className="text-xl font-bold text-foreground">{t("adminRoles.addNewRole")}</h3>
               <button 
                 onClick={() => setIsAddModalOpen(false)}
                 className="text-muted-foreground hover:text-foreground transition-colors p-2"
@@ -270,12 +273,12 @@ export default function RolesPage() {
               )}
               <form id="addRoleForm" onSubmit={handleAddRole} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-2">Role Name</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">{t("adminRoles.roleNameLabel")}</label>
                   <input
                     type="text"
                     value={newRoleName}
                     onChange={(e) => setNewRoleName(e.target.value)}
-                    placeholder="e.g. EDITOR"
+                    placeholder={t("adminRoles.roleNamePlaceholder")}
                     className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors uppercase"
                     required
                   />
@@ -288,7 +291,7 @@ export default function RolesPage() {
                 onClick={() => setIsAddModalOpen(false)}
                 className="px-5 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               >
-                Cancel
+                {t("adminRoles.cancel")}
               </button>
               <button
                 type="submit"
@@ -299,7 +302,7 @@ export default function RolesPage() {
                 {addLoading && (
                   <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
                 )}
-                Save
+                {t("adminRoles.save")}
               </button>
             </div>
           </div>

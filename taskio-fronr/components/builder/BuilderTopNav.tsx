@@ -8,6 +8,7 @@ import {
   Map as MapIcon,
   Settings as SettingsIcon,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface BuilderTopNavProps {
   formId: string;
@@ -20,19 +21,19 @@ interface BuilderTopNavProps {
 const TABS = [
   {
     key: "builder",
-    label: "Builder",
+    labelKey: "builderNav.builder",
     href: (id: string) => `/studio/forms/${id}/builder`,
     icon: LayoutGrid,
   },
   {
     key: "map",
-    label: "Map",
+    labelKey: "builderNav.map",
     href: (id: string) => `/studio/forms/${id}/map`,
     icon: MapIcon,
   },
   {
     key: "settings",
-    label: "Settings",
+    labelKey: "builderNav.settings",
     href: (id: string) => `/studio/forms/${id}/settings`,
     icon: SettingsIcon,
   },
@@ -44,13 +45,14 @@ export default function BuilderTopNav({
   actions,
 }: BuilderTopNavProps) {
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   return (
     <div className="bg-card border-b border-border px-6 h-16 flex items-center justify-between shrink-0 gap-4">
       {/* Left cluster: segmented tabs + contextual subtitle */}
       <div className="flex items-center gap-4 min-w-0">
         <div className="flex items-center gap-0.5 bg-background border border-border rounded-lg p-1 shrink-0">
-          {TABS.map(({ key, label, href, icon: Icon }) => {
+          {TABS.map(({ key, labelKey, href, icon: Icon }) => {
             const isActive = pathname?.includes(`/${key}`);
             return (
               <Link
@@ -62,7 +64,7 @@ export default function BuilderTopNav({
                     : "text-muted-foreground hover:text-gray-200 hover:bg-white/5"
                 }`}>
                 <Icon className="w-4 h-4" />
-                {label}
+                {t(labelKey)}
               </Link>
             );
           })}

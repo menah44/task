@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Building2, ArrowLeft, Loader2, AlertCircle, Edit, Users, Calendar, ShieldCheck } from "lucide-react";
+import { Building2, ArrowLeft, ArrowRight, Loader2, AlertCircle, Edit3, Users, Calendar, ShieldCheck, User } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import apiClient from "@/lib/api/client";
 import { toast } from "react-hot-toast";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { useTranslation } from "react-i18next";
+import { formatNumber } from "@/lib/formatters";
 import CreateAdminModal from "@/components/CreateAdminModal";
 
 interface Organization {
@@ -26,8 +29,10 @@ interface Organization {
 }
 
 export default function OrganizationDetailsPage() {
-  const { id } = useParams();
+  const params = useParams();
   const router = useRouter();
+  const { t, i18n } = useTranslation();
+  const id = params.id as string;
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -75,8 +80,9 @@ export default function OrganizationDetailsPage() {
   if (error || !organization) {
     return (
       <div className="bg-error/15 border border-error/20 text-error p-6 rounded-xl flex items-center justify-center flex-col gap-4">
-        <AlertCircle className="w-10 h-10" />
-        <p>Organization not found or an error occurred.</p>
+        <div className="flex items-center justify-center h-[50vh] text-error">
+          <p>{t("superAdmin.noOrgs")}</p>
+        </div>
         <Link href="/super-admin/organizations" className="text-primary hover:underline">
           Return to Organizations
         </Link>
@@ -87,7 +93,7 @@ export default function OrganizationDetailsPage() {
   const adminUser = organization.users?.find((u) => u.role === "ADMIN");
 
   return (
-    <main className="space-y-8 text-foreground" dir="ltr">
+    <main className="space-y-8 text-foreground">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -96,7 +102,7 @@ export default function OrganizationDetailsPage() {
               href="/super-admin/organizations"
               className="hover:text-blue-500 transition-colors flex items-center gap-1"
             >
-              <ArrowLeft className="w-4 h-4" /> Back to Organizations
+              <ArrowRight className="w-4 h-4 rtl:rotate-180" /> {t("superAdmin.backToOrgs")}
             </Link>
           </div>
           <h2 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-3">
@@ -107,10 +113,10 @@ export default function OrganizationDetailsPage() {
 
         <button
           onClick={() => router.push(`/super-admin/organizations/${id}/edit`)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-muted hover:bg-accent border border-border text-foreground rounded-xl transition-all font-semibold shadow-md text-sm"
+          className="flex items-center gap-2 px-5 py-2.5 bg-card text-foreground hover:bg-muted border border-border shadow-sm rounded-xl transition-all font-semibold text-sm"
         >
-          <Edit className="w-4 h-4" />
-          Edit Organization
+          <Edit3 className="w-4 h-4" />
+          {t("superAdmin.edit")}
         </button>
       </div>
 
@@ -119,32 +125,31 @@ export default function OrganizationDetailsPage() {
         {/* Main Details */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
-            <h3 className="text-xl font-bold mb-4 text-foreground">Overview</h3>
-            <div className="space-y-4">
+            <h3 className="text-xl font-bold mb-4 text-foreground">{t("superAdmin.overview")}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Description</label>
-                <p className="text-muted-foreground mt-1">{organization.description || "No description provided."}</p>
+                <label className="text-xs text-muted-foreground uppercase font-bold tracking-wider">{t("superAdmin.description")}</label>
+                <p className="text-muted-foreground mt-1">{organization.description || t("superAdmin.noDesc")}</p>
               </div>
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
                 <div>
-                  <label className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Created At</label>
-                  <div className="flex items-center gap-2 mt-1 text-muted-foreground">
+                  <label className="text-xs text-muted-foreground uppercase font-bold tracking-wider">{t("superAdmin.createdAt")}</label>
+                  <div className="flex items-center gap-2 mt-1 text-foreground">
                     <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span>{organization.createdAt ? new Date(organization.createdAt).toLocaleDateString() : "N/A"}</span>
+                    <span>{organization.createdAt ? new Intl.DateTimeFormat(i18n.language).format(new Date(organization.createdAt)) : "N/A"}</span>
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Status</label>
+                  <label className="text-xs text-muted-foreground uppercase font-bold tracking-wider">{t("superAdmin.status")}</label>
                   <div className="mt-1">
                     <span
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                         organization.isActive
-                          ? "bg-success text-success-foreground border-transparent shadow-sm"
-                          : "bg-accent text-accent-foreground border-transparent shadow-sm"
+                          ? "bg-success/15 text-success border border-success/20 shadow-sm"
+                          : "bg-muted text-muted-foreground border border-border shadow-sm"
                       }`}
                     >
-                      <ShieldCheck className="w-4 h-4" />
-                      {organization.isActive ? "Active" : "Inactive"}
+                      {organization.isActive ? t("superAdmin.active") : t("superAdmin.inactive")}
                     </span>
                   </div>
                 </div>
@@ -154,33 +159,30 @@ export default function OrganizationDetailsPage() {
 
           {/* Admin Details Section */}
           <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
-            <h3 className="text-xl font-bold mb-4 text-foreground">Organization Admin</h3>
+            <h3 className="text-xl font-bold mb-4 text-foreground">{t("superAdmin.orgAdmin")}</h3>
             {adminUser ? (
-              <div className="bg-background border border-border p-4 rounded-xl flex items-center justify-between">
+              <div className="flex items-center gap-4 p-4 bg-muted/30 border border-border rounded-xl">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                  <User className="w-6 h-6 text-primary" />
+                </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">
+                  <p className="font-semibold text-foreground">
                     {adminUser.firstName} {adminUser.lastName}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">{adminUser.email}</p>
                 </div>
-                <span
-                  className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                    adminUser.isActive
-                      ? "bg-success text-success-foreground border-transparent shadow-sm"
-                      : "bg-accent text-accent-foreground border-transparent shadow-sm"
-                  }`}
-                >
-                  {adminUser.isActive ? "Active" : "Inactive"}
-                </span>
               </div>
             ) : (
-              <div className="bg-background border border-border p-6 rounded-xl flex flex-col items-center justify-center gap-3 text-center">
-                <p className="text-sm text-muted-foreground">No Admin assigned</p>
+              <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/20 border border-border border-dashed rounded-xl">
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-3">
+                  <User className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground">{t("superAdmin.noAdmin")}</p>
                 <button
                   onClick={() => setAdminModalOpen(true)}
-                  className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold rounded-lg transition-colors shadow-sm"
+                  className="mt-4 px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-sm font-semibold transition-colors"
                 >
-                  Create Admin
+                  {t("superAdmin.setupAdmin")}
                 </button>
               </div>
             )}
@@ -189,19 +191,22 @@ export default function OrganizationDetailsPage() {
 
         {/* Sidebar Info */}
         <div className="space-y-6">
-          <div className="bg-card border border-border rounded-3xl p-6 shadow-sm text-center">
-            <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
-              <Users className="w-8 h-8 text-blue-500" />
+          <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-sm flex flex-col justify-between">
+            <div className="p-6">
+              <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-blue-500" />
+              </div>
+              <h3 className="text-3xl font-bold text-foreground">{formatNumber(organization.usersCount || 0, i18n.language)}</h3>
+              <p className="text-muted-foreground text-sm mt-1">{t("superAdmin.totalUsers")}</p>
             </div>
-            <h3 className="text-3xl font-bold text-foreground">{organization.usersCount || 0}</h3>
-            <p className="text-muted-foreground text-sm mt-1">Total Users</p>
-            
-            <button
-              onClick={() => router.push(`/super-admin/users?orgId=${organization.id}`)}
-              className="mt-6 w-full py-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-xl transition-all font-semibold text-sm"
-            >
-              View Users
-            </button>
+            <div className="p-4 bg-muted/30 border-t border-border">
+              <button
+                onClick={() => router.push(`/super-admin/users?orgId=${organization.id}`)}
+                className="w-full py-2.5 bg-background border border-border hover:bg-muted text-foreground rounded-xl text-sm font-semibold transition-colors shadow-sm"
+              >
+                {t("superAdmin.manageUsers")}
+              </button>
+            </div>
           </div>
         </div>
       </div>

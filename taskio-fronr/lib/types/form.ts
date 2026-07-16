@@ -68,6 +68,12 @@ export interface FormSettings {
   showProgress: boolean;
   hasBoundary: boolean; // triggers GPS capture on the fill page
   restrictByLocation?: boolean; // forces GPS validation against boundary
+  location?: { lat: number; lng: number; address?: string };
+  allowedRadius?: number;
+  graceRadius?: number;
+  validationMode?: "STRICT" | "ALLOW_NEARBY" | "DIRECTIONS";
+  requireLiveLocationOnSubmit?: boolean;
+  requireHighAccuracy?: boolean;
 }
 
 export const DEFAULT_FORM_SETTINGS: FormSettings = {

@@ -3,8 +3,10 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import LocationSettings from "@/components/builder/LocationSettings";
 import SkeletonCard from "@/components/SkeletonCard";
 import apiClient from "@/lib/api/client";
+import { useTranslation } from "react-i18next";
 
 interface FormSettings {
   startDate: string;
@@ -14,6 +16,12 @@ interface FormSettings {
   requireLogin: boolean;
   showProgress: boolean;
   restrictByLocation: boolean;
+  location?: { lat: number; lng: number; address?: string };
+  allowedRadius?: number;
+  graceRadius?: number;
+  validationMode?: "STRICT" | "ALLOW_NEARBY" | "DIRECTIONS";
+  requireLiveLocationOnSubmit?: boolean;
+  requireHighAccuracy?: boolean;
 }
 
 // Mock data for development (remove when API is ready)
@@ -25,10 +33,17 @@ const MOCK_SETTINGS: FormSettings = {
   requireLogin: false,
   showProgress: true,
   restrictByLocation: false,
+  location: undefined,
+  allowedRadius: 100,
+  graceRadius: 200,
+  validationMode: "STRICT",
+  requireLiveLocationOnSubmit: false,
+  requireHighAccuracy: false,
 };
 
 export default function SettingsPage() {
   const { formId } = useParams<{ formId: string }>();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,6 +58,12 @@ export default function SettingsPage() {
     requireLogin: false,
     showProgress: false,
     restrictByLocation: false,
+    location: undefined,
+    allowedRadius: 100,
+    graceRadius: 200,
+    validationMode: "STRICT",
+    requireLiveLocationOnSubmit: false,
+    requireHighAccuracy: false,
   });
 
   // Fetch settings – fallback to mock if API fails
@@ -63,6 +84,12 @@ export default function SettingsPage() {
           requireLogin: data.settings?.requireLogin ?? false,
           showProgress: data.settings?.showProgress ?? false,
           restrictByLocation: data.settings?.restrictByLocation ?? false,
+          location: data.settings?.location,
+          allowedRadius: data.settings?.allowedRadius ?? 100,
+          graceRadius: data.settings?.graceRadius ?? 200,
+          validationMode: data.settings?.validationMode ?? "STRICT",
+          requireLiveLocationOnSubmit: data.settings?.requireLiveLocationOnSubmit ?? false,
+          requireHighAccuracy: data.settings?.requireHighAccuracy ?? false,
         });
         setError(null);
       } catch (err: unknown) {
@@ -101,7 +128,7 @@ export default function SettingsPage() {
   const validateDates = (): boolean => {
     if (settings.startDate && settings.endDate) {
       if (new Date(settings.endDate) <= new Date(settings.startDate)) {
-        setError("End date must be after start date.");
+        setError(t("formSettings.endDateAfterStart"));
         return false;
       }
     }
@@ -116,30 +143,46 @@ export default function SettingsPage() {
 
     if (!validateDates()) return;
     if (!formId) {
-      setError("Form ID is missing");
+      setError(t("formSettings.missingFormId"));
       return;
     }
 
     setSaving(true);
     try {
-      const payload = {
-        settings: {
-          startDate: settings.startDate || null,
-          endDate: settings.endDate || null,
-          maxResponses: settings.maxResponses || null,
-          allowAnonymous: settings.allowAnonymous,
-          requireLogin: settings.requireLogin,
-          showProgress: settings.showProgress,
-          restrictByLocation: settings.restrictByLocation,
-        }
+      // Build settings object — strip undefined so we don't overwrite
+      // location/allowedRadius that was set by the Map page
+      const settingsPayload: Record<string, any> = {
+        startDate: settings.startDate || null,
+        endDate: settings.endDate || null,
+        maxResponses: settings.maxResponses || null,
+        allowAnonymous: settings.allowAnonymous,
+        requireLogin: settings.requireLogin,
+        showProgress: settings.showProgress,
+        restrictByLocation: settings.restrictByLocation,
+        validationMode: settings.validationMode,
+        graceRadius: settings.graceRadius,
+        requireLiveLocationOnSubmit: settings.requireLiveLocationOnSubmit,
+        requireHighAccuracy: settings.requireHighAccuracy,
       };
 
+      // Only include location + allowedRadius if they are defined
+      // (they are owned by the Map page; don't overwrite with undefined)
+      if (settings.location !== undefined) {
+        settingsPayload.location = settings.location;
+      }
+      if (settings.allowedRadius !== undefined) {
+        settingsPayload.allowedRadius = settings.allowedRadius;
+      }
+
+      console.log('[Settings] Saving payload:', JSON.stringify(settingsPayload, null, 2));
+
+      const payload = { settings: settingsPayload };
       await apiClient.put(`/forms/${formId}`, payload);
 
       setSuccess(true);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Something went wrong";
+        err instanceof Error ? err.message : t("formSettings.somethingWentWrong");
       setError(message);
       console.error("❌ Save error:", err);
     } finally {
@@ -161,10 +204,10 @@ export default function SettingsPage() {
         <Link
           href={`/studio/forms/${formId}/builder`}
           className="inline-flex items-center text-primary hover:text-primary/80 mb-6 text-sm">
-          ← Back to Builder
+          {t("formSettings.backToBuilder")}
         </Link>
 
-        <h1 className="text-2xl font-bold mb-6">Form Settings</h1>
+        <h1 className="text-2xl font-bold mb-6">{t("formSettings.title")}</h1>
 
         {error && (
           <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded text-red-300">
@@ -173,7 +216,7 @@ export default function SettingsPage() {
         )}
         {success && (
           <div className="mb-4 p-3 bg-green-900/50 border border-green-700 rounded text-green-300">
-            Settings saved successfully!
+            {t("formSettings.settingsSaved")}
           </div>
         )}
 
@@ -184,7 +227,7 @@ export default function SettingsPage() {
             <label
               htmlFor="startDate"
               className="block font-medium mb-1 text-sm">
-              Start Date
+              {t("formSettings.startDate")}
             </label>
             <input
               type="date"
@@ -198,7 +241,7 @@ export default function SettingsPage() {
 
           <div>
             <label htmlFor="endDate" className="block font-medium mb-1 text-sm">
-              End Date
+              {t("formSettings.endDate")}
             </label>
             <input
               type="date"
@@ -216,8 +259,8 @@ export default function SettingsPage() {
                     : "text-error"
                 }`}>
                 {new Date(settings.endDate) > new Date(settings.startDate)
-                  ? "✓ Valid range"
-                  : "End date must be after start date"}
+                  ? t("formSettings.validRange")
+                  : t("formSettings.endDateAfterStart")}
               </p>
             )}
           </div>
@@ -226,7 +269,7 @@ export default function SettingsPage() {
             <label
               htmlFor="maxResponses"
               className="block font-medium mb-1 text-sm">
-              Max Responses (optional)
+              {t("formSettings.maxResponses")}
             </label>
             <input
               type="number"
@@ -236,7 +279,7 @@ export default function SettingsPage() {
               onChange={handleChange}
               min="1"
               className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Leave empty for unlimited"
+              placeholder={t("formSettings.leaveEmpty")}
             />
           </div>
 
@@ -249,7 +292,7 @@ export default function SettingsPage() {
                 onChange={handleChange}
                 className="accent-blue-500"
               />
-              Allow Anonymous Submissions
+              {t("formSettings.allowAnonymous")}
             </label>
 
             <label className="flex items-center gap-3 text-sm">
@@ -260,7 +303,7 @@ export default function SettingsPage() {
                 onChange={handleChange}
                 className="accent-blue-500"
               />
-              Require Login to Submit
+              {t("formSettings.requireLogin")}
             </label>
 
             <label className="flex items-center gap-3 text-sm">
@@ -271,7 +314,7 @@ export default function SettingsPage() {
                 onChange={handleChange}
                 className="accent-blue-500"
               />
-              Show Progress Bar
+              {t("formSettings.showProgressBar")}
             </label>
 
             <label className="flex items-center gap-3 text-sm">
@@ -282,15 +325,27 @@ export default function SettingsPage() {
                 onChange={handleChange}
                 className="accent-blue-500"
               />
-              Restrict by Location (Requires saved map boundary)
+              {t("formSettings.restrictLocation")}
             </label>
+
+            {settings.restrictByLocation && (
+              <LocationSettings
+                location={settings.location}
+                allowedRadius={settings.allowedRadius}
+                graceRadius={settings.graceRadius}
+                validationMode={settings.validationMode}
+                requireLiveLocationOnSubmit={settings.requireLiveLocationOnSubmit}
+                requireHighAccuracy={settings.requireHighAccuracy}
+                onChange={(updates) => setSettings((prev) => ({ ...prev, ...updates }))}
+              />
+            )}
           </div>
 
           <button
             type="submit"
             disabled={saving}
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm font-medium py-2 rounded-lg transition-colors disabled:opacity-50">
-            {saving ? "Saving…" : "Save Settings"}
+            {saving ? t("formSettings.saving") : t("formSettings.saveSettings")}
           </button>
         </form>
       </div>

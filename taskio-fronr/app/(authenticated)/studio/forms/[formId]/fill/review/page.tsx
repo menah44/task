@@ -34,6 +34,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import styled from "styled-components";
 import apiClient from "@/lib/api/client";
+import { useTranslation } from "react-i18next";
 
 // ---------- Types ----------
 
@@ -67,10 +68,10 @@ function isMissing(answer: Answer): boolean {
   return false;
 }
 
-function formatValue(value: Answer["value"]): string {
+function formatValue(value: Answer["value"], t: any): string {
   if (value === null || value === undefined) return "";
   if (Array.isArray(value)) return value.join(", ");
-  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "boolean") return value ? t("fillReview.yes") : t("fillReview.no");
   return String(value);
 }
 
@@ -89,6 +90,7 @@ async function submitResponse(id: string): Promise<void> {
 export default function ReviewPage() {
   const { formId } = useParams<{ formId: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [data, setData] = useState<FullResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -106,7 +108,7 @@ export default function ReviewPage() {
       setData(response);
     } catch (err) {
       setLoadError(
-        err instanceof Error ? err.message : "Could not load this response.",
+        err instanceof Error ? err.message : t("fillReview.loadError"),
       );
     } finally {
       setLoading(false);
@@ -131,7 +133,7 @@ export default function ReviewPage() {
       router.push(`/studio/forms/${formId}/fill/thank-you`);
     } catch (err) {
       setSubmitError(
-        err instanceof Error ? err.message : "Submission failed. Try again.",
+        err instanceof Error ? err.message : t("fillReview.submitFailed"),
       );
       setSubmitting(false);
     }
@@ -140,7 +142,7 @@ export default function ReviewPage() {
   if (loading) {
     return (
       <Wrapper>
-        <StatusText>Loading your responses…</StatusText>
+        <StatusText>{t("fillReview.loading")}</StatusText>
       </Wrapper>
     );
   }
@@ -149,9 +151,9 @@ export default function ReviewPage() {
     return (
       <Wrapper>
         <StatusText role="alert">
-          {loadError ?? "Something went wrong loading this response."}
+          {loadError ?? t("fillReview.somethingWentWrong")}
         </StatusText>
-        <RetryButton onClick={load}>Try again</RetryButton>
+        <RetryButton onClick={load}>{t("fillReview.tryAgain")}</RetryButton>
       </Wrapper>
     );
   }
@@ -160,14 +162,12 @@ export default function ReviewPage() {
     <Wrapper>
       <Header>
         <Title>{data.formTitle}</Title>
-        <Subtitle>Review your answers before submitting</Subtitle>
+        <Subtitle>{t("fillReview.subtitle")}</Subtitle>
       </Header>
 
       {missingCount > 0 && (
         <MissingBanner role="alert">
-          {missingCount} required{" "}
-          {missingCount === 1 ? "answer is" : "answers are"} missing. They're
-          highlighted below.
+          {t("fillReview.missingBanner", { count: missingCount, plural: missingCount === 1 ? t("fillReview.missingBannerOne") : t("fillReview.missingBannerMany") })}
         </MissingBanner>
       )}
 
@@ -181,10 +181,10 @@ export default function ReviewPage() {
                 <AnswerRow key={answer.questionId} $missing={missing}>
                   <AnswerLabel>{answer.label}</AnswerLabel>
                   {missing ? (
-                    <MissingValue>Missing required answer</MissingValue>
+                    <MissingValue>{t("fillReview.missingValue")}</MissingValue>
                   ) : (
                     <AnswerValue>
-                      {formatValue(answer.value) || "—"}
+                      {formatValue(answer.value, t) || "—"}
                     </AnswerValue>
                   )}
                 </AnswerRow>
@@ -201,23 +201,20 @@ export default function ReviewPage() {
         <SubmitButton
           onClick={() => setShowConfirm(true)}
           disabled={submitting}>
-          Submit response
+          {t("fillReview.submitBtn")}
         </SubmitButton>
       </SubmitBar>
 
       {showConfirm && (
         <ModalOverlay onClick={() => !submitting && setShowConfirm(false)}>
           <ModalCard onClick={(e: any) => e.stopPropagation()}>
-            <ModalTitle>Submit this response?</ModalTitle>
+            <ModalTitle>{t("fillReview.modalTitle")}</ModalTitle>
             <ModalBody>
-              This action is irreversible. Once submitted, you won't be able to
-              change your answers.
+              {t("fillReview.modalBody")}
               {missingCount > 0 && (
                 <ModalWarning>
                   {" "}
-                  {missingCount} required{" "}
-                  {missingCount === 1 ? "answer is" : "answers are"} still
-                  missing.
+                  {t("fillReview.modalWarning", { count: missingCount, plural: missingCount === 1 ? t("fillReview.missingBannerOne") : t("fillReview.missingBannerMany") })}
                 </ModalWarning>
               )}
             </ModalBody>
@@ -225,12 +222,12 @@ export default function ReviewPage() {
               <CancelButton
                 onClick={() => setShowConfirm(false)}
                 disabled={submitting}>
-                Cancel
+                {t("fillReview.cancelBtn")}
               </CancelButton>
               <ConfirmButton
                 onClick={handleConfirmSubmit}
                 disabled={submitting}>
-                {submitting ? "Submitting…" : "Yes, submit"}
+                {submitting ? t("fillReview.submitting") : t("fillReview.confirmBtn")}
               </ConfirmButton>
             </ModalActions>
           </ModalCard>

@@ -7,6 +7,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { hasQuestions } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 // ======================== Types ========================
 interface PublicForm {
@@ -33,16 +34,17 @@ function SkeletonCard() {
 
 // ======================== Empty State ========================
 function EmptyState() {
+  const { t } = useTranslation();
   return (
     <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
       <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center text-3xl mb-4">
         📋
       </div>
       <h3 className="text-foreground font-semibold text-lg mb-1">
-        No Public Forms Available
+        {t("publicForms.noPublicForms")}
       </h3>
       <p className="text-muted-foreground text-sm max-w-xs">
-        There are no public forms available at the moment. Check back later.
+        {t("publicForms.noPublicFormsDesc")}
       </p>
     </div>
   );
@@ -50,6 +52,7 @@ function EmptyState() {
 
 // ======================== Form Card ========================
 function FormCard({ form }: { form: PublicForm }) {
+  const { t } = useTranslation();
   const isOpen = form.status === "PUBLISHED";
 
   return (
@@ -66,34 +69,34 @@ function FormCard({ form }: { form: PublicForm }) {
                 ? "bg-green-50 text-success border-green-200"
                 : "bg-muted text-muted-foreground border-border"
             }`}>
-            {isOpen ? "Open" : "Closed"}
+            {isOpen ? t("publicForms.open") : t("publicForms.closed")}
           </span>
         </div>
 
         {/* Description */}
         <p className="text-muted-foreground text-sm line-clamp-3 leading-relaxed">
-          {form.description || "No description provided."}
+          {form.description || t("publicForms.noDescription")}
         </p>
 
         {/* Anonymous badge */}
         <div className="flex items-center gap-1.5 text-xs text-blue-500">
           <span>🔓</span>
-          <span>No login required</span>
+          <span>{t("publicForms.noLoginRequired")}</span>
         </div>
       </div>
 
       {/* CTA Button */}
       {isOpen ? (
         <Link
-          href={`/public/forms/${form.id}`}
+          href={`/public/${form.id}`}
           className="mt-5 w-full py-2.5 rounded-xl text-sm font-bold text-center text-white bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-colors shadow-sm block">
-          Fill Out Form →
+          {t("publicForms.fillOutForm")}
         </Link>
       ) : (
         <button
           disabled
           className="mt-5 w-full py-2.5 rounded-xl text-sm font-bold text-muted-foreground bg-muted border border-border cursor-not-allowed">
-          Form Closed
+          {t("publicForms.formClosed")}
         </button>
       )}
     </div>
@@ -104,6 +107,7 @@ function FormCard({ form }: { form: PublicForm }) {
 export default function PublicFormsPage() {
   const [forms, setForms] = useState<PublicForm[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const load = async () => {
@@ -141,7 +145,7 @@ export default function PublicFormsPage() {
           <Link
             href="/login"
             className="px-4 py-2 text-sm font-medium text-primary border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">
-            Sign In
+            {t("publicForms.signIn")}
           </Link>
         </div>
       </header>
@@ -150,10 +154,10 @@ export default function PublicFormsPage() {
       <div className="bg-white border-b border-border">
         <div className="max-w-6xl mx-auto px-6 py-12 text-center">
           <h1 className="text-4xl font-bold text-foreground mb-3">
-            Public Forms
+            {t("publicForms.title")}
           </h1>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-            Browse and fill out forms — no account required.
+            {t("publicForms.subtitle")}
           </p>
         </div>
       </div>
@@ -174,7 +178,7 @@ export default function PublicFormsPage() {
       {/* Footer */}
       <footer className="border-t border-border mt-10">
         <div className="max-w-6xl mx-auto px-6 py-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} FormFlow. All rights reserved.
+          {t("publicForms.footer", { year: new Date().getFullYear() })}
         </div>
       </footer>
     </div>

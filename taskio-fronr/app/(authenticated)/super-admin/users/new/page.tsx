@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api/client";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 export default function CreateUserPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -77,7 +79,7 @@ export default function CreateUserPage() {
       };
       const response = await apiClient.post("/users", submitData);
       if (response.status === 201) {
-        alert("User created successfully");
+        alert(t("adminUsers.createSuccess"));
         router.push(`/super-admin/users/${response.data.id}`);
       }
     } catch (err: unknown) {
@@ -109,10 +111,10 @@ export default function CreateUserPage() {
            });
            setFieldErrors(newErrors);
         } else {
-          setApiError(error.response.data?.message || "Validation failed. Please check your inputs.");
+          setApiError(error.response.data?.message || t("adminUsers.validationFailed"));
         }
       } else {
-        setApiError(error.response?.data?.message || "An unexpected error occurred. Please try again.");
+        setApiError(error.response?.data?.message || t("adminUsers.unexpectedError"));
       }
     } finally {
       setLoading(false);
@@ -125,13 +127,13 @@ export default function CreateUserPage() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-3xl font-bold text-foreground tracking-tight">
-            Create New User
+            {t("adminUsers.createNewUser")}
           </h2>
           <Link
             href="/super-admin/users"
             className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium flex items-center gap-2"
           >
-            ← Back to Users
+            <span className="rtl:rotate-180 inline-block">←</span> {t("adminUsers.backToUsers")}
           </Link>
         </div>
 
@@ -150,7 +152,7 @@ export default function CreateUserPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-2">
-                  First Name <span className="text-error">*</span>
+                  {t("adminUsers.firstName")} <span className="text-error">*</span>
                 </label>
                 <input
                   type="text"
@@ -170,7 +172,7 @@ export default function CreateUserPage() {
               
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-2">
-                  Last Name <span className="text-error">*</span>
+                  {t("adminUsers.lastName")} <span className="text-error">*</span>
                 </label>
                 <input
                   type="text"
@@ -191,7 +193,7 @@ export default function CreateUserPage() {
 
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-2">
-                Username <span className="text-error">*</span>
+                {t("adminUsers.username")} <span className="text-error">*</span>
               </label>
               <input
                 type="text"
@@ -211,7 +213,7 @@ export default function CreateUserPage() {
 
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-2">
-                Email <span className="text-error">*</span>
+                {t("adminUsers.email")} <span className="text-error">*</span>
               </label>
               <input
                 type="email"
@@ -231,7 +233,7 @@ export default function CreateUserPage() {
 
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-2">
-                Password <span className="text-error">*</span>
+                {t("adminUsers.password")} <span className="text-error">*</span>
               </label>
               <input
                 type="password"
@@ -252,7 +254,7 @@ export default function CreateUserPage() {
 
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-2">
-                Role <span className="text-error">*</span>
+                {t("adminUsers.role")} <span className="text-error">*</span>
               </label>
               <select
                 name="role"
@@ -274,7 +276,7 @@ export default function CreateUserPage() {
 
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-2">
-                Group
+                {t("adminUsers.group")}
               </label>
               <select
                 name="groupId"
@@ -282,7 +284,7 @@ export default function CreateUserPage() {
                 onChange={handleChange}
                 className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background focus:ring-1 focus:ring-blue-500 transition-all appearance-none"
               >
-                <option value="">Select a group (optional)...</option>
+                <option value="">{t("adminUsers.selectGroup")}</option>
                 {groups.map(g => (
                   <option key={g.id} value={g.id}>{g.name}</option>
                 ))}
@@ -298,10 +300,10 @@ export default function CreateUserPage() {
                 {loading ? (
                   <>
                     <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                    Creating User...
+                    {t("adminUsers.creatingUser")}
                   </>
                 ) : (
-                  "Create User"
+                  t("adminUsers.createUser")
                 )}
               </button>
             </div>

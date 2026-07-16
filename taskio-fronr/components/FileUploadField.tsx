@@ -2,6 +2,7 @@
 
 import React, { useCallback, useRef, useState } from "react";
 import { useAuthStore } from "@/lib/auth-store";
+import { useTranslation } from "react-i18next";
 
 // ============================================================
 // TYPES
@@ -78,6 +79,7 @@ export default function FileUploadField({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const { t } = useTranslation();
 
   const isMissingRequired = showValidation && required && status !== "success";
 
@@ -88,15 +90,13 @@ export default function FileUploadField({
 
       if (!isAccepted(file, accept)) {
         setStatus("error");
-        setErrorMsg("Only images and PDF files are allowed.");
+        setErrorMsg(t("fileUpload.onlyImagesPdf"));
         return;
       }
       if (file.size > maxSizeBytes) {
         setStatus("error");
         setErrorMsg(
-          `File is too large (${formatBytes(file.size)}). Max size is ${formatBytes(
-            maxSizeBytes,
-          )}.`,
+          t("fileUpload.fileTooLarge", { size: formatBytes(file.size), max: formatBytes(maxSizeBytes) })
         );
         return;
       }
@@ -142,17 +142,17 @@ export default function FileUploadField({
             });
           } catch {
             setStatus("error");
-            setErrorMsg("Upload succeeded but response was invalid.");
+            setErrorMsg(t("fileUpload.invalidResponse"));
           }
         } else {
           setStatus("error");
-          setErrorMsg(`Upload failed (${xhr.status}). Please retry.`);
+          setErrorMsg(t("fileUpload.uploadFailed", { status: xhr.status }));
         }
       });
 
       xhr.addEventListener("error", () => {
         setStatus("error");
-        setErrorMsg("Network error during upload. Please retry.");
+        setErrorMsg(t("fileUpload.networkError"));
       });
 
       xhr.addEventListener("abort", () => {
@@ -244,11 +244,11 @@ export default function FileUploadField({
           }`}>
           <span className="text-2xl">📎</span>
           <p className="text-sm text-muted-foreground">
-            <span className="text-primary font-medium">Click to upload</span>{" "}
-            or drag and drop
+            <span className="text-primary font-medium">{t("fileUpload.clickToUpload")}</span>{" "}
+            {t("fileUpload.dragAndDrop")}
           </p>
           <p className="text-xs text-muted-foreground">
-            Images or PDF, up to {formatBytes(maxSizeBytes)}
+            {t("fileUpload.imagesPdfUpTo", { max: formatBytes(maxSizeBytes) })}
           </p>
           <input
             ref={inputRef}
@@ -269,7 +269,7 @@ export default function FileUploadField({
               type="button"
               onClick={handleRetry}
               className="shrink-0 px-2 py-1 rounded-md bg-error/15 border border-red-500/30 text-red-300 hover:bg-red-500/20 transition-colors">
-              Retry
+              {t("fileUpload.retry")}
             </button>
           )}
         </div>
@@ -306,14 +306,14 @@ export default function FileUploadField({
               </div>
             )}
             {status === "success" && (
-              <p className="mt-1 text-xs text-success">Uploaded ✓</p>
+              <p className="mt-1 text-xs text-success">{t("fileUpload.uploaded")}</p>
             )}
           </div>
 
           <button
             type="button"
             onClick={handleRemove}
-            title={status === "uploading" ? "Cancel upload" : "Remove file"}
+            title={status === "uploading" ? t("fileUpload.cancelUpload") : t("fileUpload.removeFile")}
             className="shrink-0 text-muted-foreground hover:text-error text-sm transition-colors">
             ✕
           </button>
@@ -321,7 +321,7 @@ export default function FileUploadField({
       )}
 
       {isMissingRequired && (
-        <p className="text-xs text-error">This field is required.</p>
+        <p className="text-xs text-error">{t("fileUpload.required")}</p>
       )}
     </div>
   );

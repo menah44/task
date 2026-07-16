@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 
 // ======================== Types ========================
 interface SnapshotQuestion {
@@ -81,7 +82,7 @@ function ReadOnlyQuestion({ question }: { question: SnapshotQuestion }) {
       <div className="flex items-center gap-2">
         <p className="text-sm font-medium text-foreground">
           {question.label}
-          {question.required && <span className="text-error ml-1">*</span>}
+          {question.required && <span className="text-error ms-1">*</span>}
         </p>
         <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
           {question.type}
@@ -150,6 +151,7 @@ export default function SnapshotViewPage({
   params: { formId: string; versionNumber: string };
 }) {
   const router = useRouter();
+  const { t, i18n } = useTranslation();
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCopying, setIsCopying] = useState(false);
@@ -200,7 +202,7 @@ export default function SnapshotViewPage({
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground text-sm">Loading snapshot...</p>
+        <p className="text-muted-foreground text-sm">{t("formVersions.loadingSnapshot", "Loading snapshot...")}</p>
       </div>
     );
   }
@@ -208,7 +210,7 @@ export default function SnapshotViewPage({
   if (!snapshot) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-error text-sm">Snapshot not found.</p>
+        <p className="text-error text-sm">{t("formVersions.snapshotNotFound", "Snapshot not found.")}</p>
       </div>
     );
   }
@@ -225,14 +227,14 @@ export default function SnapshotViewPage({
                   router.push(`/studio/forms/${params.formId}/versions`)
                 }
                 className="text-muted-foreground hover:text-muted-foreground text-sm transition-colors">
-                ← Versions
+                <span className="rtl:rotate-180 inline-block">←</span> {t("formVersions.backToVersions", "Versions")}
               </button>
             </div>
             <h1 className="text-xl font-bold text-foreground">
               v{snapshot.versionNumber} — {snapshot.label}
             </h1>
             <p className="text-xs text-muted-foreground mt-1">
-              {formatDate(snapshot.createdAt)} · by {snapshot.createdBy}
+              {new Intl.DateTimeFormat(i18n.language, { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(snapshot.createdAt))} · {t("formVersions.by", "by")} {snapshot.createdBy}
             </p>
           </div>
 
@@ -240,7 +242,7 @@ export default function SnapshotViewPage({
             onClick={handleCopy}
             disabled={isCopying}
             className="px-4 py-2 bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground text-sm font-medium rounded-lg transition-colors shrink-0">
-            {isCopying ? "Creating..." : "📋 Copy as New Form"}
+            {isCopying ? t("formVersions.creating", "Creating...") : `📋 ${t("formVersions.copyAsNew", "Copy as New Form")}`}
           </button>
         </div>
 
@@ -248,8 +250,7 @@ export default function SnapshotViewPage({
         <div className="bg-warning/15 border border-warning/20 text-warning text-xs px-4 py-2.5 rounded-lg flex items-center gap-2">
           <span>🔒</span>
           <span>
-            This is a <strong>read-only snapshot</strong>. You cannot edit it.
-            Use Copy as New Form to create an editable copy.
+            {t("formVersions.readOnlySnapshot", "This is a read-only snapshot. You cannot edit it. Use Copy as New Form to create an editable copy.")}
           </span>
         </div>
 
@@ -268,7 +269,7 @@ export default function SnapshotViewPage({
                 ))}
                 {sec.questions.length === 0 && (
                   <p className="text-xs text-muted-foreground italic">
-                    No questions in this section.
+                    {t("formVersions.noQuestions", "No questions in this section.")}
                   </p>
                 )}
               </div>

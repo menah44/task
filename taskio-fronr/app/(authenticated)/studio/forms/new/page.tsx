@@ -4,112 +4,115 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Layout, FileText, CheckCircle, HelpCircle } from "lucide-react";
 import apiClient from "@/lib/api/client";
+import { useTranslation } from "react-i18next";
 
 // Types
 interface Template {
   id: string;
-  name: string;
-  description: string;
+  nameKey: string;
+  descriptionKey: string;
   icon: React.ReactNode;
 }
 
 // Mock templates
 const TEMPLATES: Template[] = [
-  { id: "t-01", name: "Contact Form", description: "Simple contact form with name, email, message", icon: <FileText className="w-6 h-6 text-primary" /> },
-  { id: "t-02", name: "Survey Form", description: "Multi-step survey with rating scales", icon: <Layout className="w-6 h-6 text-primary" /> },
-  { id: "t-03", name: "Job Application", description: "Full job application with file upload", icon: <CheckCircle className="w-6 h-6 text-success" /> },
-  { id: "t-04", name: "Event Registration", description: "Event sign-up with attendance options", icon: <HelpCircle className="w-6 h-6 text-warning" /> },
+  { id: "t-01", nameKey: "newForm.templateContactName", descriptionKey: "newForm.templateContactDesc", icon: <FileText className="w-6 h-6 text-primary" /> },
+  { id: "t-02", nameKey: "newForm.templateSurveyName", descriptionKey: "newForm.templateSurveyDesc", icon: <Layout className="w-6 h-6 text-primary" /> },
+  { id: "t-03", nameKey: "newForm.templateJobName", descriptionKey: "newForm.templateJobDesc", icon: <CheckCircle className="w-6 h-6 text-success" /> },
+  { id: "t-04", nameKey: "newForm.templateEventName", descriptionKey: "newForm.templateEventDesc", icon: <HelpCircle className="w-6 h-6 text-warning" /> },
 ];
 
-const TEMPLATE_STRUCTURES: Record<string, any[]> = {
+// Moved inside component to use translation hook
+const getTemplateStructures = (t: any): Record<string, any[]> => ({
   "t-01": [
     {
       id: "sec-contact",
-      title: "Contact Information",
+      title: t("newForm.contactInfo"),
       questions: [
-        { id: "q-1", type: "text", label: "Full Name", required: true, placeholder: "Enter your full name" },
-        { id: "q-2", type: "email", label: "Email Address", required: true, placeholder: "you@example.com" },
-        { id: "q-3", type: "text", label: "Phone Number", required: false, placeholder: "e.g., +1 234 567 8900" },
-        { id: "q-4", type: "text", label: "Subject", required: true, placeholder: "What is this regarding?" },
-        { id: "q-5", type: "textarea", label: "Message", required: true, placeholder: "Type your message here..." }
+        { id: "q-1", type: "text", label: t("newForm.fullName"), required: true, placeholder: t("newForm.enterFullName") },
+        { id: "q-2", type: "email", label: t("newForm.emailAddress"), required: true, placeholder: t("newForm.emailPlaceholder") },
+        { id: "q-3", type: "text", label: t("newForm.phoneNumber"), required: false, placeholder: t("newForm.phonePlaceholder") },
+        { id: "q-4", type: "text", label: t("newForm.subject"), required: true, placeholder: t("newForm.subjectPlaceholder") },
+        { id: "q-5", type: "textarea", label: t("newForm.message"), required: true, placeholder: t("newForm.messagePlaceholder") }
       ]
     }
   ],
   "t-02": [
     {
       id: "sec-survey-1",
-      title: "Basic Info",
+      title: t("newForm.basicInfo"),
       questions: [
-        { id: "q-1", type: "text", label: "Full Name", required: true, placeholder: "Enter your full name" },
-        { id: "q-2", type: "email", label: "Email Address", required: true, placeholder: "you@example.com" },
+        { id: "q-1", type: "text", label: t("newForm.fullName"), required: true, placeholder: t("newForm.enterFullName") },
+        { id: "q-2", type: "email", label: t("newForm.emailAddress"), required: true, placeholder: t("newForm.emailPlaceholder") },
       ]
     },
     {
       id: "sec-survey-2",
-      title: "Feedback",
+      title: t("newForm.feedback"),
       questions: [
-        { id: "q-3", type: "number", label: "Overall satisfaction (1-5)", required: true, placeholder: "1 = Poor, 5 = Excellent" },
-        { id: "q-4", type: "textarea", label: "How satisfied are you with our service?", required: true, placeholder: "Please explain..." },
-        { id: "q-5", type: "textarea", label: "What did you like the most?", required: false, placeholder: "Share your thoughts" },
-        { id: "q-6", type: "textarea", label: "What can we improve?", required: false, placeholder: "Let us know how we can do better" },
-        { id: "q-7", type: "radio", label: "Would you recommend us to others?", required: true, options: ["Yes", "No"] },
-        { id: "q-8", type: "textarea", label: "Additional comments", required: false, placeholder: "Any other feedback?" }
+        { id: "q-3", type: "number", label: t("newForm.satisfaction"), required: true, placeholder: t("newForm.satisfactionPlaceholder") },
+        { id: "q-4", type: "textarea", label: t("newForm.howSatisfied"), required: true, placeholder: t("newForm.howSatisfiedPlaceholder") },
+        { id: "q-5", type: "textarea", label: t("newForm.likedMost"), required: false, placeholder: t("newForm.likedMostPlaceholder") },
+        { id: "q-6", type: "textarea", label: t("newForm.canImprove"), required: false, placeholder: t("newForm.canImprovePlaceholder") },
+        { id: "q-7", type: "radio", label: t("newForm.recommend"), required: true, options: [t("newForm.yes"), t("newForm.no")] },
+        { id: "q-8", type: "textarea", label: t("newForm.additionalComments"), required: false, placeholder: t("newForm.additionalCommentsPlaceholder") }
       ]
     }
   ],
   "t-03": [
     {
       id: "sec-job-1",
-      title: "Personal Information",
+      title: t("newForm.personalInfo"),
       questions: [
-        { id: "q-1", type: "text", label: "Full Name", required: true, placeholder: "Enter your full name" },
-        { id: "q-2", type: "email", label: "Email Address", required: true, placeholder: "you@example.com" },
-        { id: "q-3", type: "text", label: "Phone Number", required: true, placeholder: "e.g., +1 234 567 8900" },
-        { id: "q-4", type: "text", label: "Address", required: true, placeholder: "Enter your home address" },
-        { id: "q-5", type: "date", label: "Date of Birth", required: true }
+        { id: "q-1", type: "text", label: t("newForm.fullName"), required: true, placeholder: t("newForm.enterFullName") },
+        { id: "q-2", type: "email", label: t("newForm.emailAddress"), required: true, placeholder: t("newForm.emailPlaceholder") },
+        { id: "q-3", type: "text", label: t("newForm.phoneNumber"), required: true, placeholder: t("newForm.phonePlaceholder") },
+        { id: "q-4", type: "text", label: t("newForm.address"), required: true, placeholder: t("newForm.addressPlaceholder") },
+        { id: "q-5", type: "date", label: t("newForm.dob"), required: true }
       ]
     },
     {
       id: "sec-job-2",
-      title: "Professional Details",
+      title: t("newForm.profDetails"),
       questions: [
-        { id: "q-6", type: "text", label: "Position Applying For", required: true, placeholder: "e.g., Frontend Developer" },
-        { id: "q-7", type: "number", label: "Years of Experience", required: true, placeholder: "e.g., 5" },
-        { id: "q-8", type: "textarea", label: "Education", required: true, placeholder: "University, Degree, Year" },
-        { id: "q-9", type: "textarea", label: "Skills", required: true, placeholder: "List your relevant skills" },
-        { id: "q-10", type: "file", label: "Upload Resume", required: true },
-        { id: "q-11", type: "textarea", label: "Why do you want to join us?", required: true, placeholder: "Tell us about your motivation..." }
+        { id: "q-6", type: "text", label: t("newForm.position"), required: true, placeholder: t("newForm.positionPlaceholder") },
+        { id: "q-7", type: "number", label: t("newForm.yoe"), required: true, placeholder: t("newForm.yoePlaceholder") },
+        { id: "q-8", type: "textarea", label: t("newForm.education"), required: true, placeholder: t("newForm.educationPlaceholder") },
+        { id: "q-9", type: "textarea", label: t("newForm.skills"), required: true, placeholder: t("newForm.skillsPlaceholder") },
+        { id: "q-10", type: "file", label: t("newForm.uploadResume"), required: true },
+        { id: "q-11", type: "textarea", label: t("newForm.whyJoin"), required: true, placeholder: t("newForm.whyJoinPlaceholder") }
       ]
     }
   ],
   "t-04": [
     {
       id: "sec-event-1",
-      title: "Attendee Information",
+      title: t("newForm.attendeeInfo"),
       questions: [
-        { id: "q-1", type: "text", label: "Full Name", required: true, placeholder: "Enter your full name" },
-        { id: "q-2", type: "email", label: "Email Address", required: true, placeholder: "you@example.com" },
-        { id: "q-3", type: "text", label: "Phone Number", required: true, placeholder: "e.g., +1 234 567 8900" },
-        { id: "q-4", type: "text", label: "Company / Organization", required: false, placeholder: "Your company name" },
-        { id: "q-5", type: "text", label: "Job Title", required: false, placeholder: "Your title" }
+        { id: "q-1", type: "text", label: t("newForm.fullName"), required: true, placeholder: t("newForm.enterFullName") },
+        { id: "q-2", type: "email", label: t("newForm.emailAddress"), required: true, placeholder: t("newForm.emailPlaceholder") },
+        { id: "q-3", type: "text", label: t("newForm.phoneNumber"), required: true, placeholder: t("newForm.phonePlaceholder") },
+        { id: "q-4", type: "text", label: t("newForm.company"), required: false, placeholder: t("newForm.companyPlaceholder") },
+        { id: "q-5", type: "text", label: t("newForm.jobTitle"), required: false, placeholder: t("newForm.jobTitlePlaceholder") }
       ]
     },
     {
       id: "sec-event-2",
-      title: "Event Details",
+      title: t("newForm.eventDetails"),
       questions: [
-        { id: "q-6", type: "number", label: "Number of Attendees", required: true, placeholder: "e.g., 1" },
-        { id: "q-7", type: "textarea", label: "Dietary Restrictions", required: false, placeholder: "e.g., Vegan, Gluten-free" },
-        { id: "q-8", type: "textarea", label: "Special Requirements", required: false, placeholder: "e.g., Wheelchair access" },
-        { id: "q-9", type: "radio", label: "Do you need parking?", required: true, options: ["Yes", "No"] },
-        { id: "q-10", type: "textarea", label: "Additional Notes", required: false, placeholder: "Anything else we should know?" }
+        { id: "q-6", type: "number", label: t("newForm.numAttendees"), required: true, placeholder: t("newForm.numAttendeesPlaceholder") },
+        { id: "q-7", type: "textarea", label: t("newForm.dietary"), required: false, placeholder: t("newForm.dietaryPlaceholder") },
+        { id: "q-8", type: "textarea", label: t("newForm.specialReq"), required: false, placeholder: t("newForm.specialReqPlaceholder") },
+        { id: "q-9", type: "radio", label: t("newForm.needParking"), required: true, options: [t("newForm.yes"), t("newForm.no")] },
+        { id: "q-10", type: "textarea", label: t("newForm.additionalNotes"), required: false, placeholder: t("newForm.additionalNotesPlaceholder") }
       ]
     }
   ]
-};
+});
 
 export default function NewFormPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [step, setStep] = useState<"choose" | "template">("choose");
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [formTitle, setFormTitle] = useState("");
@@ -119,7 +122,7 @@ export default function NewFormPage() {
   // Create empty (Blank) form
   const handleCreateBlank = async () => {
     if (!formTitle.trim()) {
-      setError("Please enter a form title.");
+      setError(t("newForm.enterTitle"));
       return;
     }
     setIsLoading(true);
@@ -128,7 +131,7 @@ export default function NewFormPage() {
       const res = await apiClient.post("/forms", { title: formTitle });
       router.push(`/studio/forms/${res.data.id}/builder`);
     } catch {
-      setError("Failed to create form. Please try again.");
+      setError(t("newForm.failedCreate"));
     } finally {
       setIsLoading(false);
     }
@@ -140,17 +143,19 @@ export default function NewFormPage() {
     setIsLoading(true);
     setError("");
     try {
-      const title = formTitle || TEMPLATES.find(t => t.id === selectedTemplate)?.name;
+      const templateItem = TEMPLATES.find(t => t.id === selectedTemplate);
+      const title = formTitle || (templateItem ? t(templateItem.nameKey) : "");
       const res = await apiClient.post(`/forms`, { title });
       
-      const structure = TEMPLATE_STRUCTURES[selectedTemplate];
+      const templateStructures = getTemplateStructures(t);
+      const structure = templateStructures[selectedTemplate];
       if (structure) {
         await apiClient.put(`/forms/${res.data.id}`, { sections: structure });
       }
       
       router.push(`/studio/forms/${res.data.id}/builder`);
     } catch {
-      setError("Failed to create form from template.");
+      setError(t("newForm.failedCreateTemplate"));
     } finally {
       setIsLoading(false);
     }
@@ -159,12 +164,12 @@ export default function NewFormPage() {
   return (
     <>
       <div className="hidden" /> {/* Dummy element to satisfy Next.js auto-scroll logic */}
-      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm" dir="ltr">
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
       <div className="bg-card rounded-[24px] border border-border w-full max-w-2xl overflow-hidden shadow-2xl">
         
         {/* Header */}
         <div className="flex items-center justify-between px-8 py-6 border-b border-border/60">
-          <h2 className="text-2xl font-bold text-foreground tracking-tight">Create New Form</h2>
+          <h2 className="text-2xl font-bold text-foreground tracking-tight">{t("newForm.title")}</h2>
           <button
             onClick={() => router.back()}
             className="text-muted-foreground hover:text-foreground text-2xl leading-none transition-colors"
@@ -176,16 +181,16 @@ export default function NewFormPage() {
         {/* Step 1: Choose blank or template */}
         {step === "choose" && (
           <div className="p-8 space-y-6">
-            <p className="text-base text-muted-foreground">How would you like to start building your form?</p>
+            <p className="text-base text-muted-foreground">{t("newForm.howToStart")}</p>
 
             {/* Form Title Input */}
             <div>
               <label className="block text-sm font-semibold text-foreground mb-2">
-                Form Title
+                {t("newForm.formTitle")}
               </label>
               <input
                 type="text"
-                placeholder="e.g. Monthly Performance Feedback"
+                placeholder={t("newForm.formTitlePlaceholder")}
                 value={formTitle}
                 onChange={(e) => { setFormTitle(e.target.value); setError(""); }}
                 className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-all shadow-sm"
@@ -205,8 +210,8 @@ export default function NewFormPage() {
                   <FileText className="w-7 h-7 text-primary" />
                 </div>
                 <div className="mt-2">
-                  <p className="font-bold text-foreground text-lg group-hover:text-primary transition-colors tracking-tight">Start Blank</p>
-                  <p className="text-sm text-muted-foreground mt-1">Build from scratch</p>
+                  <p className="font-bold text-foreground text-lg group-hover:text-primary transition-colors tracking-tight">{t("newForm.startBlank")}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t("newForm.buildFromScratch")}</p>
                 </div>
               </button>
 
@@ -219,8 +224,8 @@ export default function NewFormPage() {
                   <Layout className="w-7 h-7 text-primary" />
                 </div>
                 <div className="mt-2">
-                  <p className="font-bold text-foreground text-lg group-hover:text-primary transition-colors tracking-tight">Use Template</p>
-                  <p className="text-sm text-muted-foreground mt-1">Start from pre-made cards</p>
+                  <p className="font-bold text-foreground text-lg group-hover:text-primary transition-colors tracking-tight">{t("newForm.useTemplate")}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t("newForm.startFromPreMade")}</p>
                 </div>
               </button>
             </div>
@@ -234,17 +239,17 @@ export default function NewFormPage() {
               onClick={() => setStep("choose")}
               className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" /> Back
+              <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("newForm.back")}
             </button>
 
-            <p className="text-sm font-medium text-muted-foreground">Pick a template to start with:</p>
+            <p className="text-sm font-medium text-muted-foreground">{t("newForm.pickTemplate")}</p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto pe-1">
               {TEMPLATES.map((template) => (
                 <button
                   key={template.id}
                   onClick={() => setSelectedTemplate(template.id)}
-                  className={`text-left p-4 rounded-xl border transition-all flex items-start gap-3 ${
+                  className={`text-start p-4 rounded-xl border transition-all flex items-start gap-3 ${
                     selectedTemplate === template.id
                       ? "border-primary bg-primary/10 text-foreground"
                       : "border-border bg-background hover:border-primary/30 hover:bg-primary/5"
@@ -254,8 +259,8 @@ export default function NewFormPage() {
                     {template.icon}
                   </div>
                   <div>
-                    <p className="font-bold text-sm text-foreground">{template.name}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{template.description}</p>
+                    <p className="font-bold text-sm text-foreground">{t(template.nameKey)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t(template.descriptionKey)}</p>
                   </div>
                 </button>
               ))}
@@ -271,14 +276,14 @@ export default function NewFormPage() {
                   : "bg-muted border-border text-muted-foreground cursor-not-allowed"
               }`}
             >
-              {isLoading ? "Creating..." : "Create from Template →"}
+              {isLoading ? t("newForm.creating") : t("newForm.createFromTemplateBtn")}
             </button>
           </div>
         )}
 
         {/* Footer */}
         <div className="px-8 py-5 bg-muted/30 border-t border-border/60 text-sm text-muted-foreground text-center">
-          You can always rename the form title later in the builder editor.
+          {t("newForm.renameLaterInfo")}
         </div>
       </div>
     </div>

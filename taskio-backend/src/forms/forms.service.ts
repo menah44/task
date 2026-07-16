@@ -1,3 +1,4 @@
+import { isElevatedRole } from '../auth/auth.utils';
 import {
   Injectable,
   NotFoundException,
@@ -120,16 +121,16 @@ export class FormsService {
   async findAll(
     user: User,
     page: number = 1,
-    limit: number = 10,
+    limit: number = 0,
     status?: string,
     search?: string,
   ) {
     const orgId = this.getOrgId(user);
-    const skip = (page - 1) * limit;
+    const skip = limit > 0 ? (page - 1) * limit : 0;
 
     const where: any = { organizationId: orgId };
     const userRole = user.role?.toUpperCase();
-    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+    if (!isElevatedRole(user.role)) {
       where.status = 'PUBLISHED';
     } else if (status) {
       where.status = status.toUpperCase();
@@ -138,13 +139,18 @@ export class FormsService {
       where.title = Like(`%${search}%`);
     }
 
-    const [data, total] = await this.formRepository.findAndCount({
+    const findOptions: any = {
       where,
       order: { updatedAt: 'DESC' },
-      skip,
-      take: limit,
       relations: ['sections', 'sections.questions'],
-    });
+    };
+
+    if (limit > 0) {
+      findOptions.skip = skip;
+      findOptions.take = limit;
+    }
+
+    const [data, total] = await this.formRepository.findAndCount(findOptions);
 
     const formIds = data.map((f) => f.id);
     let counts: { formId: number; count: string }[] = [];
@@ -178,7 +184,7 @@ export class FormsService {
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit),
+      totalPages: limit > 0 ? Math.ceil(total / limit) : 1,
     };
   }
 
@@ -533,7 +539,7 @@ export class FormsService {
   ): Promise<Record<string, unknown> | null> {
     const form = await this.findOne(id, user);
     if (!form.boundary) {
-      throw new NotFoundException(`No boundary set for Form ID ${id}`);
+      return { boundary: null };
     }
     return form.boundary as Record<string, unknown>;
   }

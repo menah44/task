@@ -37,17 +37,18 @@ import {
   toAnswerQuestion,
   questionOptionValues,
 } from "@/lib/types/forms/answerFieldAdapter";
+import { useTranslation } from "react-i18next";
 
-const QUESTION_TYPES: { type: QuestionType; label: string; icon: string }[] = [
-  { type: "text", label: "Short Text", icon: "📝" },
-  { type: "textarea", label: "Long Text", icon: "📄" },
-  { type: "radio", label: "Multiple Choice", icon: "🔘" },
-  { type: "checkbox", label: "Checkboxes", icon: "☑️" },
-  { type: "select", label: "Dropdown", icon: "🔽" },
-  { type: "date", label: "Date", icon: "📅" },
-  { type: "number", label: "Number", icon: "🔢" },
-  { type: "email", label: "Email", icon: "📧" },
-  { type: "file", label: "File Upload", icon: "📎" },
+const QUESTION_TYPES: { type: QuestionType; labelKey: string; icon: string }[] = [
+  { type: "text", labelKey: "formBuilder.qTypeShortText", icon: "📝" },
+  { type: "textarea", labelKey: "formBuilder.qTypeLongText", icon: "📄" },
+  { type: "radio", labelKey: "formBuilder.qTypeMultipleChoice", icon: "🔘" },
+  { type: "checkbox", labelKey: "formBuilder.qTypeCheckboxes", icon: "☑️" },
+  { type: "select", labelKey: "formBuilder.qTypeDropdown", icon: "🔽" },
+  { type: "date", labelKey: "formBuilder.qTypeDate", icon: "📅" },
+  { type: "number", labelKey: "formBuilder.qTypeNumber", icon: "🔢" },
+  { type: "email", labelKey: "formBuilder.qTypeEmail", icon: "📧" },
+  { type: "file", labelKey: "formBuilder.qTypeFileUpload", icon: "📎" },
 ];
 
 const FILE_UPLOAD_DEFAULTS = {
@@ -64,6 +65,7 @@ function SortableQuestion({
   isSelected: boolean;
   onClick: () => void;
 }) {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -113,7 +115,7 @@ function SortableQuestion({
             </span>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5">{qType?.label}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{qType ? t(qType.labelKey) : ""}</p>
       </div>
     </div>
   );
@@ -174,7 +176,7 @@ function SortableSection({
           e.stopPropagation();
           onDelete();
         }}
-        className={`opacity-0 group-hover:opacity-100 text-xs ml-1 transition-opacity ${
+        className={`opacity-0 group-hover:opacity-100 text-xs ms-1 transition-opacity ${
           isSelected
             ? "text-blue-300 hover:text-foreground"
             : "text-muted-foreground hover:text-error"
@@ -192,6 +194,7 @@ function PreviewModal({
   sections: Section[];
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [showValidation, setShowValidation] = useState(false);
 
@@ -204,10 +207,9 @@ function PreviewModal({
       <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
-            <h2 className="text-lg font-bold text-foreground">Form Preview</h2>
+            <h2 className="text-lg font-bold text-foreground">{t("formBuilder.previewModalTitle", "Form Preview")}</h2>
             <p className="text-xs text-muted-foreground">
-              This is how the form will look to end users. Conditional logic is
-              live here too.
+              {t("formBuilder.previewModalDesc", "This is how the form will look to end users. Conditional logic is live here too.")}
             </p>
           </div>
           <button
@@ -241,7 +243,7 @@ function PreviewModal({
                 ))}
                 {visible.length === 0 && (
                   <p className="text-xs text-muted-foreground italic">
-                    No questions to show in this section yet.
+                    {t("formBuilder.noQuestionsPreview", "No questions to show in this section yet.")}
                   </p>
                 )}
               </div>
@@ -251,12 +253,12 @@ function PreviewModal({
 
         <div className="px-6 py-4 border-t border-border flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            Preview only — answers here are not saved.
+            {t("formBuilder.previewWarning", "Preview only — answers here are not saved.")}
           </p>
           <button
             onClick={() => setShowValidation(true)}
             className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-medium rounded-lg transition-colors">
-            Test Submit (Check Validation)
+            {t("formBuilder.testSubmit", "Test Submit (Check Validation)")}
           </button>
         </div>
       </div>
@@ -286,10 +288,11 @@ function FormSettingsPopover({
   ) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-xl z-40 p-4 space-y-4">
+    <div className="absolute end-0 top-full mt-2 w-80 bg-card border border-border rounded-xl shadow-xl z-40 p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-foreground">Form Settings</h3>
+        <h3 className="text-sm font-bold text-foreground">{t("formBuilder.formSettings")}</h3>
         <button
           onClick={onClose}
           className="text-muted-foreground hover:text-foreground text-lg leading-none">
@@ -299,7 +302,7 @@ function FormSettingsPopover({
 
       <div>
         <label className="block text-xs font-medium text-muted-foreground mb-1">
-          Title
+          {t("formBuilder.titleLabel")}
         </label>
         <input
           value={title}
@@ -310,7 +313,7 @@ function FormSettingsPopover({
 
       <div>
         <label className="block text-xs font-medium text-muted-foreground mb-1">
-          Description
+          {t("formBuilder.descLabel")}
         </label>
         <textarea
           rows={2}
@@ -322,9 +325,9 @@ function FormSettingsPopover({
 
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium text-muted-foreground">Show progress bar</p>
+          <p className="text-xs font-medium text-muted-foreground">{t("formBuilder.showProgress")}</p>
           <p className="text-[11px] text-muted-foreground">
-            Section X of Y + % on the fill page
+            {t("formBuilder.showProgressDesc")}
           </p>
         </div>
         <button
@@ -333,7 +336,7 @@ function FormSettingsPopover({
             showProgress ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" : "bg-accent"
           }`}>
           <span
-            className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+            className={`absolute top-1 start-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
               showProgress ? "translate-x-5" : "translate-x-0"
             }`}
           />
@@ -343,10 +346,10 @@ function FormSettingsPopover({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs font-medium text-muted-foreground">
-            Requires GPS location
+            {t("formBuilder.requiresGps")}
           </p>
           <p className="text-[11px] text-muted-foreground">
-            Captures respondent's location; attached on submit
+            {t("formBuilder.requiresGpsDesc")}
           </p>
         </div>
         <button
@@ -355,7 +358,7 @@ function FormSettingsPopover({
             hasBoundary ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" : "bg-accent"
           }`}>
           <span
-            className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+            className={`absolute top-1 start-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
               hasBoundary ? "translate-x-5" : "translate-x-0"
             }`}
           />
@@ -400,6 +403,7 @@ export default function FormBuilderPage() {
   const [savedFieldFlash, setSavedFieldFlash] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const { t } = useTranslation();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -520,7 +524,7 @@ export default function FormBuilderPage() {
     const newQ: Question = {
       id: `q-${Date.now()}`,
       type,
-      label: `New ${QUESTION_TYPES.find((t) => t.type === type)?.label ?? "Question"}`,
+      label: `New ${t(QUESTION_TYPES.find((qt) => qt.type === type)?.labelKey ?? "") || "Question"}`,
       required: false,
       ...(type === "file"
         ? {
@@ -677,9 +681,9 @@ export default function FormBuilderPage() {
         });
       }
       setIsSaving(false);
-      alert("✅ Form structure saved successfully!");
+      alert(t("formBuilder.savedSuccess"));
     } catch (err) {
-      setError("Failed to save data.");
+      setError(t("formBuilder.failedToSave"));
       setIsSaving(false);
     }
   };
@@ -689,7 +693,7 @@ export default function FormBuilderPage() {
       <div className="flex items-center justify-center h-screen bg-background text-foreground">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Loading form structure...</p>
+          <p className="text-sm text-muted-foreground">{t("formBuilder.loading")}</p>
         </div>
       </div>
     );
@@ -697,15 +701,15 @@ export default function FormBuilderPage() {
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      <aside className="w-56 bg-card border-r border-border flex flex-col shrink-0">
+      <aside className="w-56 bg-card border-e border-border flex flex-col shrink-0">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Sections
+            {t("formBuilder.sections")}
           </h2>
           <button
             onClick={handleAddSection}
             className="text-primary hover:text-primary/80 text-xl leading-none font-bold"
-            title="Add section">
+            title={t("formBuilder.addSection")}>
             +
           </button>
         </div>
@@ -734,7 +738,7 @@ export default function FormBuilderPage() {
           </DndContext>
           {sections.length === 0 && (
             <p className="text-xs text-muted-foreground text-center py-4">
-              No sections yet. Click + to add.
+              {t("formBuilder.noSections")}
             </p>
           )}
         </div>
@@ -749,8 +753,8 @@ export default function FormBuilderPage() {
               <div className="relative">
                 <button
                   onClick={() => setShowSettings((v) => !v)}
-                  title="Form settings"
-                  aria-label="Form settings"
+                  title={t("formBuilder.formSettingsTooltip")}
+                  aria-label={t("formBuilder.formSettingsTooltip")}
                   className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors ${
                     showSettings
                       ? "bg-muted border-blue-500/40 text-primary"
@@ -783,13 +787,13 @@ export default function FormBuilderPage() {
                   href={`/studio/forms/${formId}/fill`}
                   className="flex items-center gap-1.5 h-9 px-3.5 bg-transparent hover:bg-muted border border-border text-muted-foreground hover:text-foreground text-sm font-medium rounded-lg transition-colors">
                   <ExternalLink className="w-3.5 h-3.5" />
-                  Fill Form
+                  {t("formBuilder.fillForm")}
                 </Link>
                 <button
                   onClick={() => setShowPreview(true)}
                   className="flex items-center gap-1.5 h-9 px-3.5 bg-transparent hover:bg-muted border border-border text-muted-foreground hover:text-foreground text-sm font-medium rounded-lg transition-colors">
                   <Eye className="w-3.5 h-3.5" />
-                  Preview
+                  {t("formBuilder.preview")}
                 </button>
               </div>
 
@@ -802,12 +806,12 @@ export default function FormBuilderPage() {
                 {isSaving ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    Saving...
+                    {t("formBuilder.saving")}
                   </>
                 ) : (
                   <>
                     <Save className="w-3.5 h-3.5" />
-                    Save Form
+                    {t("formBuilder.saveForm")}
                   </>
                 )}
               </button>
@@ -861,7 +865,7 @@ export default function FormBuilderPage() {
                         />
                         <button
                           onClick={() => handleDeleteQuestion(q.id)}
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-xs text-muted-foreground hover:text-error transition-all">
+                          className="absolute top-2 end-2 opacity-0 group-hover:opacity-100 text-xs text-muted-foreground hover:text-error transition-all">
                           ✕
                         </button>
                       </div>
@@ -873,7 +877,7 @@ export default function FormBuilderPage() {
               {showTypePickerFor === selectedSectionId ? (
                 <div className="border border-border rounded-xl bg-card p-4 shadow-sm">
                   <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">
-                    Pick Question Type
+                    {t("formBuilder.pickQuestionType")}
                   </p>
                   <div className="grid grid-cols-4 gap-2">
                     {QUESTION_TYPES.map((qt) => (
@@ -883,7 +887,7 @@ export default function FormBuilderPage() {
                         className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm/10 hover:border-blue-500/30 border border-transparent transition-all text-center">
                         <span className="text-xl">{qt.icon}</span>
                         <span className="text-xs text-muted-foreground">
-                          {qt.label}
+                          {t(qt.labelKey)}
                         </span>
                       </button>
                     ))}
@@ -891,35 +895,35 @@ export default function FormBuilderPage() {
                   <button
                     onClick={() => setShowTypePickerFor(null)}
                     className="mt-3 text-xs text-muted-foreground hover:text-muted-foreground">
-                    Cancel
+                    {t("formBuilder.cancel")}
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={() => setShowTypePickerFor(selectedSectionId)}
                   className="w-full py-2.5 border-2 border-dashed border-border rounded-xl text-sm text-muted-foreground hover:border-blue-500/50 hover:text-primary/80 transition-all">
-                  + Add Question
+                  {t("formBuilder.addQuestion")}
                 </button>
               )}
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               {sections.length === 0
-                ? "Add a section to start building your form."
-                : "Select a section to start"}
+                ? t("formBuilder.addSectionToStart")
+                : t("formBuilder.selectSectionToStart")}
             </div>
           )}
         </div>
       </main>
 
-      <aside className="w-64 bg-card border-l border-border flex flex-col overflow-y-auto shrink-0">
+      <aside className="w-64 bg-card border-s border-border flex flex-col overflow-y-auto shrink-0">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Properties
+            {t("formBuilder.properties")}
           </h2>
           {savedFieldFlash && (
             <span className="text-[10px] text-success font-medium animate-pulse">
-              Saved ✓
+              {t("formBuilder.saved")}
             </span>
           )}
         </div>
@@ -928,7 +932,7 @@ export default function FormBuilderPage() {
           <div className="p-4 space-y-4">
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">
-                Label
+                {t("formBuilder.label")}
               </label>
               <input
                 value={selectedQuestion.label}
@@ -944,7 +948,7 @@ export default function FormBuilderPage() {
 
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">
-                Type
+                {t("formBuilder.type")}
               </label>
               <select
                 value={selectedQuestion.type}
@@ -956,7 +960,7 @@ export default function FormBuilderPage() {
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {QUESTION_TYPES.map((qt) => (
                   <option key={qt.type} value={qt.type}>
-                    {qt.icon} {qt.label}
+                    {qt.icon} {t(qt.labelKey)}
                   </option>
                 ))}
               </select>
@@ -967,7 +971,7 @@ export default function FormBuilderPage() {
             ) && (
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Placeholder
+                  {t("formBuilder.placeholder")}
                 </label>
                 <input
                   value={selectedQuestion.placeholder ?? ""}
@@ -989,7 +993,7 @@ export default function FormBuilderPage() {
             ) && (
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Options (one per line)
+                  {t("formBuilder.options")}
                 </label>
                 <textarea
                   rows={4}
@@ -1013,7 +1017,7 @@ export default function FormBuilderPage() {
               <div className="space-y-3 pt-1">
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Max file size (MB)
+                    {t("formBuilder.maxFileSize")}
                   </label>
                   <input
                     type="number"
@@ -1041,18 +1045,18 @@ export default function FormBuilderPage() {
                     className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Hard cap is 100MB per the platform upload limit.
+                    {t("formBuilder.hardCap")}
                   </p>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Accepted file types: images and PDF (fixed).
+                  {t("formBuilder.acceptedFiles")}
                 </p>
               </div>
             )}
 
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-muted-foreground">
-                Required
+                {t("formBuilder.required")}
               </label>
               <button
                 onClick={() => {
@@ -1064,7 +1068,7 @@ export default function FormBuilderPage() {
                   selectedQuestion.required ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" : "bg-accent"
                 }`}>
                 <span
-                  className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  className={`absolute top-1 start-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
                     selectedQuestion.required
                       ? "translate-x-5"
                       : "translate-x-0"
@@ -1076,19 +1080,18 @@ export default function FormBuilderPage() {
             <div className="pt-2 border-t border-border">
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-medium text-muted-foreground">
-                  Conditional Logic
+                  {t("formBuilder.conditionalLogic")}
                 </label>
                 {selectedQuestion.conditional && (
                   <button
                     onClick={() => handleConditionalDependsOnChange("")}
                     className="text-[10px] text-error hover:text-red-300">
-                    Clear
+                    {t("formBuilder.clear")}
                   </button>
                 )}
               </div>
               <p className="text-[11px] text-muted-foreground mb-2">
-                Only show this question when another question has a specific
-                answer.
+                {t("formBuilder.conditionalLogicDesc")}
               </p>
 
               <select
@@ -1097,7 +1100,7 @@ export default function FormBuilderPage() {
                   handleConditionalDependsOnChange(e.target.value)
                 }
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
-                <option value="">Always show</option>
+                <option value="">{t("formBuilder.alwaysShow")}</option>
                 {allQuestions
                   .filter((q) => q.id !== selectedQuestion.id)
                   .map((q) => (
@@ -1119,7 +1122,7 @@ export default function FormBuilderPage() {
                         handleConditionalShowWhenChange(e.target.value)
                       }
                       className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="">Select a value…</option>
+                      <option value="">{t("formBuilder.selectValue")}</option>
                       {optionValues.map((val) => (
                         <option key={val} value={val}>
                           {val}
@@ -1132,7 +1135,7 @@ export default function FormBuilderPage() {
                       onChange={(e) =>
                         handleConditionalShowWhenChange(e.target.value)
                       }
-                      placeholder="Exact answer value…"
+                      placeholder={t("formBuilder.exactAnswerValue")}
                       className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   );
@@ -1142,7 +1145,7 @@ export default function FormBuilderPage() {
         ) : (
           <div className="flex-1 flex items-center justify-center p-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Select a question to edit its properties
+              {t("formBuilder.selectQuestionToEdit")}
             </p>
           </div>
         )}

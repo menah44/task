@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { ClipboardList, Calendar, Search, MapPin, Eye, Loader2, X, ArrowLeft, FileText, CheckCircle2, XCircle, MapIcon } from "lucide-react";
 import * as turf from "@turf/turf";
 import apiClient from "@/lib/api/client";
+import { useTranslation } from "react-i18next";
 
 interface UserInfo {
   id: number;
@@ -52,6 +53,7 @@ interface FullResponseDetail {
 const LocationAddressDisplay = ({ val }: { val: any }) => {
   const [address, setAddress] = useState<string | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const { t } = useTranslation();
 
   let lat = 0;
   let lng = 0;
@@ -107,7 +109,7 @@ const LocationAddressDisplay = ({ val }: { val: any }) => {
   }, [lat, lng, hasPoint]);
 
   if (!hasPoint) {
-    return <span className="text-muted-foreground italic">Invalid Location Data</span>;
+    return <span className="text-muted-foreground italic">{t("responses.invalidLocation")}</span>;
   }
 
   let mapLat = lat;
@@ -120,10 +122,10 @@ const LocationAddressDisplay = ({ val }: { val: any }) => {
   return (
     <div className="flex flex-col gap-3 p-4 bg-muted/20 border border-border rounded-xl">
       <div>
-        <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">User Location</h5>
+        <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("responses.userLocation")}</h5>
         {isGeocoding ? (
           <div className="flex items-center gap-2 text-sm text-foreground">
-            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> Resolving address...
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> {t("responses.resolvingAddress")}
           </div>
         ) : address ? (
           <div className="flex items-start gap-2">
@@ -135,8 +137,8 @@ const LocationAddressDisplay = ({ val }: { val: any }) => {
           </div>
         ) : (
           <div className="text-sm text-muted-foreground space-y-1">
-            <p>Latitude: {lat.toFixed(5)}</p>
-            <p>Longitude: {lng.toFixed(5)}</p>
+            <p>{t("responses.latitude")}: {lat.toFixed(5)}</p>
+            <p>{t("responses.longitude")}: {lng.toFixed(5)}</p>
           </div>
         )}
       </div>
@@ -145,12 +147,12 @@ const LocationAddressDisplay = ({ val }: { val: any }) => {
         <div className="pt-3 border-t border-border/50 flex flex-col gap-2">
           {insideAllowed !== undefined && (
             <div>
-              <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Location Status</h5>
+              <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">{t("responses.locationStatus")}</h5>
               <p className="text-sm font-medium">
                 {insideAllowed ? (
-                  <span className="text-green-600 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Inside Allowed Area</span>
+                  <span className="text-green-600 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> {t("responses.insideArea")}</span>
                 ) : (
-                  <span className="text-error flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Outside Allowed Area</span>
+                  <span className="text-error flex items-center gap-1.5"><XCircle className="w-4 h-4" /> {t("responses.outsideArea")}</span>
                 )}
               </p>
             </div>
@@ -164,7 +166,7 @@ const LocationAddressDisplay = ({ val }: { val: any }) => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
               >
-                <MapIcon className="w-3.5 h-3.5" /> Open in Google Maps
+                <MapIcon className="w-3.5 h-3.5" /> {t("responses.openInMaps")}
               </a>
             </div>
           )}
@@ -196,11 +198,11 @@ const TableRowLocationCell = ({ lat, lng }: { lat: number; lng: number }) => {
       href={mapsUrl} 
       target="_blank" 
       rel="noopener noreferrer"
-      className="inline-flex items-start gap-1.5 hover:bg-black/5 dark:hover:bg-white/5 p-1.5 -ml-1.5 rounded-lg transition-colors group max-w-full"
+      className="inline-flex items-start gap-1.5 hover:bg-black/5 dark:hover:bg-white/5 p-1.5 -ms-1.5 rounded-lg transition-colors group max-w-full"
       onClick={(e) => e.stopPropagation()}
     >
       <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-      <div className="flex flex-col text-left overflow-hidden">
+      <div className="flex flex-col text-start overflow-hidden">
         {address ? (
           <>
             <span className="text-sm font-semibold text-foreground truncate">{address.split(',')[0]}</span>
@@ -221,6 +223,7 @@ export default function GlobalResponsesPage() {
   const [formsList, setFormsList] = useState<FormInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   // Search & Filter state
   const [selectedFormId, setSelectedFormId] = useState("");
@@ -247,7 +250,7 @@ export default function GlobalResponsesPage() {
         setFormsList(formsResp.data.items || []);
       } catch (err) {
         console.error("Failed to load responses:", err);
-        setError("Unable to load organization submissions.");
+        setError(t("responses.loadResponsesError"));
       } finally {
         setLoading(false);
       }
@@ -268,7 +271,7 @@ export default function GlobalResponsesPage() {
         setDetailData(res.data);
       } catch (err) {
         console.error("Failed to load details:", err);
-        alert("Failed to load response details.");
+        alert(t("analytics.loadDetailsError"));
         setSelectedResponseId(null);
       } finally {
         setLoadingDetail(false);
@@ -338,8 +341,8 @@ export default function GlobalResponsesPage() {
   }, [responses, selectedFormId, searchEmail, startDate, endDate]);
 
   const renderAnswerValue = (val: any) => {
-    if (val === null || val === undefined) return <span className="text-muted-foreground italic">No Answer</span>;
-    if (typeof val === "boolean") return val ? "Yes" : "No";
+    if (val === null || val === undefined) return <span className="text-muted-foreground italic">{t("analytics.noAnswer")}</span>;
+    if (typeof val === "boolean") return val ? t("analytics.yes") : t("analytics.no");
     if (Array.isArray(val)) return val.join(", ");
     if (typeof val === "object") {
       if (
@@ -358,15 +361,15 @@ export default function GlobalResponsesPage() {
         return (
           <div className="flex items-center gap-4 border border-border p-3 rounded-xl bg-muted/20 w-max max-w-full overflow-hidden">
             <div className="flex items-center gap-2 truncate">
-              <span className="text-sm font-medium truncate">{val.fileName || "Uploaded File"}</span>
+              <span className="text-sm font-medium truncate">{val.fileName || t("analytics.uploadedFile")}</span>
               {val.fileSize && <span className="text-xs text-muted-foreground whitespace-nowrap">({Math.round(val.fileSize / 1024)} KB)</span>}
             </div>
-            <div className="flex items-center gap-2 ml-auto shrink-0">
+            <div className="flex items-center gap-2 ms-auto shrink-0">
               <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-lg hover:bg-secondary/80 transition">
-                View
+                {t("responses.view")}
               </a>
               <a href={fileUrl} download={val.fileName || "download"} className="px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition">
-                Download
+                {t("analytics.download")}
               </a>
             </div>
           </div>
@@ -378,18 +381,18 @@ export default function GlobalResponsesPage() {
   };
 
   return (
-    <main className="space-y-6 text-foreground pb-12" dir="ltr">
+    <main className="space-y-6 text-foreground pb-12">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border pb-5">
         <div>
           <h1 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
             <ClipboardList className="w-8 h-8 text-blue-500" />
-            {selectedFormId ? "Form Submissions" : "Submitted Responses"}
+            {selectedFormId ? t("responses.formSubmissions") : t("responses.title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {selectedFormId
-              ? "Browse and review submissions for the selected form."
-              : "Browse and review submitted responses across all active forms in your organization."}
+              ? t("responses.formSubmissionsSubtitle")
+              : t("responses.subtitle")}
           </p>
         </div>
         {selectedFormId && (
@@ -397,7 +400,7 @@ export default function GlobalResponsesPage() {
             onClick={() => setSelectedFormId("")}
             className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl transition-colors text-sm font-semibold border border-border"
           >
-            <ArrowLeft className="w-4 h-4" /> Back to Forms
+            <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("responses.backToForms")}
           </button>
         )}
       </div>
@@ -414,21 +417,21 @@ export default function GlobalResponsesPage() {
         // --- FORMS LIST VIEW ---
         <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-border/60 text-left text-sm">
+            <table className="min-w-full divide-y divide-border/60 text-start text-sm">
               <thead className="bg-card/50 text-muted-foreground uppercase text-xs font-bold tracking-wider">
                 <tr>
-                  <th className="px-6 py-4">Form Name</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Total Responses</th>
-                  <th className="px-6 py-4">Last Submission</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4">{t("responses.formName")}</th>
+                  <th className="px-6 py-4">{t("responses.status")}</th>
+                  <th className="px-6 py-4">{t("responses.totalResponses")}</th>
+                  <th className="px-6 py-4">{t("responses.lastSubmission")}</th>
+                  <th className="px-6 py-4 text-end">{t("responses.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60 text-sm text-muted-foreground">
                 {formsWithSubmissions.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center">
-                      No forms found.
+                      {t("responses.noForms")}
                     </td>
                   </tr>
                 ) : (
@@ -448,12 +451,12 @@ export default function GlobalResponsesPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {f.lastSubmission ? new Date(f.lastSubmission).toLocaleDateString() : "—"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <td className="px-6 py-4 whitespace-nowrap text-end">
                         <button
                           onClick={() => setSelectedFormId(f.id.toString())}
                           className="px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm border border-primary/20 rounded-xl transition-all inline-flex items-center gap-1 text-xs font-bold"
                         >
-                          View Responses
+                          {t("responses.viewResponses")}
                         </button>
                       </td>
                     </tr>
@@ -471,11 +474,11 @@ export default function GlobalResponsesPage() {
             {/* Email Search */}
             <div className="space-y-2">
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                Search Submitter
+                {t("responses.searchSubmitter")}
               </label>
               <input
                 type="text"
-                placeholder="Search by name or email..."
+                placeholder={t("responses.searchPlaceholder")}
                 value={searchEmail}
                 onChange={(e) => setSearchEmail(e.target.value)}
                 className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors"
@@ -484,7 +487,7 @@ export default function GlobalResponsesPage() {
             {/* Start Date */}
             <div className="space-y-2">
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                From Date
+                {t("responses.fromDate")}
               </label>
               <input
                 type="date"
@@ -496,7 +499,7 @@ export default function GlobalResponsesPage() {
             {/* End Date */}
             <div className="space-y-2">
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
-                To Date
+                {t("responses.toDate")}
               </label>
               <input
                 type="date"
@@ -509,19 +512,19 @@ export default function GlobalResponsesPage() {
 
           {filteredResponses.length === 0 ? (
             <div className="bg-card border border-border rounded-2xl p-12 text-center text-muted-foreground">
-              No matching submissions found for this form.
+              {t("responses.noSubmissions")}
             </div>
           ) : (
             <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-border/60 text-left text-sm">
+                <table className="min-w-full divide-y divide-border/60 text-start text-sm">
                   <thead className="bg-card/50 text-muted-foreground uppercase text-xs font-bold tracking-wider">
                     <tr>
-                      <th className="px-6 py-4">User Name</th>
-                      <th className="px-6 py-4">User Email</th>
-                      <th className="px-6 py-4">Submitted At</th>
-                      <th className="px-6 py-4">Location</th>
-                      <th className="px-6 py-4 text-right">Action</th>
+                      <th className="px-6 py-4">{t("responses.userName")}</th>
+                      <th className="px-6 py-4">{t("responses.userEmail")}</th>
+                      <th className="px-6 py-4">{t("responses.submittedAt")}</th>
+                      <th className="px-6 py-4">{t("responses.location")}</th>
+                      <th className="px-6 py-4 text-end">{t("responses.action")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/60 text-sm text-muted-foreground">
@@ -531,7 +534,7 @@ export default function GlobalResponsesPage() {
                       return (
                         <tr key={res.id} className="hover:bg-muted transition-colors">
                           <td className="px-6 py-4 text-foreground font-medium whitespace-nowrap">
-                            {submitterName || "Anonymous"}
+                            {submitterName || t("responses.anonymous")}
                           </td>
                           <td className="px-6 py-4 text-muted-foreground whitespace-nowrap">
                             {res.user?.email || "—"}
@@ -543,15 +546,15 @@ export default function GlobalResponsesPage() {
                             {res.latitude && res.longitude ? (
                               <TableRowLocationCell lat={res.latitude} lng={res.longitude} />
                             ) : (
-                              <span className="text-muted-foreground italic text-xs">No GPS Data</span>
+                              <span className="text-muted-foreground italic text-xs">{t("responses.noGps")}</span>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <td className="px-6 py-4 whitespace-nowrap text-end">
                             <button
                               onClick={() => setSelectedResponseId(res.id)}
                               className="px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm border border-primary/20 rounded-xl transition-all inline-flex items-center gap-1 text-xs font-bold"
                             >
-                              View
+                              {t("responses.view")}
                             </button>
                           </td>
                         </tr>
@@ -573,10 +576,10 @@ export default function GlobalResponsesPage() {
             <div className="p-6 border-b border-border flex justify-between items-center bg-background">
               <div>
                 <h3 className="text-xl font-bold text-foreground tracking-tight">
-                  {detailData ? `Submission Details` : "Loading Details..."}
+                  {detailData ? t("responses.submissionDetails") : t("responses.loadingDetails")}
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {detailData ? detailData.formTitle : "Please wait"}
+                  {detailData ? detailData.formTitle : t("responses.pleaseWait")}
                 </p>
               </div>
               <button
@@ -596,7 +599,7 @@ export default function GlobalResponsesPage() {
               ) : (
                 detailData.sections.map((sec) => (
                   <div key={sec.id} className="space-y-4">
-                    <h4 className="font-bold text-md text-foreground border-l-4 border-blue-500 pl-3 uppercase tracking-wider text-xs">
+                    <h4 className="font-bold text-md text-foreground border-s-4 border-blue-500 ps-3 uppercase tracking-wider text-xs">
                       {sec.title}
                     </h4>
                     <div className="bg-card border border-border rounded-2xl overflow-hidden divide-y divide-border/60">
@@ -622,7 +625,7 @@ export default function GlobalResponsesPage() {
                 onClick={() => setSelectedResponseId(null)}
                 className="px-5 py-2.5 bg-muted hover:bg-accent text-foreground text-sm font-semibold rounded-xl transition-colors border border-border"
               >
-                Close
+                {t("responses.close")}
               </button>
             </div>
           </div>

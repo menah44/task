@@ -8,6 +8,7 @@ import * as turf from "@turf/turf";
 import type { Feature, Polygon } from "geojson";
 import apiClient from "@/lib/api/client";
 import BuilderTopNav from "@/components/builder/BuilderTopNav";
+import { useTranslation } from "react-i18next";
 import {
   Trash2,
   Save,
@@ -56,6 +57,7 @@ export default function FormBoundaryMapPage() {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRef = useRef<maplibregl.Marker | null>(null);
+  const { t } = useTranslation();
 
   const [basemap, setBasemap] = useState<Basemap>("satellite");
   const [center, setCenter] = useState<[number, number] | null>(null);
@@ -307,7 +309,7 @@ export default function FormBoundaryMapPage() {
         const axiosError = err as { response?: { status?: number } };
         if (axiosError.response?.status !== 404) {
           console.error("Failed to load form boundary:", err);
-          setError("Couldn't load the saved boundary. You can still set a new one.");
+          setError(t("formMap.loadError"));
         }
       } finally {
         setIsLoadingBoundary(false);
@@ -319,7 +321,7 @@ export default function FormBoundaryMapPage() {
 
   const handleCurrentLocation = () => {
     if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser.");
+      setError(t("formMap.geoErrorNotSupported"));
       return;
     }
 
@@ -339,16 +341,16 @@ export default function FormBoundaryMapPage() {
         setIsLocating(false);
         switch (geoError.code) {
           case geoError.PERMISSION_DENIED:
-            setError("Location permission denied. Please allow location access in your browser.");
+            setError(t("formMap.geoErrorDenied"));
             break;
           case geoError.POSITION_UNAVAILABLE:
-            setError("Location information is unavailable.");
+            setError(t("formMap.geoErrorUnavailable"));
             break;
           case geoError.TIMEOUT:
-            setError("The request to get user location timed out.");
+            setError(t("formMap.geoErrorTimeout"));
             break;
           default:
-            setError("An unknown error occurred while requesting location.");
+            setError(t("formMap.geoErrorUnknown"));
             break;
         }
       },
@@ -367,22 +369,45 @@ export default function FormBoundaryMapPage() {
   };
 
   const handleSave = async () => {
-    if (!center || !formId) return;
+    if (!formId) return;
 
     setIsSaving(true);
     setError(null);
 
     try {
-      const circleFeature = getCircleFeature(center, radiusMeters);
-      const featureCollection = {
-        type: "FeatureCollection",
-        features: [circleFeature],
-      };
+      let featureCollection = null;
+      let area = 0;
+
+      if (center) {
+        const circleFeature = getCircleFeature(center, radiusMeters);
+        featureCollection = {
+          type: "FeatureCollection",
+          features: [circleFeature],
+        };
+        area = Number(areaKm2.toFixed(4));
+      }
 
       await apiClient.put(`/forms/${formId}/boundary`, {
         geojson: featureCollection,
-        areaKm2: Number(areaKm2.toFixed(4)),
+        areaKm2: area,
       });
+
+      // Synchronize the location and radius into the form settings
+      // so that haversineDistance and the LocationSettings page can use them!
+      await apiClient.put(`/forms/${formId}`, {
+        settings: center ? {
+          location: {
+            lat: center[1],
+            lng: center[0],
+            address: address || "",
+          },
+          allowedRadius: radiusMeters,
+        } : {
+          location: undefined,
+          allowedRadius: undefined,
+        }
+      });
+
 
       setIsDirty(false);
       setSavedFlash(true);
@@ -392,7 +417,7 @@ export default function FormBoundaryMapPage() {
       const axiosError = err as { response?: { data?: { message?: string } } };
       setError(
         axiosError.response?.data?.message ||
-          "Couldn't save the boundary. Try again."
+          t("formMap.saveError")
       );
     } finally {
       setIsSaving(false);
@@ -403,7 +428,7 @@ export default function FormBoundaryMapPage() {
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
       <BuilderTopNav
         formId={formId as string}
-        subtitle={`Form ID: ${formId} — ${center ? `${areaKm2.toFixed(3)} km² covered` : "no boundary set"}`}
+        subtitle={`Form ID: ${formId} — ${center ? t("formMap.covered", { area: areaKm2.toFixed(3) }) : t("formMap.noBoundary")}`}
         actions={
           <>
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 text-primary text-sm font-medium rounded-lg">
@@ -412,19 +437,19 @@ export default function FormBoundaryMapPage() {
             </div>
             <button
               onClick={handleSave}
-              disabled={!center || !isDirty || isSaving}
+              disabled={!isDirty || isSaving}
               className="px-4 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-medium rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5">
               {isSaving ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                  <Loader2 className="w-4 h-4 animate-spin" /> {t("formMap.saving")}
                 </>
               ) : savedFlash ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4" /> Saved
+                  <CheckCircle2 className="w-4 h-4" /> {t("formMap.saved")}
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4" /> Save Boundary
+                  <Save className="w-4 h-4" /> {t("formMap.saveBoundary")}
                 </>
               )}
             </button>
@@ -449,7 +474,7 @@ export default function FormBoundaryMapPage() {
         {center && (
           <div className="flex flex-col gap-3 p-3 bg-card border border-border rounded-lg shadow-sm min-w-[280px]">
             <div className="flex items-center justify-between gap-4">
-              <label className="text-sm font-medium text-muted-foreground">Radius (meters)</label>
+              <label className="text-sm font-medium text-muted-foreground">{t("formMap.radius")}</label>
               <input
                 type="number"
                 min="50"
@@ -463,7 +488,7 @@ export default function FormBoundaryMapPage() {
                   setRadiusMeters(val);
                   setIsDirty(true);
                 }}
-                className="bg-background border border-border rounded px-2 py-1 text-sm w-24 text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-right"
+                className="bg-background border border-border rounded px-2 py-1 text-sm w-24 text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-end"
               />
             </div>
             <div className="flex items-center gap-3">
@@ -479,7 +504,7 @@ export default function FormBoundaryMapPage() {
                 }}
                 className="flex-1 accent-primary cursor-pointer"
               />
-              <span className="text-sm font-medium text-muted-foreground w-12 text-right shrink-0">
+              <span className="text-sm font-medium text-muted-foreground w-12 text-end shrink-0">
                 {radiusMeters} m
               </span>
             </div>
@@ -496,7 +521,7 @@ export default function FormBoundaryMapPage() {
           ) : (
             <MapPin className="w-4 h-4" />
           )}
-          Use Current Location
+          {t("formMap.useCurrentLocation")}
         </button>
 
         <button
@@ -504,7 +529,7 @@ export default function FormBoundaryMapPage() {
           onClick={handleClear}
           disabled={!center}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-error bg-card border border-border hover:bg-error/15 hover:border-error/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-          <Trash2 className="w-4 h-4" /> Clear
+          <Trash2 className="w-4 h-4" /> {t("formMap.clear")}
         </button>
 
         <div className="w-px h-5 bg-accent mx-1" />
@@ -519,11 +544,11 @@ export default function FormBoundaryMapPage() {
           ) : (
             <Satellite className="w-4 h-4" />
           )}
-          {basemap === "satellite" ? "Switch to Streets" : "Switch to Satellite"}
+          {basemap === "satellite" ? t("formMap.switchToStreets") : t("formMap.switchToSatellite")}
         </button>
 
-        <p className="text-xs text-muted-foreground ml-2">
-          Click anywhere on the map to place the center marker, then adjust the radius.
+        <p className="text-xs text-muted-foreground ms-2">
+          {t("formMap.mapInstruction")}
         </p>
       </div>
 
@@ -536,7 +561,7 @@ export default function FormBoundaryMapPage() {
             <div className="flex flex-col items-center gap-3">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
               <p className="text-sm text-muted-foreground">
-                {isMapReady ? "Loading saved boundary..." : "Loading map..."}
+                {isMapReady ? t("formMap.loadingSaved") : t("formMap.loadingMap")}
               </p>
             </div>
           </div>
@@ -552,7 +577,7 @@ export default function FormBoundaryMapPage() {
           <div className="flex-1">
             {isGeocoding ? (
               <p className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> Resolving address...
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> {t("formMap.resolvingAddress")}
               </p>
             ) : address ? (
               <>

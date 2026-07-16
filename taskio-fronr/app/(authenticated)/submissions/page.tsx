@@ -5,6 +5,9 @@ import Link from "next/link";
 import { FileText, Eye, HelpCircle } from "lucide-react";
 import apiClient from "@/lib/api/client";
 import SkeletonCard from "@/components/SkeletonCard";
+import { useTranslation } from "react-i18next";
+import { format as formatDateFns } from "date-fns";
+import { ar, enUS } from "date-fns/locale";
 
 interface SubmissionItem {
   id: string | number;
@@ -21,6 +24,7 @@ export default function SubmissionsPage() {
   const [submissions, setSubmissions] = useState<SubmissionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -31,7 +35,7 @@ export default function SubmissionsPage() {
         setSubmissions(response.data || []);
       } catch (err) {
         console.error("Failed to fetch user submissions:", err);
-        setError("Could not load your submissions. Please try again later.");
+        setError(t("submissions.errorLoadingDesc"));
       } finally {
         setLoading(false);
       }
@@ -41,15 +45,15 @@ export default function SubmissionsPage() {
   }, []);
 
   return (
-    <main className="space-y-8 text-foreground" dir="ltr">
+    <main className="space-y-8 text-foreground">
       {/* Page Header */}
       <div>
         <h2 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
           <FileText className="w-8 h-8 text-blue-500" />
-          My Submissions
+          {t("submissions.title")}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          View forms that you have already submitted.
+          {t("submissions.subtitle")}
         </p>
       </div>
 
@@ -64,7 +68,7 @@ export default function SubmissionsPage() {
           <div className="p-4 bg-error/15 rounded-full border border-red-500/25 mb-4">
             <HelpCircle className="w-12 h-12 text-error" />
           </div>
-          <h3 className="text-xl font-bold text-foreground mb-2">Error Loading Submissions</h3>
+          <h3 className="text-xl font-bold text-foreground mb-2">{t("submissions.errorLoading")}</h3>
           <p className="text-muted-foreground max-w-md text-sm">{error}</p>
         </div>
       ) : submissions.length === 0 ? (
@@ -72,9 +76,9 @@ export default function SubmissionsPage() {
           <div className="p-4 bg-blue-500/10 rounded-full border border-blue-500/25 mb-4">
             <FileText className="w-12 h-12 text-blue-500" />
           </div>
-          <h3 className="text-xl font-bold text-foreground mb-2">No Submissions Yet</h3>
+          <h3 className="text-xl font-bold text-foreground mb-2">{t("submissions.noSubmissions")}</h3>
           <p className="text-muted-foreground max-w-md text-sm">
-            You have not submitted any forms yet.
+            {t("submissions.noSubmissionsDesc")}
           </p>
         </div>
       ) : (
@@ -86,24 +90,26 @@ export default function SubmissionsPage() {
             >
               <div>
                 <h3 className="font-bold text-xl text-foreground tracking-tight">
-                  {sub.form?.title || "Untitled Form"}
+                  {sub.form?.title || t("submissions.untitledForm")}
                 </h3>
                 <p className="text-muted-foreground text-sm mt-2">
                   <span className="inline-block px-2 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-md text-xs font-semibold uppercase tracking-wide">
-                    Submitted
+                    {t("submissions.submitted")}
                   </span>
                 </p>
               </div>
 
               <div className="mt-6 pt-4 border-t border-border/50 flex justify-between items-center">
                 <span className="text-xs text-muted-foreground">
-                  Date: {new Date(sub.submittedAt).toLocaleDateString()} {new Date(sub.submittedAt).toLocaleTimeString()}
+                  {t("submissions.date")}: {
+                    formatDateFns(new Date(sub.submittedAt), "PPP p", { locale: i18n.language === "ar" ? ar : enUS })
+                  }
                 </span>
                 <Link
                   href={`/submissions/${sub.id}`}
                   className="px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm text-xs font-semibold rounded-xl transition-all shadow-md flex items-center gap-1.5"
                 >
-                  <Eye className="w-3.5 h-3.5" /> View
+                  <Eye className="w-3.5 h-3.5" /> {t("submissions.view")}
                 </Link>
               </div>
             </div>

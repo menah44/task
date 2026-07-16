@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import apiClient from "@/lib/api/client";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 interface Organization {
   id: number;
@@ -16,6 +17,7 @@ interface Organization {
 
 export default function CreateOrganizationPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -75,7 +77,7 @@ export default function CreateOrganizationPage() {
 
 
   return (
-    <main className="space-y-8 text-foreground" dir="ltr">
+    <main className="space-y-8 text-foreground">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -84,15 +86,15 @@ export default function CreateOrganizationPage() {
               href={`/super-admin/organizations`}
               className="hover:text-blue-500 transition-colors flex items-center gap-1"
             >
-              <ArrowLeft className="w-4 h-4" /> Back to Organizations
+              <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("superAdmin.backToOrgs")}
             </Link>
           </div>
           <h2 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-3">
             <Building2 className="w-8 h-8 text-blue-500" />
-            Create Organization
+            {t("superAdmin.addOrg")}
           </h2>
           <p className="text-muted-foreground text-sm mt-1">
-            Add a new organization to the system.
+            {t("superAdmin.createOrg")}
           </p>
         </div>
       </div>
@@ -103,14 +105,14 @@ export default function CreateOrganizationPage() {
           
           <div className="space-y-2">
             <label className="text-sm font-semibold text-muted-foreground">
-              Organization Name <span className="text-error">*</span>
+              {t("superAdmin.orgName")} <span className="text-error">*</span>
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={handleNameChange}
               className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors"
-              placeholder="e.g. Acme Corporation"
+              placeholder={t("superAdmin.orgNamePlaceholder")}
               required
             />
           </div>
@@ -138,15 +140,15 @@ export default function CreateOrganizationPage() {
               onClick={() => router.push(`/super-admin/organizations`)}
               className="px-5 py-2.5 rounded-xl font-semibold text-sm text-muted-foreground bg-muted hover:bg-accent transition-colors"
             >
-              Cancel
+              {t("superAdmin.cancel")}
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-primary-foreground shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-primary-foreground shadow-sm bg-primary hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Create Organization
+              {t("superAdmin.createBtn")}
             </button>
           </div>
         </form>

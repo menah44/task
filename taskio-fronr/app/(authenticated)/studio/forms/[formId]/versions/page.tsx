@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
+import { format as formatDateFns } from "date-fns";
+import { ar, enUS } from "date-fns/locale";
 
 // ======================== Types ========================
 interface FormVersion {
@@ -42,14 +45,14 @@ const MOCK_VERSIONS: FormVersion[] = [
 ];
 
 // ======================== Helpers ========================
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function formatDate(iso: string, language: string) {
+  try {
+    return formatDateFns(new Date(iso), "MMM d, yyyy, h:mm a", {
+      locale: language === "ar" ? ar : enUS,
+    });
+  } catch (err) {
+    return iso;
+  }
 }
 
 // ======================== Version Card ========================
@@ -65,6 +68,7 @@ function VersionCard({
   isLatest: boolean;
 }) {
   const router = useRouter();
+  const { t, i18n } = useTranslation();
 
   return (
     <div className="bg-card border border-border rounded-2xl p-5 hover:border-blue-500/30 transition-all flex flex-col gap-4">
@@ -88,12 +92,12 @@ function VersionCard({
               </p>
               {isLatest && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-success text-success-foreground border-transparent shadow-sm">
-                  LATEST
+                  {t("versions.latest")}
                 </span>
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {formatDate(version.createdAt)} · by {version.createdBy}
+              {formatDate(version.createdAt, i18n.language)} · {t("versions.by")} {version.createdBy}
             </p>
           </div>
         </div>
@@ -105,7 +109,7 @@ function VersionCard({
               {version.sectionCount}
             </p>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-              Sections
+              {t("versions.sections")}
             </p>
           </div>
           <div className="w-px bg-accent" />
@@ -114,7 +118,7 @@ function VersionCard({
               {version.questionCount}
             </p>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-              Questions
+              {t("versions.questions")}
             </p>
           </div>
         </div>
@@ -130,14 +134,14 @@ function VersionCard({
             )
           }
           className="flex-1 py-2 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:border-blue-500/50 hover:text-primary/80 transition-all">
-          👁 View Snapshot
+          {t("versions.viewSnapshot")}
         </button>
 
         {/* Create a copy → generates new editable form */}
         <button
           onClick={() => onCopy(version.versionNumber)}
           className="flex-1 py-2 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:border-primary/50 hover:text-primary/80 transition-all">
-          📋 Copy as New Form
+          {t("versions.copyAsNewForm")}
         </button>
       </div>
     </div>
@@ -151,6 +155,7 @@ export default function FormVersionsPage({
   params: { formId: string };
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [versions, setVersions] = useState<FormVersion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -219,11 +224,11 @@ export default function FormVersionsPage({
         setVersions((prev) => [mockNew, ...prev]);
       }
 
-      showToast("Snapshot created successfully ✓");
+      showToast(t("versions.snapshotCreated"));
       setSnapshotLabel("");
       setShowLabelInput(false);
     } catch {
-      showToast("Failed to create snapshot", "error");
+      showToast(t("versions.snapshotCreateFailed"), "error");
     } finally {
       setIsCreating(false);
     }
@@ -240,15 +245,15 @@ export default function FormVersionsPage({
 
       if (res.ok) {
         const newForm = await res.json();
-        showToast("New form created from snapshot ✓");
+        showToast(t("versions.newFormCreated"));
         router.push(`/studio/forms/${newForm.id}/builder`);
       } else {
         // Mock navigation
-        showToast("New form created — redirecting to builder ✓");
+        showToast(t("versions.newFormRedirecting"));
         setTimeout(() => router.push(`/studio/forms/new-copy/builder`), 1200);
       }
     } catch {
-      showToast("Failed to copy version", "error");
+      showToast(t("versions.copyFailed"), "error");
     } finally {
       setIsCopying(null);
     }
@@ -260,10 +265,9 @@ export default function FormVersionsPage({
         {/* ── Header ── */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Version History</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t("versions.title")}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Form ID: {params.formId} · {versions.length} snapshot
-              {versions.length !== 1 ? "s" : ""}
+              {t("versions.subtitle", { formId: params.formId, count: versions.length, s: versions.length !== 1 ? "s" : "" })}
             </p>
           </div>
 
@@ -272,7 +276,7 @@ export default function FormVersionsPage({
             <button
               onClick={() => setShowLabelInput(true)}
               className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-medium rounded-lg transition-colors">
-              + Create Snapshot
+              {t("versions.createSnapshot")}
             </button>
           ) : (
             <div className="flex items-center gap-2">
@@ -285,14 +289,14 @@ export default function FormVersionsPage({
                   if (e.key === "Enter") handleCreateSnapshot();
                   if (e.key === "Escape") setShowLabelInput(false);
                 }}
-                placeholder="Snapshot label..."
+                placeholder={t("versions.snapshotLabel")}
                 className="bg-background border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 w-52"
               />
               <button
                 onClick={handleCreateSnapshot}
                 disabled={isCreating || !snapshotLabel.trim()}
                 className="px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm disabled:opacity-50 text-sm font-medium rounded-lg transition-colors">
-                {isCreating ? "..." : "Save"}
+                {isCreating ? t("versions.saving") : t("versions.save")}
               </button>
               <button
                 onClick={() => setShowLabelInput(false)}
@@ -328,10 +332,10 @@ export default function FormVersionsPage({
         ) : versions.length === 0 ? (
           <div className="bg-card border border-border rounded-2xl p-12 text-center">
             <p className="text-muted-foreground text-sm font-medium">
-              No snapshots yet
+              {t("versions.noSnapshots")}
             </p>
             <p className="text-muted-foreground text-xs mt-1">
-              Create your first snapshot to start tracking versions.
+              {t("versions.noSnapshotsDesc")}
             </p>
           </div>
         ) : (
@@ -340,7 +344,7 @@ export default function FormVersionsPage({
               <div key={v.versionNumber} className="relative">
                 {isCopying === v.versionNumber && (
                   <div className="absolute inset-0 bg-background/60 rounded-2xl flex items-center justify-center z-10">
-                    <p className="text-sm text-primary">Creating copy...</p>
+                    <p className="text-sm text-primary">{t("versions.creatingCopy")}</p>
                   </div>
                 )}
                 <VersionCard

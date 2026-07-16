@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { BarChart3, ArrowLeft, Calendar, Search, MapPin, Eye, Loader2, X } from "lucide-react";
 import apiClient from "@/lib/api/client";
+import { useTranslation } from "react-i18next";
 
 interface UserInfo {
   id: number;
@@ -66,11 +67,11 @@ const TableRowLocationCell = ({ lat, lng }: { lat: number; lng: number }) => {
       href={mapsUrl} 
       target="_blank" 
       rel="noopener noreferrer"
-      className="inline-flex items-start gap-1.5 hover:bg-black/5 dark:hover:bg-white/5 p-1.5 -ml-1.5 rounded-lg transition-colors group max-w-full"
+      className="inline-flex items-start gap-1.5 hover:bg-black/5 dark:hover:bg-white/5 p-1.5 -ms-1.5 rounded-lg transition-colors group max-w-full"
       onClick={(e) => e.stopPropagation()}
     >
       <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-      <div className="flex flex-col text-left overflow-hidden">
+      <div className="flex flex-col text-start overflow-hidden">
         {address ? (
           <>
             <span className="text-sm font-semibold text-foreground truncate">{address.split(',')[0]}</span>
@@ -94,6 +95,7 @@ export default function AnalyticsPage() {
   const [responses, setResponses] = useState<FormResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   // Search & Filter state
   const [searchEmail, setSearchEmail] = useState("");
@@ -118,7 +120,7 @@ export default function AnalyticsPage() {
         setResponses(res.data || []);
       } catch (err) {
         console.error("Failed to load responses:", err);
-        setError("Unable to load submissions for this form.");
+        setError(t("analytics.loadResponsesError"));
       } finally {
         setLoading(false);
       }
@@ -139,7 +141,7 @@ export default function AnalyticsPage() {
         setDetailData(res.data);
       } catch (err) {
         console.error("Failed to load details:", err);
-        alert("Failed to load response details.");
+        alert(t("analytics.loadDetailsError"));
         setSelectedResponseId(null);
       } finally {
         setLoadingDetail(false);
@@ -174,11 +176,11 @@ export default function AnalyticsPage() {
     });
   }, [responses, searchEmail, startDate, endDate]);
 
-  const formTitle = responses[0]?.form?.title || "Form Submissions";
+  const formTitle = responses[0]?.form?.title || t("analytics.title");
 
   const renderAnswerValue = (val: any) => {
-    if (val === null || val === undefined) return <span className="text-muted-foreground italic">No Answer</span>;
-    if (typeof val === "boolean") return val ? "Yes" : "No";
+    if (val === null || val === undefined) return <span className="text-muted-foreground italic">{t("analytics.noAnswer")}</span>;
+    if (typeof val === "boolean") return val ? t("analytics.yes") : t("analytics.no");
     if (Array.isArray(val)) return val.join(", ");
     if (typeof val === "object") {
       if (val.lat !== undefined && val.lng !== undefined) {
@@ -194,15 +196,15 @@ export default function AnalyticsPage() {
         return (
           <div className="flex items-center gap-4 border border-border p-3 rounded-xl bg-muted/20 w-max max-w-full overflow-hidden">
             <div className="flex items-center gap-2 truncate">
-              <span className="text-sm font-medium truncate">{val.fileName || "Uploaded File"}</span>
+              <span className="text-sm font-medium truncate">{val.fileName || t("analytics.uploadedFile")}</span>
               {val.fileSize && <span className="text-xs text-muted-foreground whitespace-nowrap">({Math.round(val.fileSize / 1024)} KB)</span>}
             </div>
-            <div className="flex items-center gap-2 ml-auto shrink-0">
+            <div className="flex items-center gap-2 ms-auto shrink-0">
               <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-lg hover:bg-secondary/80 transition">
-                View
+                {t("analytics.view")}
               </a>
               <a href={fileUrl} download={val.fileName || "download"} className="px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition">
-                Download
+                {t("analytics.download")}
               </a>
             </div>
           </div>
@@ -214,7 +216,7 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <main className="space-y-6 text-foreground pb-12" dir="ltr">
+    <main className="space-y-6 text-foreground pb-12">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border pb-5">
         <div className="flex items-center gap-3">
@@ -222,7 +224,7 @@ export default function AnalyticsPage() {
             onClick={() => router.back()}
             className="p-2 bg-muted hover:bg-accent rounded-xl text-muted-foreground hover:text-foreground transition-all border border-border"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
           </button>
           <div>
             <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
@@ -230,7 +232,7 @@ export default function AnalyticsPage() {
               {formTitle}
             </h1>
             <p className="text-xs text-muted-foreground mt-1">
-              View and filter responses submitted by members of your organization.
+              {t("analytics.subtitle")}
             </p>
           </div>
         </div>
@@ -241,11 +243,11 @@ export default function AnalyticsPage() {
         {/* Email Search */}
         <div className="space-y-2">
           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <Search className="w-3.5 h-3.5 text-muted-foreground" /> Search Submitter
+            <Search className="w-3.5 h-3.5 text-muted-foreground" /> {t("analytics.searchSubmitter")}
           </label>
           <input
             type="text"
-            placeholder="Search by email..."
+            placeholder={t("analytics.searchPlaceholder")}
             value={searchEmail}
             onChange={(e) => setSearchEmail(e.target.value)}
             className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-colors"
@@ -255,7 +257,7 @@ export default function AnalyticsPage() {
         {/* Start Date */}
         <div className="space-y-2">
           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-muted-foreground" /> From Date
+            <Calendar className="w-3.5 h-3.5 text-muted-foreground" /> {t("analytics.fromDate")}
           </label>
           <input
             type="date"
@@ -268,7 +270,7 @@ export default function AnalyticsPage() {
         {/* End Date */}
         <div className="space-y-2">
           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-muted-foreground" /> To Date
+            <Calendar className="w-3.5 h-3.5 text-muted-foreground" /> {t("analytics.toDate")}
           </label>
           <input
             type="date"
@@ -290,25 +292,25 @@ export default function AnalyticsPage() {
         </div>
       ) : filteredResponses.length === 0 ? (
         <div className="bg-card border border-border rounded-2xl p-12 text-center text-muted-foreground">
-          No matching submissions found for this form.
+          {t("analytics.noSubmissions")}
         </div>
       ) : (
         <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-border/60 text-left text-sm">
+            <table className="min-w-full divide-y divide-border/60 text-start text-sm">
               <thead className="bg-card/50 text-muted-foreground uppercase text-xs font-bold tracking-wider">
                 <tr>
-                  <th className="px-6 py-4">Submitter</th>
-                  <th className="px-6 py-4">Submission Date</th>
-                  <th className="px-6 py-4">Location</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4">{t("analytics.submitter")}</th>
+                  <th className="px-6 py-4">{t("analytics.submissionDate")}</th>
+                  <th className="px-6 py-4">{t("analytics.location")}</th>
+                  <th className="px-6 py-4 text-end">{t("analytics.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60 text-sm text-muted-foreground">
                 {filteredResponses.map((res) => (
                   <tr key={res.id} className="hover:bg-muted transition-colors">
                     <td className="px-6 py-4 font-semibold text-foreground whitespace-nowrap">
-                      {res.user?.email || <span className="text-muted-foreground italic">Anonymous</span>}
+                      {res.user?.email || <span className="text-muted-foreground italic">{t("analytics.anonymous")}</span>}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">
                       {res.submittedAt ? new Date(res.submittedAt).toLocaleString() : "N/A"}
@@ -317,15 +319,15 @@ export default function AnalyticsPage() {
                       {res.latitude && res.longitude ? (
                         <TableRowLocationCell lat={res.latitude} lng={res.longitude} />
                       ) : (
-                        <span className="text-muted-foreground italic text-xs">No GPS Data</span>
+                        <span className="text-muted-foreground italic text-xs">{t("analytics.noGps")}</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-6 py-4 whitespace-nowrap text-end">
                       <button
                         onClick={() => setSelectedResponseId(res.id)}
                         className="px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm border border-primary/20 rounded-xl transition-all inline-flex items-center gap-1 text-xs font-bold"
                       >
-                        <Eye className="w-3.5 h-3.5" /> View Details
+                        <Eye className="w-3.5 h-3.5" /> {t("analytics.viewDetails")}
                       </button>
                     </td>
                   </tr>
@@ -344,10 +346,10 @@ export default function AnalyticsPage() {
             <div className="p-6 border-b border-border flex justify-between items-center bg-background">
               <div>
                 <h3 className="text-xl font-bold text-foreground tracking-tight">
-                  {detailData ? `Submission #${detailData.id}` : "Loading Details..."}
+                  {detailData ? t("analytics.submissionNum", { id: detailData.id }) : t("analytics.loadingDetails")}
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Submitted answers overview
+                  {t("analytics.answersOverview")}
                 </p>
               </div>
               <button
@@ -367,7 +369,7 @@ export default function AnalyticsPage() {
               ) : (
                 detailData.sections.map((sec) => (
                   <div key={sec.id} className="space-y-4">
-                    <h4 className="font-bold text-md text-foreground border-l-4 border-blue-500 pl-3 uppercase tracking-wider text-xs">
+                    <h4 className="font-bold text-md text-foreground border-s-4 border-blue-500 ps-3 uppercase tracking-wider text-xs">
                       {sec.title}
                     </h4>
                     <div className="bg-card border border-border rounded-2xl overflow-hidden divide-y divide-border/60">
@@ -393,7 +395,7 @@ export default function AnalyticsPage() {
                 onClick={() => setSelectedResponseId(null)}
                 className="px-5 py-2.5 bg-muted hover:bg-accent text-foreground text-sm font-semibold rounded-xl transition-colors border border-border"
               >
-                Close
+                {t("analytics.close")}
               </button>
             </div>
           </div>

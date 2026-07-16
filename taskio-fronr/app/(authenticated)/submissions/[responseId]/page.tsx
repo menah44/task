@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { FileText, ArrowLeft, Loader2, MapPin } from "lucide-react";
 import apiClient from "@/lib/api/client";
+import { useTranslation } from "react-i18next";
 
 interface Answer {
   questionId: string;
@@ -33,6 +34,7 @@ export default function SubmissionViewPage() {
   const [detailData, setDetailData] = useState<FullResponseDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!params?.responseId) return;
@@ -46,9 +48,9 @@ export default function SubmissionViewPage() {
       } catch (err: any) {
         console.error("Failed to load details:", err);
         if (err.response?.status === 403 || err.response?.status === 404) {
-          setError("Submission not found or you do not have permission to view it.");
+          setError(t("submissionDetail.notFoundOrNoPermission"));
         } else {
-          setError("Failed to load submission details.");
+          setError(t("submissionDetail.failedToLoad"));
         }
       } finally {
         setLoading(false);
@@ -59,9 +61,9 @@ export default function SubmissionViewPage() {
   }, [params?.responseId]);
 
   const renderAnswerValue = (val: any) => {
-    if (val === null || val === undefined || val === "") return <span className="text-muted-foreground italic">No Answer</span>;
-    if (typeof val === "boolean") return val ? "Yes" : "No";
-    if (Array.isArray(val)) return val.length > 0 ? val.join(", ") : <span className="text-muted-foreground italic">No Answer</span>;
+    if (val === null || val === undefined || val === "") return <span className="text-muted-foreground italic">{t("submissionDetail.noAnswer")}</span>;
+    if (typeof val === "boolean") return val ? t("submissionDetail.yes") : t("submissionDetail.no");
+    if (Array.isArray(val)) return val.length > 0 ? val.join(", ") : <span className="text-muted-foreground italic">{t("submissionDetail.noAnswer")}</span>;
     if (typeof val === "object") {
       if (val.lat !== undefined && val.lng !== undefined) {
         return (
@@ -77,15 +79,15 @@ export default function SubmissionViewPage() {
         return (
           <div className="flex items-center gap-4 border border-border p-3 rounded-xl bg-muted/20 w-max max-w-full overflow-hidden">
             <div className="flex items-center gap-2 truncate">
-              <span className="text-sm font-medium truncate">{val.fileName || "Uploaded File"}</span>
+              <span className="text-sm font-medium truncate">{val.fileName || t("submissionDetail.uploadedFile")}</span>
               {val.fileSize && <span className="text-xs text-muted-foreground whitespace-nowrap">({Math.round(val.fileSize / 1024)} KB)</span>}
             </div>
-            <div className="flex items-center gap-2 ml-auto shrink-0">
+            <div className="flex items-center gap-2 ms-auto shrink-0">
               <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-lg hover:bg-secondary/80 transition">
-                View
+                {t("submissionDetail.view")}
               </a>
               <a href={fileUrl} download={val.fileName || "download"} className="px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition">
-                Download
+                {t("submissionDetail.download")}
               </a>
             </div>
           </div>
@@ -101,7 +103,7 @@ export default function SubmissionViewPage() {
       <div className="flex items-center justify-center h-[70vh] bg-background text-foreground">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-          <p className="text-sm text-muted-foreground">Loading submission details...</p>
+          <p className="text-sm text-muted-foreground">{t("submissionDetail.loading")}</p>
         </div>
       </div>
     );
@@ -111,21 +113,21 @@ export default function SubmissionViewPage() {
     return (
       <div className="space-y-6 max-w-3xl mx-auto py-8">
         <button onClick={() => router.back()} className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm font-semibold transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back
+          <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("submissionDetail.back")}
         </button>
         <div className="bg-error/15 border border-error/20 text-error p-6 rounded-2xl text-center text-sm font-semibold">
-          {error || "Submission not found."}
+          {error || t("submissionDetail.notFound")}
         </div>
       </div>
     );
   }
 
   return (
-    <main className="space-y-6 max-w-4xl mx-auto py-4 text-foreground pb-12" dir="ltr">
+    <main className="space-y-6 max-w-4xl mx-auto py-4 text-foreground pb-12">
       <div className="flex items-center justify-between border-b border-border pb-5">
         <div>
           <Link href="/submissions" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm font-semibold transition-colors mb-4">
-            <ArrowLeft className="w-4 h-4" /> Back to Submissions
+            <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t("submissionDetail.backToSubmissions")}
           </Link>
           <h1 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
             <FileText className="w-8 h-8 text-blue-500" />
@@ -133,10 +135,10 @@ export default function SubmissionViewPage() {
           </h1>
           <div className="mt-2 flex items-center gap-2">
             <span className="inline-block px-2.5 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-md text-xs font-semibold uppercase tracking-wide">
-              Read-Only View
+              {t("submissionDetail.readOnlyView")}
             </span>
             <span className="text-sm text-muted-foreground">
-              You have already submitted this form. Your answers are locked.
+              {t("submissionDetail.lockedAnswers")}
             </span>
           </div>
         </div>
@@ -145,7 +147,7 @@ export default function SubmissionViewPage() {
       <div className="space-y-8 mt-6">
         {detailData.sections.map((sec) => (
           <div key={sec.id} className="space-y-4">
-            <h4 className="font-bold text-md text-foreground border-l-4 border-blue-500 pl-3 uppercase tracking-wider text-xs">
+            <h4 className="font-bold text-md text-foreground border-s-4 border-blue-500 ps-3 uppercase tracking-wider text-xs">
               {sec.title}
             </h4>
             <div className="bg-card border border-border rounded-2xl overflow-hidden divide-y divide-border/60 shadow-sm">
@@ -165,7 +167,7 @@ export default function SubmissionViewPage() {
 
         {detailData.sections.length === 0 && (
           <div className="bg-card border border-border rounded-2xl p-12 text-center text-muted-foreground">
-            No sections found in this submission.
+            {t("submissionDetail.noSections")}
           </div>
         )}
       </div>

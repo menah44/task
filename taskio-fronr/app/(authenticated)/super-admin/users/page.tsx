@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import SkeletonTable from "@/components/SkeletonTable";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useTranslation } from "react-i18next";
+import { formatNumber } from "@/lib/formatters";
 
 interface UserItem {
   id: number;
@@ -23,6 +25,7 @@ interface UserItem {
 
 export default function UserManagementPage() {
   const router = useRouter();
+  const { t, i18n } = useTranslation();
   const currentUser = useAuthStore((state) => state.currentUser);
   const currentUserId = currentUser?.id ? Number(currentUser.id) : null;
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,7 +94,7 @@ export default function UserManagementPage() {
       setTotalPages(payload.totalPages || 1);
     } catch (err: unknown) {
       console.error("Failed to load users:", err);
-      setError("Failed to retrieve users list from the server.");
+      setError(t("adminUsers.fetchError"));
       setUsers([]);
       setTotal(0);
       setTotalPages(1);
@@ -107,16 +110,16 @@ export default function UserManagementPage() {
   // 3. User Deactivation Handler
   const handleDeactivate = async (id: number, name: string) => {
     triggerConfirm(
-      "Deactivate User",
-      `Are you sure you want to deactivate ${name}'s account? This user will no longer be able to log in.`,
+      t("adminUsers.deactivateTitle"),
+      t("adminUsers.deactivateDesc"),
       async () => {
         try {
           await apiClient.patch(`/users/${id}/deactivate`);
-          toast.success("Account deactivated successfully");
+          toast.success(t("adminUsers.deactivateSuccess"));
           fetchUsers(); // Refresh the list
         } catch (err: unknown) {
           console.error("Deactivation failed:", err);
-          toast.error("Failed to deactivate account.");
+          toast.error(t("adminUsers.deactivateFailed"));
         }
       }
     );
@@ -125,16 +128,16 @@ export default function UserManagementPage() {
   // 3b. User Activation Handler
   const handleActivate = async (id: number, name: string) => {
     triggerConfirm(
-      "Activate User",
-      `Are you sure you want to enable ${name}'s account? This user will be able to log in again.`,
+      t("adminUsers.activateTitle"),
+      t("adminUsers.activateDesc"),
       async () => {
         try {
           await apiClient.patch(`/users/${id}/activate`);
-          toast.success("Account activated successfully");
+          toast.success(t("adminUsers.activateSuccess"));
           fetchUsers(); // Refresh the list
         } catch (err: unknown) {
           console.error("Activation failed:", err);
-          toast.error("Failed to enable account.");
+          toast.error(t("adminUsers.activateFailed"));
         }
       }
     );
@@ -143,7 +146,7 @@ export default function UserManagementPage() {
   const safeUsers = Array.isArray(users) ? users : [];
 
   return (
-    <main className="space-y-8 text-foreground" dir="ltr">
+    <main className="space-y-8 text-foreground">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -152,18 +155,17 @@ export default function UserManagementPage() {
               href="/super-admin"
               className="hover:text-blue-500 transition-colors flex items-center gap-1"
             >
-              Dashboard <ArrowRight className="w-4 h-4 rotate-180" />
+              {t("adminUsers.dashboard")} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </Link>
             <span>/</span>
-            <span className="text-foreground font-medium">User Management</span>
+            <span className="text-foreground font-medium">{t("adminUsers.userManagement")}</span>
           </div>
           <h2 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
             <Users className="w-8 h-8 text-blue-500" />
-            User Management & Permissions
+            {t("adminUsers.userManagementTitle")}
           </h2>
           <p className="text-muted-foreground text-sm mt-1">
-            Add new users, edit permissions, and manage account statuses across
-            the system.
+            {t("adminUsers.userManagementDesc")}
           </p>
         </div>
 
@@ -172,7 +174,7 @@ export default function UserManagementPage() {
           className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-xl transition-all font-semibold shadow-md text-sm border border-blue-500/20"
         >
           <UserPlus className="w-4 h-4" />
-          Add New User
+          {t("adminUsers.addNewUser")}
         </button>
       </div>
 
@@ -189,10 +191,10 @@ export default function UserManagementPage() {
         <Search className="w-5 h-5 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Search by name or email..."
+          placeholder={t("adminUsers.searchPlaceholder")}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="bg-transparent border-none text-foreground text-sm focus:outline-none w-full placeholder-gray-500"
+          className="bg-transparent border-none text-foreground text-sm focus:outline-none w-full placeholder-gray-500 ltr:text-start rtl:text-end"
         />
       </div>
 
@@ -202,14 +204,14 @@ export default function UserManagementPage() {
       ) : (
         <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-start border-collapse">
               <thead>
                 <tr className="border-b border-border bg-card/50 text-muted-foreground text-xs font-bold uppercase tracking-wider">
-                  <th className="px-6 py-4">Name</th>
-                  <th className="px-6 py-4">Email</th>
-                  <th className="px-6 py-4">Role</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4">{t("adminUsers.tableHeader.name")}</th>
+                  <th className="px-6 py-4">{t("adminUsers.tableHeader.email")}</th>
+                  <th className="px-6 py-4">{t("adminUsers.tableHeader.role")}</th>
+                  <th className="px-6 py-4">{t("adminUsers.tableHeader.status")}</th>
+                  <th className="px-6 py-4 ltr:text-end rtl:text-start">{t("adminUsers.tableHeader.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60 text-sm">
@@ -219,7 +221,7 @@ export default function UserManagementPage() {
                       colSpan={5}
                       className="px-6 py-12 text-center text-muted-foreground"
                     >
-                      No users found matching your search criteria.
+                      {t("adminUsers.noUsersFound")}
                     </td>
                   </tr>
                 ) : (
@@ -269,35 +271,35 @@ export default function UserManagementPage() {
                                 : "bg-muted0/10 text-muted-foreground border-gray-500/20"
                             }`}
                           >
-                            {user.isActive ? "Active" : "Inactive"}
+                            {user.isActive ? t("adminUsers.statusActive") : t("adminUsers.statusInactive")}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                        <td className="px-6 py-4 ltr:text-end rtl:text-start whitespace-nowrap">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => router.push(`/super-admin/users/${user.id}`)}
                               className="px-3 py-1.5 rounded-full text-xs font-semibold text-primary border border-blue-500/10 bg-blue-500/5 hover:bg-blue-500/10 transition-all"
                             >
-                              View Details
+                              {t("adminUsers.viewDetails")}
                             </button>
                             {/* Safeguard: never show action buttons for the logged-in admin's own row */}
                             {user.id === currentUserId ? (
                               <span className="text-xs text-muted-foreground italic px-3 py-1">
-                                You
+                                {t("adminUsers.you")}
                               </span>
                             ) : user.isActive ? (
                               <button
                                 onClick={() => handleDeactivate(user.id, displayName)}
                                 className="px-3 py-1.5 rounded-full text-xs font-semibold text-error border border-red-500/10 bg-red-500/5 hover:bg-error/15 transition-all"
                               >
-                                Disable Account
+                                {t("adminUsers.disableAccount")}
                               </button>
                             ) : (
                               <button
                                 onClick={() => handleActivate(user.id, displayName)}
                                 className="px-3 py-1.5 rounded-full text-xs font-semibold text-success border border-green-500/10 bg-green-500/5 hover:bg-success/15 transition-all"
                               >
-                                Enable Account
+                                {t("adminUsers.enableAccount")}
                               </button>
                             )}
                           </div>
@@ -316,7 +318,7 @@ export default function UserManagementPage() {
       {!isLoading && totalPages > 1 && (
         <div className="flex justify-between items-center bg-card border border-border rounded-2xl p-4">
           <span className="text-sm text-muted-foreground">
-            Showing Page {page} of {totalPages} (Total: {total} users)
+            {t("adminUsers.showingPage")} {formatNumber(page, i18n.language)} {t("adminUsers.of")} {formatNumber(totalPages, i18n.language)} ({t("adminUsers.totalUsers", { total: formatNumber(total, i18n.language) })})
           </span>
           <div className="flex gap-2">
             <button
@@ -324,14 +326,14 @@ export default function UserManagementPage() {
               disabled={page === 1}
               className="px-4 py-2 bg-background border border-border rounded-xl text-[11px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              Previous
+              {t("adminUsers.previous")}
             </button>
             <button
               onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={page === totalPages}
               className="px-4 py-2 bg-background border border-border rounded-xl text-[11px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              Next
+              {t("adminUsers.next")}
             </button>
           </div>
         </div>

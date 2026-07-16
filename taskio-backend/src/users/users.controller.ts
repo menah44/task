@@ -1,3 +1,4 @@
+import { isElevatedRole } from '../auth/auth.utils';
 import {
   Controller,
   Get,
@@ -48,7 +49,7 @@ export class UsersController {
     @Query('search') search?: string,
   ) {
     const userRole = user.role?.toUpperCase();
-    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+    if (!isElevatedRole(user.role)) {
       throw new ForbiddenException(
         'Only administrators can access this resource.',
       );
@@ -68,7 +69,7 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     const userRole = user.role?.toUpperCase();
-    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+    if (!isElevatedRole(user.role)) {
       throw new ForbiddenException(
         'Only administrators can access this resource.',
       );
@@ -82,7 +83,7 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     const userRole = user.role?.toUpperCase();
-    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+    if (!isElevatedRole(user.role)) {
       throw new ForbiddenException(
         'Only administrators can access this resource.',
       );
@@ -96,7 +97,7 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     const userRole = user.role?.toUpperCase();
-    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+    if (!isElevatedRole(user.role)) {
       throw new ForbiddenException(
         'Only administrators can access this resource.',
       );
@@ -107,7 +108,7 @@ export class UsersController {
   @Post()
   async createUser(@CurrentUser() user: User, @Body() dto: CreateUserAdminDto) {
     const userRole = user.role?.toUpperCase();
-    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+    if (!isElevatedRole(user.role)) {
       throw new ForbiddenException(
         'Only administrators can perform this action.',
       );
@@ -136,7 +137,7 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
   ) {
     const userRole = user.role?.toUpperCase();
-    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+    if (!isElevatedRole(user.role)) {
       throw new ForbiddenException(
         'Only administrators can perform this action.',
       );
@@ -158,7 +159,7 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     const userRole = user.role?.toUpperCase();
-    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+    if (!isElevatedRole(user.role)) {
       throw new ForbiddenException(
         'Only administrators can perform this action.',
       );
@@ -172,7 +173,7 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     const userRole = user.role?.toUpperCase();
-    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+    if (!isElevatedRole(user.role)) {
       throw new ForbiddenException(
         'Only administrators can perform this action.',
       );

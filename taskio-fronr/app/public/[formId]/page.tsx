@@ -8,6 +8,7 @@ import AnswerField, {
   AnswerQuestion,
   AnswerValue,
 } from "@/components/AnswerField";
+import { useTranslation } from "react-i18next";
 
 // ======================== Types ========================
 interface PublicQuestion {
@@ -75,13 +76,13 @@ function toAnswerQuestion(q: PublicQuestion): AnswerQuestion {
 }
 
 // ======================== Progress Bar ========================
-function ProgressBar({ current, total }: { current: number; total: number }) {
+function ProgressBar({ current, total, t }: { current: number; total: number; t: any }) {
   const pct = total === 0 ? 0 : Math.round((current / total) * 100);
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs text-muted-foreground">
         <span>
-          Section {current} of {total}
+          {t("publicForms.section", { current, total })}
         </span>
         <span>{pct}%</span>
       </div>
@@ -161,6 +162,7 @@ export default function PublicFormFillPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const load = async () => {
@@ -188,7 +190,7 @@ export default function PublicFormFillPage() {
       <div className="min-h-screen bg-muted flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Loading form...</p>
+          <p className="text-sm text-muted-foreground">{t("publicForms.loading")}</p>
         </div>
       </div>
     );
@@ -198,11 +200,11 @@ export default function PublicFormFillPage() {
     return (
       <div className="min-h-screen bg-muted flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground text-lg mb-4">Form not found.</p>
+          <p className="text-muted-foreground text-lg mb-4">{t("publicForms.notFound")}</p>
           <Link
             href="/public"
             className="text-primary hover:underline text-sm">
-            ← Back to forms
+            {t("publicForms.backToForms")}
           </Link>
         </div>
       </div>
@@ -215,14 +217,14 @@ export default function PublicFormFillPage() {
       <div className="min-h-screen bg-muted flex items-center justify-center p-6">
         <div className="bg-white rounded-2xl border border-border shadow-sm p-10 max-w-md w-full text-center space-y-4">
           <div className="text-5xl">✅</div>
-          <h2 className="text-2xl font-bold text-foreground">Thank You!</h2>
+          <h2 className="text-2xl font-bold text-foreground">{t("publicForms.thankYou")}</h2>
           <p className="text-muted-foreground text-sm">
-            Your response has been submitted successfully.
+            {t("publicForms.submitted")}
           </p>
           <Link
             href="/public"
             className="inline-block mt-4 px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm text-white text-sm font-medium rounded-xl transition-colors">
-            Back to Forms
+            {t("publicForms.backToFormsBtn")}
           </Link>
         </div>
       </div>
@@ -236,11 +238,11 @@ export default function PublicFormFillPage() {
       <div className="max-w-2xl mx-auto space-y-6 pb-10">
         <div className="bg-white border border-border rounded-2xl p-6 text-center text-muted-foreground shadow-sm">
           <h1 className="text-xl font-bold text-foreground mb-2">{form.title}</h1>
-          <p className="text-sm">This form has no questions yet.</p>
+          <p className="text-sm">{t("publicForms.noQuestions")}</p>
           <button
             onClick={() => router.push("/public")}
             className="mt-4 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm text-white text-sm font-bold rounded-xl transition-colors">
-            Back to Forms
+            {t("publicForms.backToFormsBtn")}
           </button>
         </div>
       </div>
@@ -322,7 +324,7 @@ export default function PublicFormFillPage() {
             <span className="text-foreground font-bold">FormFlow</span>
           </Link>
           <span className="text-xs text-muted-foreground flex items-center gap-1">
-            🔓 No login required
+            🔓 {t("publicForms.noLoginRequired")}
           </span>
         </div>
       </header>
@@ -342,6 +344,7 @@ export default function PublicFormFillPage() {
             <ProgressBar
               current={currentSectionIdx + 1}
               total={sections.length}
+              t={t}
             />
           </div>
         )}
@@ -379,7 +382,7 @@ export default function PublicFormFillPage() {
             <button
               onClick={handleBack}
               className="px-5 py-2.5 text-sm font-medium text-muted-foreground border border-border rounded-xl hover:bg-muted transition-colors">
-              ← Back
+              {t("publicForms.back")}
             </button>
           ) : (
             <div />
@@ -390,19 +393,19 @@ export default function PublicFormFillPage() {
               onClick={handleSubmit}
               disabled={isSubmitting}
               className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
-              {isSubmitting ? "Submitting..." : "Submit Form ✓"}
+              {isSubmitting ? t("publicForms.submitting") : t("publicForms.submit")}
             </button>
           ) : (
             <button
               onClick={handleNext}
               className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
-              Next →
+              {t("publicForms.next")}
             </button>
           )}
         </div>
 
         <p className="text-center text-xs text-muted-foreground pb-6">
-          Your response will be submitted anonymously.
+          {t("publicForms.anonymousNotice")}
         </p>
       </div>
     </div>

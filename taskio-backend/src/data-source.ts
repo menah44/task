@@ -37,5 +37,5 @@ export const AppDataSource = new DataSource({
     Response,
   ],
   migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
-  synchronize: true,
+  synchronize: false,
 });

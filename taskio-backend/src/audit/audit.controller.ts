@@ -1,3 +1,4 @@
+import { isElevatedRole } from '../auth/auth.utils';
 import {
   Controller,
   UseGuards,
@@ -31,8 +32,7 @@ export class AuditController {
     @Query('endDate') endDate?: string,
   ) {
     if (
-      user.role?.toUpperCase() !== 'ADMIN' &&
-      user.role?.toUpperCase() !== 'SUPER_ADMIN'
+      !isElevatedRole(user?.role)
     ) {
       throw new ForbiddenException('Only administrators can view audit logs.');
     }
@@ -57,8 +57,7 @@ export class AuditController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     if (
-      user.role?.toUpperCase() !== 'ADMIN' &&
-      user.role?.toUpperCase() !== 'SUPER_ADMIN'
+      !isElevatedRole(user?.role)
     ) {
       throw new ForbiddenException('Only administrators can view audit logs.');
     }

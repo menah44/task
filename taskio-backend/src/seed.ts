@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DataSource } from 'typeorm';
@@ -12,7 +15,20 @@ async function bootstrap() {
     process.exit(1);
   }
 
+  // Validate SUPER_ADMIN environment variables
+  const superAdminName = process.env.SUPER_ADMIN_NAME;
+  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL;
+  const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
+
+  if (!superAdminName || !superAdminEmail || !superAdminPassword) {
+    console.error(
+      '❌ FATAL ERROR: Missing SUPER_ADMIN_NAME, SUPER_ADMIN_EMAIL, or SUPER_ADMIN_PASSWORD environment variables.',
+    );
+    process.exit(1);
+  }
+
   console.log('Seeding database starting...');
+  console.log('Checking roles...');
   const app = await NestFactory.createApplicationContext(AppModule);
 
   const dataSource = app.get(DataSource);
@@ -31,30 +47,64 @@ async function bootstrap() {
       console.log(`ℹ️ Role already exists: ${roleName}`);
     }
   }
+  console.log('Roles completed.');
 
-  // Seed default admin
-  const adminExists = await userRepository.findOne({
-    where: { email: 'admin@taskio.com' },
+  console.log('Checking Super Admin...');
+  // Check if any SUPER_ADMIN already exists
+  const superAdminExists = await userRepository.findOne({
+    where: { role: 'SUPER_ADMIN' },
+    relations: ['roles'],
   });
 
-  if (!adminExists) {
-    const defaultAdmin = userRepository.create({
-      email: 'admin@taskio.com',
-      // Correct bcrypt hash of '123456'
-      password: '$2b$10$qCVz09lo4SwOYUmkxEdf.unz.CEmw6yZDOcKiJ2c.rDtmxcJ6clD.',
-      role: 'SUPER_ADMIN',
-    });
-    await userRepository.save(defaultAdmin);
-    console.log('✅ Default Admin created successfully via Seed Script!');
-  } else {
-    // If admin exists, ensure their password is correct hash of '123456'
-    adminExists.password =
-      '$2b$10$qCVz09lo4SwOYUmkxEdf.unz.CEmw6yZDOcKiJ2c.rDtmxcJ6clD.';
-    adminExists.role = 'SUPER_ADMIN';
-    await userRepository.save(adminExists);
-    console.log(
-      '✅ Default Admin password/role verified & updated successfully!',
+  if (superAdminExists) {
+    console.log('ℹ️ Super Admin already exists.');
+
+    // One-time synchronization of the roles relation
+    const hasRoleRelation = superAdminExists.roles?.some(
+      (r) => r.name === 'SUPER_ADMIN',
     );
+    if (!hasRoleRelation) {
+      console.log('Synchronizing roles relation for existing Super Admin...');
+      const superAdminRole = await roleRepository.findOne({
+        where: { name: 'SUPER_ADMIN' },
+      });
+      if (superAdminRole) {
+        superAdminExists.roles = superAdminExists.roles
+          ? [...superAdminExists.roles, superAdminRole]
+          : [superAdminRole];
+        await userRepository.save(superAdminExists);
+        console.log('✅ Roles relation synchronized successfully.');
+      }
+    }
+  } else {
+    console.log('Creating Super Admin...');
+
+    // Hash password dynamically
+    const bcrypt = await import('bcrypt');
+    const hashedPassword = await bcrypt.hash(superAdminPassword, 10);
+
+    // Split name for firstName and lastName
+    const nameParts = superAdminName.split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || undefined;
+
+    const superAdminRole = await roleRepository.findOne({
+      where: { name: 'SUPER_ADMIN' },
+    });
+
+    const defaultAdmin = userRepository.create({
+      email: superAdminEmail,
+      password: hashedPassword,
+      role: 'SUPER_ADMIN',
+      roles: superAdminRole ? [superAdminRole] : [],
+      firstName,
+      lastName,
+    });
+
+    await userRepository.save(defaultAdmin);
+    console.log('✅ Super Admin created successfully.');
+    console.log(`Email: ${superAdminEmail}`);
+    console.log('Password loaded from environment variables.');
   }
 
   await app.close();

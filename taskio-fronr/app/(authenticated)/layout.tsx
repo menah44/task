@@ -1,9 +1,11 @@
 "use client";
+import { isElevatedRole } from "@/lib/auth-utils";
 
 import { useEffect } from "react";
 import { useAuthStore, parseJwt } from "@/lib/auth-store";
 import { usePathname, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
 import { useTheme } from "next-themes";
@@ -23,6 +25,7 @@ export default function AuthenticatedLayout({
     accessToken,
   } = useAuthStore();
 
+  const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -65,8 +68,7 @@ export default function AuthenticatedLayout({
           router.replace("/super-admin/dashboard");
         } else if (
           (isAdminPath || (isStudioPath && !isFillPath)) &&
-          userRole !== "ADMIN" &&
-          userRole !== "SUPER_ADMIN"
+          !isElevatedRole(userRole)
         ) {
           console.warn(
             "Unprivileged access attempt blocked. Redirecting to user forms...",
@@ -125,12 +127,10 @@ export default function AuthenticatedLayout({
 
   if (isChecking) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center bg-background text-foreground"
-        dir="ltr">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-          <p className="text-foreground text-sm">Verifying authentication...</p>
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground">{t("common.verifyingAuth", "Verifying authentication...")}</p>
         </div>
       </div>
     );
@@ -157,7 +157,7 @@ export default function AuthenticatedLayout({
   );
 
   return (
-    <div dir="ltr" className="min-h-screen bg-background text-foreground flex">
+    <div className="min-h-screen bg-background text-foreground flex">
       {/* Reusable Sidebar */}
       <Sidebar userRole={userRole} pathname={pathname} logout={logout} />
 

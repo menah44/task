@@ -16,6 +16,8 @@ import {
   Users,
   AlertCircle,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { formatNumber } from "@/lib/formatters";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -115,7 +117,7 @@ function GroupTreeNode({
         onDrop={(e) => onDrop(e, node.id)}
         onDragEnd={onDragEnd}
         style={{ paddingLeft: `${depth * 24 + 8}px` }}
-        className={`group flex items-center gap-2 py-2.5 pr-3 rounded-xl cursor-pointer transition-all select-none border ${
+        className={`group flex items-center gap-2 py-2.5 pe-3 rounded-xl cursor-pointer transition-all select-none border ${
           isSelected
             ? "bg-indigo-600/15 border-indigo-500/30 text-indigo-300"
             : isDragOver
@@ -140,10 +142,10 @@ function GroupTreeNode({
             isExpanded ? (
               <ChevronDown className="w-4 h-4" />
             ) : (
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4 rtl:rotate-180" />
             )
           ) : (
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 rtl:rotate-180" />
           )}
         </button>
 
@@ -154,11 +156,10 @@ function GroupTreeNode({
           <Folder className="w-4 h-4 flex-shrink-0 text-indigo-400/70" />
         )}
 
-        {/* Name + Count */}
         <span className="flex-1 text-sm font-medium truncate">{node.name}</span>
         <span className="flex-shrink-0 flex items-center gap-1 text-xs text-muted-foreground group-hover:text-muted-foreground transition-colors">
           <Users className="w-3 h-3" />
-          {node.membersCount}
+          {formatNumber(node.membersCount, "en")} {/* Will fix it below if I can pass i18n language, or I can use i18n directly */}
         </span>
 
         {/* Action Buttons */}
@@ -188,7 +189,7 @@ function GroupTreeNode({
         <div className="relative">
           {/* Vertical connecting line */}
           <div
-            className="absolute top-0 bottom-0 border-l border-border"
+            className="absolute top-0 bottom-0 border-s border-border"
             style={{ left: `${depth * 24 + 20}px` }}
           />
           {node.children.map((child) => (
@@ -237,6 +238,7 @@ function MembersPanel({ group, onClose }: MembersPanelProps) {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [addingMember, setAddingMember] = useState(false);
   const [removingId, setRemovingId] = useState<number | null>(null);
+  const { t } = useTranslation();
 
   const fetchMembers = useCallback(async () => {
     setLoadingMembers(true);
@@ -272,11 +274,11 @@ function MembersPanel({ group, onClose }: MembersPanelProps) {
       await apiClient.post(`/groups/${group.id}/members`, {
         userId: Number(selectedUserId),
       });
-      toast.success("Member added");
+      toast.success(t("adminGroups.memberAdded"));
       setSelectedUserId("");
       await fetchMembers();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to add member");
+      toast.error(err.response?.data?.message || t("adminGroups.failedAddMember"));
     } finally {
       setAddingMember(false);
     }
@@ -286,10 +288,10 @@ function MembersPanel({ group, onClose }: MembersPanelProps) {
     setRemovingId(userId);
     try {
       await apiClient.delete(`/groups/${group.id}/members/${userId}`);
-      toast.success("Member removed");
+      toast.success(t("adminGroups.memberRemoved"));
       await fetchMembers();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to remove member");
+      toast.error(err.response?.data?.message || t("adminGroups.failedRemoveMember"));
     } finally {
       setRemovingId(null);
     }
@@ -314,7 +316,7 @@ function MembersPanel({ group, onClose }: MembersPanelProps) {
             <h3 className="text-sm font-bold text-foreground truncate max-w-[160px]">
               {group.name}
             </h3>
-            <p className="text-xs text-muted-foreground">Members</p>
+            <p className="text-xs text-muted-foreground">{t("adminGroups.members")}</p>
           </div>
         </div>
         <button
@@ -328,7 +330,7 @@ function MembersPanel({ group, onClose }: MembersPanelProps) {
       {/* Add Member */}
       <div className="p-4 border-b border-border">
         <label className="block text-xs font-medium text-muted-foreground mb-2">
-          Add Member
+          {t("adminGroups.addMember")}
         </label>
         <div className="flex gap-2">
           <select
@@ -336,7 +338,7 @@ function MembersPanel({ group, onClose }: MembersPanelProps) {
             onChange={(e) => setSelectedUserId(e.target.value)}
             className="flex-1 min-w-0 bg-background border border-border rounded-lg px-3 py-2 text-foreground text-xs focus:outline-none focus:border-indigo-500 transition-colors"
           >
-            <option value="">Select user…</option>
+            <option value="">{t("adminGroups.selectUser")}</option>
             {availableUsers.map((u) => (
               <option key={u.id} value={u.id}>
                 {displayName(u)}
@@ -367,7 +369,7 @@ function MembersPanel({ group, onClose }: MembersPanelProps) {
         ) : members.length === 0 ? (
           <div className="text-center py-8">
             <Users className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-muted-foreground text-xs">No members yet</p>
+            <p className="text-muted-foreground text-xs">{t("adminGroups.noMembers")}</p>
           </div>
         ) : (
           members.map((member) => (
@@ -421,6 +423,7 @@ function GroupModal({
   loading,
   error,
 }: GroupModalProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState(initial?.name ?? "");
   const [parentId, setParentId] = useState<number | null>(
     initial?.parentId ?? null
@@ -438,7 +441,7 @@ function GroupModal({
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-5 border-b border-border">
           <h3 className="text-lg font-bold text-foreground">
-            {mode === "create" ? "Create Group" : "Edit Group"}
+            {mode === "create" ? t("adminGroups.createGroup") : t("adminGroups.editGroup")}
           </h3>
           <button
             onClick={onClose}
@@ -459,13 +462,13 @@ function GroupModal({
 
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Group Name <span className="text-error">*</span>
+              {t("adminGroups.groupName")} <span className="text-error">*</span>
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Engineering"
+              placeholder={t("adminGroups.groupNamePlaceholder")}
               autoFocus
               required
               className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-foreground text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all"
@@ -474,8 +477,8 @@ function GroupModal({
 
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Parent Group{" "}
-              <span className="text-muted-foreground font-normal">(optional)</span>
+              {t("adminGroups.parentGroup")}{" "}
+              <span className="text-muted-foreground font-normal">{t("adminGroups.optional")}</span>
             </label>
             <select
               value={parentId ?? ""}
@@ -484,7 +487,7 @@ function GroupModal({
               }
               className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-foreground text-sm focus:outline-none focus:border-indigo-500 transition-all appearance-none"
             >
-              <option value="">— No parent (root group) —</option>
+              <option value="">{t("adminGroups.noParent")}</option>
               {groups
                 .filter((g) => !initial || g.id !== (initial as any).id)
                 .map((g) => (
@@ -503,7 +506,7 @@ function GroupModal({
             onClick={onClose}
             className="px-5 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
-            Cancel
+            {t("adminGroups.cancel")}
           </button>
           <button
             type="submit"
@@ -512,7 +515,7 @@ function GroupModal({
             className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-foreground rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {loading && <Spinner />}
-            {mode === "create" ? "Create" : "Save Changes"}
+            {mode === "create" ? t("adminGroups.create") : t("adminGroups.saveChanges")}
           </button>
         </div>
       </div>
@@ -523,6 +526,7 @@ function GroupModal({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function GroupsPage() {
+  const { t, i18n } = useTranslation();
   // ── Data state ──
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
@@ -570,7 +574,7 @@ export default function GroupsPage() {
       });
       setExpandedIds(parents);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load groups");
+      setError(err.response?.data?.message || t("adminGroups.failedLoad"));
     } finally {
       setLoading(false);
     }
@@ -599,11 +603,11 @@ export default function GroupsPage() {
     setCreateError(null);
     try {
       await apiClient.post("/groups", { name, parentId });
-      toast.success("Group created");
+      toast.success(t("adminGroups.groupCreated"));
       setShowCreate(false);
       await fetchGroups();
     } catch (err: any) {
-      setCreateError(err.response?.data?.message || "Failed to create group");
+      setCreateError(err.response?.data?.message || t("adminGroups.failedCreate"));
     } finally {
       setCreateLoading(false);
     }
@@ -615,11 +619,11 @@ export default function GroupsPage() {
     setEditError(null);
     try {
       await apiClient.put(`/groups/${editTarget.id}`, { name, parentId });
-      toast.success("Group updated");
+      toast.success(t("adminGroups.groupUpdated"));
       setEditTarget(null);
       await fetchGroups();
     } catch (err: any) {
-      setEditError(err.response?.data?.message || "Failed to update group");
+      setEditError(err.response?.data?.message || t("adminGroups.failedUpdate"));
     } finally {
       setEditLoading(false);
     }
@@ -627,16 +631,16 @@ export default function GroupsPage() {
 
   const handleDelete = (group: Group) => {
     setConfirmConfig({
-      title: "Delete Group",
-      description: `Are you sure you want to delete "${group.name}"? This action cannot be undone.`,
+      title: t("adminGroups.deleteConfirmTitle"),
+      description: t("adminGroups.deleteConfirmDesc", { groupName: group.name }),
       onConfirm: async () => {
         try {
           await apiClient.delete(`/groups/${group.id}`);
-          toast.success("Group deleted");
+          toast.success(t("adminGroups.groupDeleted"));
           if (selectedGroup?.id === group.id) setSelectedGroup(null);
           await fetchGroups();
         } catch (err: any) {
-          toast.error(err.response?.data?.message || "Failed to delete group");
+          toast.error(err.response?.data?.message || t("adminGroups.failedDelete"));
         }
       },
     });
@@ -681,7 +685,7 @@ export default function GroupsPage() {
       if (!dragSource || dragSource.id === targetId || isMoving) return;
 
       if (isDescendantOf(targetId, dragSource.id)) {
-        toast.error("Cannot move a group inside its own sub-group");
+        toast.error(t("adminGroups.moveError"));
         return;
       }
 
@@ -695,11 +699,11 @@ export default function GroupsPage() {
 
       try {
         await apiClient.put(`/groups/${dragSource.id}/parent/${targetId}`);
-        toast.success(`"${dragSource.name}" moved`);
+        toast.success(t("adminGroups.movedSuccess", { groupName: dragSource.name }));
       } catch (err: any) {
         toast.error(
           err.response?.data?.message ||
-            "Failed to move group"
+            t("adminGroups.failedMove")
         );
         // Revert on failure
         await fetchGroups();
@@ -726,10 +730,10 @@ export default function GroupsPage() {
           <div>
             <h1 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
               <Folder className="w-8 h-8 text-indigo-400" />
-              Groups
+              {t("adminGroups.title")}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Manage group hierarchy, members, and permissions
+              {t("adminGroups.desc")}
             </p>
           </div>
           <button
@@ -740,7 +744,7 @@ export default function GroupsPage() {
             className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-foreground rounded-xl text-sm font-semibold transition-all shadow-md border border-indigo-500/30"
           >
             <Plus className="w-4 h-4" />
-            Add Group
+            {t("adminGroups.addGroup")}
           </button>
         </div>
 
@@ -762,20 +766,20 @@ export default function GroupsPage() {
               <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm font-semibold text-foreground">
-                    Group Hierarchy
+                    {t("adminGroups.groupHierarchy")}
                   </h2>
                   <span className="text-xs bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 rounded-full px-2 py-0.5 font-medium">
-                    {groups.length}
+                    {formatNumber(groups.length, i18n.language)}
                   </span>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-indigo-400 inline-block" />
-                    Drag to re-parent
+                    {t("adminGroups.dragToReparent")}
                   </span>
                   <span className="flex items-center gap-1">
                     <Users className="w-3 h-3" />
-                    Click to view members
+                    {t("adminGroups.clickViewMembers")}
                   </span>
                 </div>
               </div>
@@ -804,11 +808,11 @@ export default function GroupsPage() {
 
                     try {
                       await apiClient.put(`/groups/${dragSource.id}/parent/null`);
-                      toast.success(`"${dragSource.name}" moved to root`);
+                      toast.success(t("adminGroups.movedToRoot", { groupName: dragSource.name }));
                     } catch (err: any) {
                       toast.error(
                         err.response?.data?.message ||
-                          "Failed to move group to root"
+                          t("adminGroups.failedMoveRoot")
                       );
                       await fetchGroups();
                     } finally {
@@ -826,14 +830,14 @@ export default function GroupsPage() {
                       : "border-border text-muted-foreground hover:text-muted-foreground"
                   }`}
                 >
-                  Drop here to move to Root
+                  {t("adminGroups.dropToRoot")}
                 </div>
                 {tree.length === 0 ? (
                   <div className="py-16 text-center">
                     <Folder className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-muted-foreground font-medium">No groups yet</p>
+                    <p className="text-muted-foreground font-medium">{t("adminGroups.noGroups")}</p>
                     <p className="text-muted-foreground text-sm mt-1">
-                      Click &ldquo;Add Group&rdquo; to create your first group
+                      {t("adminGroups.clickToAdd")}
                     </p>
                   </div>
                 ) : (
@@ -905,7 +909,7 @@ export default function GroupsPage() {
           setConfirmOpen(false);
         }}
         onCancel={() => setConfirmOpen(false)}
-        confirmText="Delete"
+        confirmText={t("adminGroups.deleteBtn")}
       />
     </main>
   );

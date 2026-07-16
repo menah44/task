@@ -12,7 +12,7 @@ export default function UserMenu({ name, email }: UserMenuProps) {
         {firstLetter}
       </div>
 
-      <div className="hidden sm:block text-left">
+      <div className="hidden sm:block text-start">
         <p className="font-semibold text-xs text-foreground">{name || email.split("@")[0]}</p>
         <p className="text-[10px] text-muted-foreground">{email}</p>
       </div>

@@ -11,5 +11,13 @@ export const boundaryApi = {
 
   // التحقق من الموقع
   validateGeofence: (formId: number, latitude: number, longitude: number) =>
-    apiClient.post<{ inside: boolean }>(`/spatial/geofence/validate`, { formId, latitude, longitude }),
+    apiClient.post<{
+      inside: boolean;
+      status?: string;
+      distance?: number;
+      validationMode?: string;
+      allowedRadius?: number;
+      graceRadius?: number | null;
+      location?: { lat: number; lng: number; address?: string };
+    }>(`/spatial/geofence/validate`, { formId, latitude, longitude }),
 };

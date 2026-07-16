@@ -18,6 +18,8 @@ import {
   Building2,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
+import { useTranslation } from "react-i18next";
+import { formatNumber } from "@/lib/formatters";
 
 interface AuditLog {
   id: number;
@@ -45,6 +47,7 @@ interface User {
 }
 
 export default function AuditLogsPage() {
+  const { t, i18n } = useTranslation();
   // ── Data states ──
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [total, setTotal] = useState(0);
@@ -102,7 +105,7 @@ export default function AuditLogsPage() {
       setTotal(res.data.total || 0);
       setTotalPages(res.data.totalPages || 1);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load audit logs");
+      setError(err.response?.data?.message || t("adminAudit.failedLoad"));
     } finally {
       setLoading(false);
     }
@@ -119,7 +122,7 @@ export default function AuditLogsPage() {
     setStartDate("");
     setEndDate("");
     setPage(1);
-    toast.success("Filters reset");
+    toast.success(t("adminAudit.filtersReset"));
   };
 
   // ── Fetch detailed log for drawer ──
@@ -132,7 +135,7 @@ export default function AuditLogsPage() {
       const res = await apiClient.get(`/audit/${id}`);
       setDetailedLog(res.data);
     } catch {
-      toast.error("Failed to load audit log details");
+      toast.error(t("adminAudit.failedLoadDetails"));
       setDrawerOpen(false);
     } finally {
       setLoadingDetail(false);
@@ -143,14 +146,14 @@ export default function AuditLogsPage() {
   const formatTimestamp = (iso: string) => {
     try {
       const date = new Date(iso);
-      return date.toLocaleString([], {
+      return new Intl.DateTimeFormat(i18n.language, {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
-      });
+      }).format(date);
     } catch {
       return iso;
     }
@@ -198,35 +201,35 @@ export default function AuditLogsPage() {
           <div>
             <h1 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
               <ClipboardList className="w-8 h-8 text-primary" />
-              Audit Logs
+              {t("adminAudit.title")}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Track user actions, database operations, and system administration activities
+              {t("adminAudit.desc")}
             </p>
           </div>
           <button
             onClick={() => {
               fetchLogs();
-              toast.success("Logs refreshed");
+              toast.success(t("adminAudit.logsRefreshed"));
             }}
             className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border hover:bg-muted text-foreground rounded-xl text-sm font-semibold transition-all shadow-md"
           >
             <RefreshCw className="w-4 h-4" />
-            Refresh
+            {t("adminAudit.refresh")}
           </button>
         </div>
 
         {/* Filter Panel */}
         <div className="bg-card border border-border rounded-2xl p-5 mb-6 shadow-sm">
           <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">
-            Filter System Activity
+            {t("adminAudit.filterTitle")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Actor Filter */}
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
                 <UserIcon className="w-3.5 h-3.5" />
-                Actor (User)
+                {t("adminAudit.actor")}
               </label>
               <select
                 value={selectedActorId}
@@ -236,7 +239,7 @@ export default function AuditLogsPage() {
                 }}
                 className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-primary transition-colors"
               >
-                <option value="">All Actors</option>
+                <option value="">{t("adminAudit.allActors")}</option>
                 {allUsers.map((u) => (
                   <option key={u.id} value={u.id}>
                     {getUserDisplayName(u)}
@@ -249,7 +252,7 @@ export default function AuditLogsPage() {
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
                 <ClipboardList className="w-3.5 h-3.5" />
-                Resource Type
+                {t("adminAudit.resourceType")}
               </label>
               <select
                 value={selectedResourceType}
@@ -259,7 +262,7 @@ export default function AuditLogsPage() {
                 }}
                 className="w-full bg-background border border-border rounded-xl px-3 py-2 text-foreground text-xs font-medium focus:outline-none focus:border-primary transition-colors"
               >
-                <option value="ALL">All Types</option>
+                <option value="ALL">{t("adminAudit.allTypes")}</option>
                 <option value="USER">USER</option>
                 <option value="GROUP">GROUP</option>
                 <option value="ROLE">ROLE</option>
@@ -271,7 +274,7 @@ export default function AuditLogsPage() {
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
-                Start Date
+                {t("adminAudit.startDate")}
               </label>
               <input
                 type="date"
@@ -288,7 +291,7 @@ export default function AuditLogsPage() {
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
-                End Date
+                {t("adminAudit.endDate")}
               </label>
               <div className="flex gap-2">
                 <input
@@ -303,7 +306,7 @@ export default function AuditLogsPage() {
                 {(selectedActorId || selectedResourceType !== "ALL" || startDate || endDate) && (
                   <button
                     onClick={handleResetFilters}
-                    title="Clear filters"
+                    title={t("adminAudit.clearFilters")}
                     className="p-2 border border-border bg-background hover:bg-rose-500/10 hover:border-rose-500/20 text-muted-foreground hover:text-rose-400 rounded-xl transition-all flex items-center justify-center"
                   >
                     <X className="w-4 h-4" />
@@ -331,28 +334,28 @@ export default function AuditLogsPage() {
               <table className="min-w-full divide-y divide-border/60">
                 <thead className="bg-card">
                   <tr>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Timestamp
+                    <th className="px-6 py-4 ltr:text-start rtl:text-end text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      {t("adminAudit.timestamp")}
                     </th>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Actor
+                    <th className="px-6 py-4 ltr:text-start rtl:text-end text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      {t("adminAudit.actorColumn")}
                     </th>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Action
+                    <th className="px-6 py-4 ltr:text-start rtl:text-end text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      {t("adminAudit.action")}
                     </th>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Resource Type
+                    <th className="px-6 py-4 ltr:text-start rtl:text-end text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      {t("adminAudit.resourceType")}
                     </th>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Target ID
+                    <th className="px-6 py-4 ltr:text-start rtl:text-end text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      {t("adminAudit.targetId")}
                     </th>
                     {isSuperAdmin && (
-                      <th className="px-6 py-4 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        Organization
+                      <th className="px-6 py-4 ltr:text-start rtl:text-end text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        {t("adminAudit.organization")}
                       </th>
                     )}
-                    <th className="px-6 py-4 text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Actions
+                    <th className="px-6 py-4 ltr:text-end rtl:text-start text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      {t("adminAudit.actions")}
                     </th>
                   </tr>
                 </thead>
@@ -361,9 +364,9 @@ export default function AuditLogsPage() {
                     <tr>
                       <td colSpan={isSuperAdmin ? 7 : 6} className="text-center py-16 text-muted-foreground">
                         <ClipboardList className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                        <p className="font-semibold text-sm">No audit logs found</p>
+                        <p className="font-semibold text-sm">{t("adminAudit.noLogs")}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Try adjustments to filters or check back later
+                          {t("adminAudit.noLogsDesc")}
                         </p>
                       </td>
                     </tr>
@@ -409,11 +412,11 @@ export default function AuditLogsPage() {
                                 {log.organization.name}
                               </div>
                             ) : (
-                              <span className="text-muted-foreground italic">System</span>
+                              <span className="text-muted-foreground italic">{t("adminAudit.system")}</span>
                             )}
                           </td>
                         )}
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
+                        <td className="px-6 py-4 whitespace-nowrap ltr:text-end rtl:text-start text-xs">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -435,9 +438,9 @@ export default function AuditLogsPage() {
             {totalPages > 1 && (
               <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-card">
                 <div className="text-xs text-muted-foreground font-medium">
-                  Showing Page <span className="text-foreground font-semibold">{page}</span> of{" "}
-                  <span className="text-foreground font-semibold">{totalPages}</span> (
-                  <span className="text-foreground font-semibold">{total}</span> total entries)
+                  {t("adminAudit.showingPage")} <span className="text-foreground font-semibold">{formatNumber(page, i18n.language)}</span> {t("adminAudit.of")}{" "}
+                  <span className="text-foreground font-semibold">{formatNumber(totalPages, i18n.language)}</span> (
+                  <span className="text-foreground font-semibold">{formatNumber(total, i18n.language)}</span> {t("adminAudit.totalEntries")})
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -445,14 +448,14 @@ export default function AuditLogsPage() {
                     disabled={page === 1}
                     className="px-4 py-2 border border-border hover:bg-muted text-xs font-semibold text-foreground rounded-xl transition-all disabled:opacity-30 disabled:hover:bg-transparent"
                   >
-                    Previous
+                    {t("adminAudit.previous")}
                   </button>
                   <button
                     onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
                     disabled={page === totalPages}
                     className="px-4 py-2 border border-border hover:bg-muted text-xs font-semibold text-foreground rounded-xl transition-all disabled:opacity-30 disabled:hover:bg-transparent"
                   >
-                    Next
+                    {t("adminAudit.next")}
                   </button>
                 </div>
               </div>
@@ -475,7 +478,7 @@ export default function AuditLogsPage() {
 
         {/* Drawer container */}
         <div
-          className={`absolute right-0 top-0 bottom-0 w-full max-w-xl bg-card border-l border-border shadow-2xl flex flex-col transition-transform duration-300 ${
+          className={`absolute end-0 top-0 bottom-0 w-full max-w-xl bg-card border-s border-border shadow-2xl flex flex-col transition-transform duration-300 ${
             drawerOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
@@ -484,9 +487,9 @@ export default function AuditLogsPage() {
             <div>
               <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <ClipboardList className="w-5 h-5 text-primary" />
-                Audit Log Details
+                {t("adminAudit.detailsTitle")}
               </h3>
-              <p className="text-xs text-muted-foreground mt-1">Log Identifier #{selectedLogId}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("adminAudit.logId", { id: selectedLogId })}</p>
             </div>
             <button
               onClick={() => setDrawerOpen(false)}
@@ -511,7 +514,7 @@ export default function AuditLogsPage() {
                   <div className={`grid grid-cols-2 ${isSuperAdmin ? 'md:grid-cols-3' : ''} gap-4 bg-background border border-border rounded-2xl p-4`}>
                     <div>
                       <span className="block text-[10px] uppercase font-bold text-muted-foreground">
-                        Actor Email
+                        {t("adminAudit.actorEmail")}
                       </span>
                       <span className="text-sm font-semibold text-foreground">
                         {detailedLog.actorEmail}
@@ -519,7 +522,7 @@ export default function AuditLogsPage() {
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase font-bold text-muted-foreground">
-                        Actor ID
+                        {t("adminAudit.actorId")}
                       </span>
                       <span className="text-sm font-mono text-muted-foreground">
                         {detailedLog.actorId}
@@ -527,7 +530,7 @@ export default function AuditLogsPage() {
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase font-bold text-muted-foreground">
-                        Action Executed
+                        {t("adminAudit.actionExecuted")}
                       </span>
                       <span
                         className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border mt-0.5 ${getActionBadgeColor(
@@ -539,7 +542,7 @@ export default function AuditLogsPage() {
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase font-bold text-muted-foreground">
-                        Resource Type / Target ID
+                        {t("adminAudit.resourceTypeTargetId")}
                       </span>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span
@@ -557,12 +560,12 @@ export default function AuditLogsPage() {
                     {isSuperAdmin && (
                       <div>
                         <span className="block text-[10px] uppercase font-bold text-muted-foreground">
-                          Organization
+                          {t("adminAudit.organization")}
                         </span>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
                           <span className="text-xs font-medium text-muted-foreground">
-                            {detailedLog.organization?.name || "System"}
+                            {detailedLog.organization?.name || t("adminAudit.system")}
                           </span>
                         </div>
                       </div>
@@ -572,23 +575,23 @@ export default function AuditLogsPage() {
                   {/* Metadata Sections */}
                   <div className="space-y-4">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      Network & Agent Metadata
+                      {t("adminAudit.networkMetadata")}
                     </h4>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-xs text-muted-foreground py-1">
                         <Clock className="w-4 h-4 text-primary flex-shrink-0" />
-                        <span className="text-muted-foreground w-24 flex-shrink-0">Event Time</span>
+                        <span className="text-muted-foreground w-24 flex-shrink-0">{t("adminAudit.eventTime")}</span>
                         <span className="font-mono">{formatTimestamp(detailedLog.createdAt)}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground py-1">
                         <Globe className="w-4 h-4 text-primary flex-shrink-0" />
-                        <span className="text-muted-foreground w-24 flex-shrink-0">IP Address</span>
+                        <span className="text-muted-foreground w-24 flex-shrink-0">{t("adminAudit.ipAddress")}</span>
                         <span className="font-mono">{detailedLog.ipAddress || "—"}</span>
                       </div>
                       <div className="flex items-start gap-3 text-xs text-muted-foreground py-1">
                         <Terminal className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span className="text-muted-foreground w-24 flex-shrink-0">User Agent</span>
-                        <span className="text-muted-foreground text-left truncate hover:text-clip hover:whitespace-normal">
+                        <span className="text-muted-foreground w-24 flex-shrink-0">{t("adminAudit.userAgent")}</span>
+                        <span className="text-muted-foreground text-start truncate hover:text-clip hover:whitespace-normal">
                           {detailedLog.userAgent || "—"}
                         </span>
                       </div>
@@ -599,7 +602,7 @@ export default function AuditLogsPage() {
                   {detailedLog.details && (
                     <div className="space-y-3">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                        Action Payload Details & Changes
+                        {t("adminAudit.payloadDetails")}
                       </h4>
                       <pre className="bg-background p-4 rounded-xl border border-border overflow-x-auto text-xs text-indigo-300 font-mono leading-relaxed max-h-[300px]">
                         {JSON.stringify(detailedLog.details, null, 2)}
@@ -617,7 +620,7 @@ export default function AuditLogsPage() {
               onClick={() => setDrawerOpen(false)}
               className="px-5 py-2.5 bg-background border border-border hover:bg-muted text-foreground rounded-xl text-xs font-semibold transition-all"
             >
-              Close Drawer
+              {t("adminAudit.closeDrawer")}
             </button>
           </div>
         </div>

@@ -8,16 +8,19 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import ThemeLogo from "@/components/ThemeLogo";
+import { useTranslation } from "react-i18next";
 
-const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+const getLoginSchema = (t: any) => z.object({
+  email: z.string().email(t("login.emailRequired")),
+  password: z.string().min(6, t("login.passwordMinLength")),
 });
 
-type LoginForm = z.infer<typeof loginSchema>;
+type LoginForm = z.infer<ReturnType<typeof getLoginSchema>>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { fetchCurrentUser, currentUser, hasHydrated, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
@@ -37,12 +40,14 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const schema = getLoginSchema(t);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(schema),
   });
 
   const onSubmit = async (data: LoginForm) => {
@@ -56,7 +61,7 @@ export default function LoginPage() {
       const token = result.accessToken || result.token;
 
       if (!token) {
-        setApiError("Authentication token not found in server response.");
+        setApiError(t("login.authFailed"));
         setIsLoading(false);
         return;
       }
@@ -73,7 +78,7 @@ export default function LoginPage() {
 
       const state = useAuthStore.getState();
       if (!state.currentUser) {
-        setApiError("Failed to fetch user profile after authentication.");
+        setApiError(t("login.profileFailed"));
         setIsLoading(false);
         return;
       }
@@ -97,7 +102,7 @@ export default function LoginPage() {
       };
       const errorMsg =
         axiosError.response?.data?.message ||
-        "Invalid credentials. Please try again.";
+        t("login.invalidCredentials");
       setApiError(errorMsg);
       setIsLoading(false);
     }
@@ -106,20 +111,19 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div
-        className="w-full max-w-md bg-card p-8 rounded-xl border border-border shadow-2xl relative overflow-hidden"
-        dir="ltr">
+        className="w-full max-w-md bg-card p-8 rounded-xl border border-border shadow-2xl relative overflow-hidden">
         {/* Decorative soft background glow */}
-        <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -top-10 -start-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-10 -end-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm/10 border border-primary/30 flex items-center justify-center mb-3">
-            <Lock className="w-6 h-6 text-primary-foreground" />
+          <div className="mb-5">
+            <ThemeLogo width={180} height={58} />
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Sign In
+            {t("login.title")}
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Welcome back to Form</p>
+          <p className="text-muted-foreground text-sm mt-1">{t("login.subtitle")}</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -132,16 +136,16 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Email Address
+              {t("login.emailLabel")}
             </label>
             <div className="relative">
               <input
                 type="email"
                 {...register("email")}
-                className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-background border border-border text-foreground placeholder-gray-500 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-all text-left"
-                placeholder="you@example.com"
+                className="w-full ltr:ps-10 ltr:pe-3 rtl:pe-10 rtl:ps-3 py-2.5 rounded-lg bg-background border border-border text-foreground placeholder-gray-500 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-all"
+                placeholder={t("login.emailPlaceholder")}
               />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+              <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none text-muted-foreground">
                 <Mail className="w-5 h-5" />
               </div>
             </div>
@@ -154,22 +158,22 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Password
+              {t("login.passwordLabel")}
             </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 {...register("password")}
-                className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-background border border-border text-foreground placeholder-gray-500 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-all text-left"
-                placeholder="••••••••"
+                className="w-full ltr:ps-10 ltr:pe-10 rtl:pe-10 rtl:ps-10 py-2.5 rounded-lg bg-background border border-border text-foreground placeholder-gray-500 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-all"
+                placeholder={t("login.passwordPlaceholder")}
               />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+              <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none text-muted-foreground">
                 <Lock className="w-5 h-5" />
               </div>
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-muted-foreground focus:outline-none">
+                className="absolute inset-y-0 end-0 pe-3 flex items-center text-muted-foreground hover:text-muted-foreground focus:outline-none">
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
                 ) : (
@@ -191,10 +195,10 @@ export default function LoginPage() {
             {isLoading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Signing in...</span>
+                <span>{t("login.signingInBtn")}</span>
               </>
             ) : (
-              <span>Sign In</span>
+              <span>{t("login.signInBtn")}</span>
             )}
           </button>
         </form>

@@ -13,6 +13,21 @@ import {
 } from "@/lib/types/form";
 import { toAnswerQuestion } from "@/lib/types/forms/answerFieldAdapter";
 import { useAuthStore } from "@/lib/auth-store";
+import { useTranslation } from "react-i18next";
+
+
+// ======================== Helpers ========================
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371e3; // meters
+  const toRad = (angle: number) => (angle * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 // ======================== Types ========================
 interface GpsCoords {
@@ -92,12 +107,13 @@ function getMockForm(formId: string): FormStructure {
 
 // ======================== Progress Bar ========================
 function ProgressBar({ current, total }: { current: number; total: number }) {
+  const { t } = useTranslation();
   const pct = total === 0 ? 0 : Math.round((current / total) * 100);
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between text-xs text-muted-foreground">
         <span>
-          Section {current} of {total}
+          {t("fillForm.sectionProgress", { current, total })}
         </span>
         <span className="font-medium text-primary">{pct}%</span>
       </div>
@@ -121,11 +137,13 @@ function GpsBanner({
   loading: boolean;
   denied: boolean;
 }) {
+  const { t } = useTranslation();
+
   if (loading) {
     return (
       <div className="bg-warning/15 border border-warning/20 text-warning text-xs px-4 py-2.5 rounded-lg flex items-center gap-2">
         <span className="animate-spin">⟳</span>
-        Capturing your location...
+        {t("fillForm.capturingLocation")}
       </div>
     );
   }
@@ -142,7 +160,7 @@ function GpsBanner({
         <div className="text-success text-xs px-4 py-2.5 flex items-center justify-between gap-2">
           <span className="flex items-center gap-2">
             <span>📍</span>
-            Location captured (±{Math.round(accuracy)}m)
+            {t("fillForm.locationCaptured", { accuracy: Math.round(accuracy) })}
           </span>
           {/* Same-tab navigation by design (no target="_blank"). Note: this
               will leave the fill flow, so anything not auto-saved yet will
@@ -150,7 +168,7 @@ function GpsBanner({
           <a
             href={mapLink}
             className="underline hover:text-green-300 whitespace-nowrap">
-            Open in Maps ↗
+            {t("fillForm.openInMaps")}
           </a>
         </div>
         <iframe
@@ -167,8 +185,7 @@ function GpsBanner({
     return (
       <div className="bg-error/15 border border-error/20 text-error text-xs px-4 py-2.5 rounded-lg flex items-center gap-2">
         <span>⚠️</span>
-        Couldn&apos;t access your location. Check your browser&apos;s location
-        permission for this site and try again.
+        {t("fillForm.locationDenied")}
       </div>
     );
   }
@@ -182,6 +199,7 @@ function AutoSaveIndicator({
 }: {
   status: "idle" | "saving" | "saved" | "error";
 }) {
+  const { t } = useTranslation();
   if (status === "idle") return null;
   return (
     <span
@@ -193,10 +211,10 @@ function AutoSaveIndicator({
             : "text-error"
       }`}>
       {status === "saving"
-        ? "Auto-saving..."
+        ? t("fillForm.autoSaving")
         : status === "saved"
-          ? "Draft saved ✓"
-          : "Save failed"}
+          ? t("fillForm.draftSaved")
+          : t("fillForm.saveFailed")}
     </span>
   );
 }
@@ -222,9 +240,14 @@ export default function FormFillPage() {
   const [gpsDenied, setGpsDenied] = useState(false);
   const [locationBlocked, setLocationBlocked] = useState(false);
   const [locationErrorMsg, setLocationErrorMsg] = useState("");
+  const [locationWarningMsg, setLocationWarningMsg] = useState("");
+  const [locationName, setLocationName] = useState("");
+  const [locationDistance, setLocationDistance] = useState<number | null>(null);
+  const [locationRequiredDistance, setLocationRequiredDistance] = useState<number | null>(null);
 
   const { currentUser } = useAuthStore();
   const role = currentUser?.role;
+  const { t } = useTranslation();
 
   const backLink = React.useMemo(() => {
     if (role === "SUPER_ADMIN") return "/super-admin/dashboard";
@@ -283,6 +306,44 @@ export default function FormFillPage() {
       { enableHighAccuracy: true, timeout: 10000 },
     );
   }, [form]);
+
+
+  // ── Client-Side Location Validation ──
+  useEffect(() => {
+    if (!form || !gpsCoords) return;
+    // FormStructure extends FormSettings, so settings fields are directly on `form`
+    if (!form.restrictByLocation || !form.location || !form.allowedRadius) return;
+
+    // Accuracy Check
+    if (gpsCoords.accuracy > form.allowedRadius * 2 && gpsCoords.accuracy > 150) {
+      setLocationBlocked(true);
+      setLocationErrorMsg(t("fillForm.locationAccuracyTooLow", { accuracy: Math.round(gpsCoords.accuracy) }));
+      return;
+    }
+
+    const dist = haversineDistance(gpsCoords.lat, gpsCoords.lng, form.location.lat, form.location.lng);
+    setLocationDistance(dist);
+    setLocationRequiredDistance(form.allowedRadius);
+    if (form.location.address) {
+      setLocationName(form.location.address);
+    }
+
+    let maxDist = form.allowedRadius;
+    if (form.validationMode === "ALLOW_NEARBY" && form.graceRadius) {
+      maxDist = form.graceRadius;
+      if (dist > form.allowedRadius && dist <= form.graceRadius) {
+        setLocationWarningMsg(t("fillForm.locationWarningNearby"));
+      } else {
+        setLocationWarningMsg("");
+      }
+    }
+
+    if (dist > maxDist) {
+      setLocationBlocked(true);
+    } else {
+      setLocationBlocked(false);
+    }
+  }, [form, gpsCoords, t]);
 
   // ── Create a draft response on first answer: POST /responses/forms/:formId (A4-01) ──
   const createDraftIfNeeded = useCallback(async () => {
@@ -412,7 +473,7 @@ export default function FormFillPage() {
       router.push(`/studio/forms/${formId}/fill/thank-you`);
     } catch (err) {
       console.error("Submission failed:", err);
-      alert("Submission failed. Please try again.");
+      alert(t("fillForm.submissionFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -424,7 +485,7 @@ export default function FormFillPage() {
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Loading form...</p>
+          <p className="text-sm text-muted-foreground">{t("fillForm.loading")}</p>
         </div>
       </div>
     );
@@ -433,11 +494,11 @@ export default function FormFillPage() {
   if (!form)
     return (
       <div className="text-center py-20">
-        <p className="text-muted-foreground">Form not found.</p>
+        <p className="text-muted-foreground">{t("fillForm.formNotFound")}</p>
         <Link
           href={backLink}
           className="text-primary text-sm hover:underline mt-2 block">
-          ← Back to forms
+          {t("fillForm.backToForms")}
         </Link>
       </div>
     );
@@ -453,12 +514,12 @@ export default function FormFillPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-foreground mb-2">Location Restricted</h1>
+          <h1 className="text-xl font-bold text-foreground mb-2">{t("fillForm.locationRestricted")}</h1>
           <p className="text-sm text-muted-foreground">{locationErrorMsg}</p>
           <Link
             href={backLink}
             className="mt-6 px-4 py-2 inline-block bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-bold rounded-xl transition-colors">
-            Back to Forms
+            {t("fillForm.backToFormsBtn")}
           </Link>
         </div>
       </div>
@@ -472,11 +533,11 @@ export default function FormFillPage() {
       <div className="max-w-2xl mx-auto space-y-6 pb-10 mt-10">
         <div className="bg-card border border-border rounded-2xl p-6 text-center shadow-sm">
           <h1 className="text-xl font-bold text-foreground mb-2">{form.title}</h1>
-          <p className="text-sm text-muted-foreground">This form has no questions yet.</p>
+          <p className="text-sm text-muted-foreground">{t("fillForm.noQuestions")}</p>
           <Link
             href={backLink}
             className="mt-4 px-4 py-2 inline-block bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-bold rounded-xl transition-colors">
-            Back to Forms
+            {t("fillForm.backToFormsBtn")}
           </Link>
         </div>
       </div>
@@ -535,7 +596,7 @@ export default function FormFillPage() {
 
         {visibleQuestions.length === 0 && (
           <p className="text-muted-foreground text-sm italic text-center py-4">
-            No questions to display in this section.
+            {t("fillForm.noQuestionsSection")}
           </p>
         )}
       </div>
@@ -546,13 +607,13 @@ export default function FormFillPage() {
           <button
             onClick={handleBack}
             className="px-5 py-2.5 text-sm font-medium text-muted-foreground border border-border rounded-xl hover:bg-muted transition-colors">
-            ← Back
+            {t("fillForm.back")}
           </button>
         ) : (
           <Link
             href={backLink}
             className="px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            ← Cancel
+            {t("fillForm.cancel")}
           </Link>
         )}
 
@@ -561,13 +622,13 @@ export default function FormFillPage() {
             onClick={handleSubmit}
             disabled={isSubmitting}
             className="px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-foreground text-sm font-bold rounded-xl transition-colors shadow-sm">
-            {isSubmitting ? "Submitting..." : "Submit ✓"}
+            {isSubmitting ? t("fillForm.submitting") : t("fillForm.submit")}
           </button>
         ) : (
           <button
             onClick={handleNext}
             className="px-6 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-bold rounded-xl transition-colors shadow-sm">
-            Next →
+            {t("fillForm.next")}
           </button>
         )}
       </div>

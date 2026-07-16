@@ -5,6 +5,8 @@ import Link from "next/link";
 import apiClient from "@/lib/api/client";
 import SkeletonCard from "@/components/SkeletonCard";
 import EmptyState from "@/components/EmptyState";
+import { useTranslation } from "react-i18next";
+import { formatNumber } from "@/lib/formatters";
 
 interface Organization {
   id: number;
@@ -24,6 +26,7 @@ export default function SuperAdminDashboard() {
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [loadingOrg, setLoadingOrg] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     setLoadingOrg(true);
@@ -65,48 +68,48 @@ export default function SuperAdminDashboard() {
   const activeUsers = safeUsers.filter((u) => u.isActive).length;
 
   return (
-    <main className="space-y-8 text-foreground" dir="ltr">
+    <main className="space-y-8 text-foreground">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-foreground tracking-tight">
-            Super Admin Dashboard
+            {t("superAdmin.dashboard")}
           </h2>
           <p className="text-muted-foreground text-sm mt-1">
-            System-wide overview of organizations and users.
+            {t("superAdmin.dashboardDesc")}
           </p>
         </div>
         <Link
           href="/super-admin/organizations"
           className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm font-medium rounded-xl transition-colors">
-          Manage Organizations
+          {t("superAdmin.manageOrgs")}
         </Link>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-          <p className="text-muted-foreground text-sm font-medium">Total Organizations</p>
-          <h3 className="text-3xl font-bold mt-2 text-foreground">{loadingOrg ? "-" : totalOrgs}</h3>
+          <p className="text-muted-foreground text-sm font-medium">{t("superAdmin.totalOrgs")}</p>
+          <h3 className="text-3xl font-bold mt-2 text-foreground">{loadingOrg ? "-" : formatNumber(totalOrgs, i18n.language)}</h3>
         </div>
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-          <p className="text-muted-foreground text-sm font-medium">Active Organizations</p>
-          <h3 className="text-3xl font-bold mt-2 text-success">{loadingOrg ? "-" : activeOrgs}</h3>
+          <p className="text-muted-foreground text-sm font-medium">{t("superAdmin.activeOrgs")}</p>
+          <h3 className="text-3xl font-bold mt-2 text-success">{loadingOrg ? "-" : formatNumber(activeOrgs, i18n.language)}</h3>
         </div>
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-          <p className="text-muted-foreground text-sm font-medium">Total Users</p>
-          <h3 className="text-3xl font-bold mt-2 text-primary">{loadingUsers ? "-" : totalUsers}</h3>
+          <p className="text-muted-foreground text-sm font-medium">{t("superAdmin.totalUsers")}</p>
+          <h3 className="text-3xl font-bold mt-2 text-primary">{loadingUsers ? "-" : formatNumber(totalUsers, i18n.language)}</h3>
         </div>
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-          <p className="text-muted-foreground text-sm font-medium">Active Users</p>
-          <h3 className="text-3xl font-bold mt-2 text-success">{loadingUsers ? "-" : activeUsers}</h3>
+          <p className="text-muted-foreground text-sm font-medium">{t("superAdmin.activeUsers")}</p>
+          <h3 className="text-3xl font-bold mt-2 text-success">{loadingUsers ? "-" : formatNumber(activeUsers, i18n.language)}</h3>
         </div>
       </div>
 
       {/* Recent Organizations Section */}
       <div className="bg-card rounded-3xl p-6 shadow-sm border border-border">
         <h3 className="text-xl font-bold mb-6 text-foreground border-b border-border pb-3">
-          Organizations Overview
+          {t("superAdmin.orgsOverview")}
         </h3>
 
         {loadingOrg ? (
@@ -136,16 +139,16 @@ export default function SuperAdminDashboard() {
                           ? "bg-success text-success-foreground border-transparent shadow-sm"
                           : "bg-accent text-accent-foreground border-transparent shadow-sm"
                       }`}>
-                      {org.isActive ? "Active" : "Inactive"}
+                      {org.isActive ? t("superAdmin.active") : t("superAdmin.inactive")}
                     </span>
                   </div>
 
                   <p className="text-muted-foreground text-sm mt-3">
-                    Users:{" "}
+                    {t("superAdmin.users")}{" "}
                     <span className="text-foreground font-medium">
-                      {org.usersCount || 0}
+                      {formatNumber(org.usersCount || 0, i18n.language)}
                     </span>{" "}
-                    registered
+                    {t("superAdmin.registered")}
                   </p>
                 </div>
 
@@ -153,7 +156,7 @@ export default function SuperAdminDashboard() {
                   <Link
                     href={`/super-admin/organizations/${org.id}`}
                     className="text-primary font-medium text-sm hover:text-primary/80 transition-colors">
-                    View Details →
+                    {t("superAdmin.viewDetails")}
                   </Link>
                 </div>
               </div>

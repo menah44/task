@@ -20,7 +20,7 @@ export default function SkeletonCard() {
         <div className="h-4 bg-accent rounded w-1/4" />
         <div className="h-10 bg-accent rounded w-full" />
       </div>
-      <div className="h-10 bg-accent rounded w-1/5 ml-auto" />
+      <div className="h-10 bg-accent rounded w-1/5 ms-auto" />
     </div>
   );
 }

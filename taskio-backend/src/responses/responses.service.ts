@@ -11,7 +11,8 @@ import { Form } from '../forms/entities/form.entity';
 import { User } from '../auth/entities/user.entity';
 import { AuditService } from '../audit/audit.service';
 
-import { isPointInBoundary } from '../spatial/utils/spatial-helpers';
+import { isPointInBoundary, haversineDistance } from '../spatial/utils/spatial-helpers';
+import { isElevatedRole } from '../auth/auth.utils';
 
 @Injectable()
 export class ResponsesService {
@@ -38,6 +39,64 @@ export class ResponsesService {
     return !!existing;
   }
 
+  private validateLocation(form: any, gps: any) {
+    const settings = (form.settings || {}) as any;
+    if (!settings.restrictByLocation) return;
+
+    const lat = gps?.latitude ?? gps?.lat;
+    const lng = gps?.longitude ?? gps?.lng;
+    const accuracy = gps?.accuracy;
+
+    console.log(`\n--- LOCATION VALIDATION DEBUG ---`);
+    console.log(`restrictByLocation: ${settings.restrictByLocation}`);
+    
+    if (lat === undefined || lng === undefined || lat === null || lng === null) {
+      console.log(`Validation Result: NO GPS PROVIDED`);
+      throw new ForbiddenException("You must be inside the configured location to submit this form.");
+    }
+
+    console.log(`User Location: { lat: ${lat}, lng: ${lng}, accuracy: ${accuracy} }`);
+
+    // 1. Check Point+Radius setup
+    if (settings.location && settings.allowedRadius) {
+      // Accuracy check
+      if (accuracy && accuracy > settings.allowedRadius * 2 && accuracy > 150) {
+        console.log(`Validation Result: POOR ACCURACY`);
+        throw new ForbiddenException("Your current GPS accuracy is too low. Please enable High Accuracy Location or move to an open area and try again.");
+      }
+
+      const distance = haversineDistance(lat, lng, settings.location.lat, settings.location.lng);
+      console.log(`Haversine Distance: ${distance} meters`);
+
+      let maxDistance = settings.allowedRadius;
+      if (settings.validationMode === 'ALLOW_NEARBY' && settings.graceRadius) {
+        maxDistance = settings.graceRadius;
+      }
+
+      if (distance > maxDistance) {
+        console.log(`Validation Result: OUTSIDE RADIUS`);
+        throw new ForbiddenException("You must be inside the configured location to submit this form.");
+      }
+      console.log(`Validation Result: INSIDE RADIUS`);
+      return;
+    }
+
+    // 2. Fallback to GeoJSON boundary
+    const point: [number, number] = [lng, lat]; // GeoJSON expects [lng, lat]
+    let isInside = false;
+    if (!form.boundary) {
+      isInside = true;
+    } else {
+      console.log(`Calculated Position (GeoJSON check): executing isPointInBoundary...`);
+      isInside = isPointInBoundary(point, form.boundary);
+    }
+    
+    console.log(`Validation Result: ${isInside ? 'INSIDE' : 'OUTSIDE'}`);
+    if (!isInside) {
+      throw new ForbiddenException("You must be inside the configured location to submit this form.");
+    }
+  }
+
   async createDraft(
     formId: number,
     gps: { latitude?: number; longitude?: number; lat?: number; lng?: number } | undefined,
@@ -57,42 +116,11 @@ export class ResponsesService {
       throw new ForbiddenException('You have already submitted this form.');
     }
 
-    const settings = (form.settings || {}) as { restrictByLocation?: boolean };
+    // Validate location restriction initially
+    this.validateLocation(form, gps);
+
     const lat = gps?.latitude ?? gps?.lat;
     const lng = gps?.longitude ?? gps?.lng;
-    
-    console.log(`\n--- LOCATION VALIDATION DEBUG (DRAFT) ---`);
-    console.log(`restrictByLocation: ${settings.restrictByLocation}`);
-    console.log(`Stored Boundary:`, JSON.stringify(form.boundary));
-    
-    // Check location restriction
-    if (settings.restrictByLocation === true) {
-      console.log(`User Location: { lat: ${lat}, lng: ${lng} }`);
-      
-      if (lat === undefined || lng === undefined) {
-        console.log(`Validation Result: NO GPS PROVIDED`);
-        console.log(`Returning 403 Forbidden`);
-        throw new ForbiddenException("You must be inside the configured location to submit this form.");
-      }
-      
-      const point: [number, number] = [lng, lat]; // GeoJSON expects [lng, lat]
-      
-      let isInside = false;
-      if (!form.boundary) {
-        isInside = true;
-      } else {
-        // Output debug logs closer to the format requested
-        console.log(`Calculated Position (GeoJSON check): executing isPointInBoundary...`);
-        isInside = isPointInBoundary(point, form.boundary);
-      }
-      
-      console.log(`Validation Result: ${isInside ? 'INSIDE' : 'OUTSIDE'}`);
-      
-      if (!isInside) {
-        console.log(`Returning 403 Forbidden`);
-        throw new ForbiddenException("You must be inside the configured location to submit this form.");
-      }
-    }
 
     const draft = this.responseRepository.create({
       formId,
@@ -129,7 +157,7 @@ export class ResponsesService {
     const orgId = this.getOrgId(user);
 
     const whereClause: any = { id, organizationId: orgId };
-    if (user.role === 'USER') {
+    if (!isElevatedRole(user.role)) {
       whereClause.userId = user.id;
     }
 
@@ -194,43 +222,14 @@ export class ResponsesService {
     }
 
     const form = response.form;
-    const settings = (form?.settings || {}) as { restrictByLocation?: boolean };
-    
-    console.log(`\n--- LOCATION VALIDATION DEBUG (SUBMIT) ---`);
-    console.log(`restrictByLocation: ${settings.restrictByLocation}`);
-    console.log(`Stored Boundary:`, JSON.stringify(form.boundary));
+    const settings = (form?.settings || {}) as any;
     
     // Check location restriction again on submit using the live gps
-    if (settings.restrictByLocation === true) {
+    if (settings.restrictByLocation === true && settings.requireLiveLocationOnSubmit === true) {
+      this.validateLocation(form, gps);
+
       const lat = gps?.latitude ?? gps?.lat;
       const lng = gps?.longitude ?? gps?.lng;
-      console.log(`User Location: { lat: ${lat}, lng: ${lng} }`);
-      
-      if (lat === null || lng === null || lat === undefined || lng === undefined) {
-        console.log(`Validation Result: NO GPS PROVIDED`);
-        console.log(`Returning 403 Forbidden`);
-        throw new ForbiddenException("You must be inside the configured location to submit this form.");
-      }
-      
-      const point: [number, number] = [lng, lat];
-      
-      let isInside = false;
-      if (!form.boundary) {
-        isInside = true;
-      } else {
-        // Log boundary check details
-        const geojson = form.boundary?.geojson || form.boundary;
-        console.log(`Boundary Type:`, geojson?.type, `Features:`, geojson?.features?.length);
-        isInside = isPointInBoundary(point, form.boundary);
-      }
-      
-      console.log(`Validation Result: ${isInside ? 'INSIDE' : 'OUTSIDE'}`);
-      
-      if (!isInside) {
-        console.log(`Returning 403 Forbidden`);
-        throw new ForbiddenException("You must be inside the configured location to submit this form.");
-      }
-
       // Update response coordinates with the final submission coordinates
       response.latitude = lat;
       response.longitude = lng;

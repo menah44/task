@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import FileUploadField, {
   FileAnswerMetadata,
 } from "@/components/FileUploadField";
+import { useTranslation } from "react-i18next";
 
 // ======================== Types ========================
 export type QuestionType =
@@ -79,6 +80,7 @@ export default function AnswerField({
   mode = "fill",
   showValidation = false,
 }: AnswerFieldProps) {
+  const { t } = useTranslation();
   const isInvalid = showValidation && question.required && isEmptyValue(value);
 
   // FILE questions render their own label + required marker inside
@@ -105,7 +107,7 @@ export default function AnswerField({
     <div className="space-y-1.5">
       <label className="block text-sm font-medium text-white">
         {question.label}
-        {question.required && <span className="text-error ml-1">*</span>}
+        {question.required && <span className="text-error ms-1">*</span>}
       </label>
 
       <RendererSwitch
@@ -117,7 +119,7 @@ export default function AnswerField({
       />
 
       {isInvalid && (
-        <p className="text-xs text-error mt-1">This field is required.</p>
+        <p className="text-xs text-error mt-1">{t("answerField.required")}</p>
       )}
     </div>
   );
@@ -137,6 +139,7 @@ function RendererSwitch({
   mode: "preview" | "fill";
   isInvalid: boolean;
 }) {
+  const { t } = useTranslation();
   const baseInputClasses = `w-full bg-background border rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
     isInvalid ? "border-red-500" : "border-border"
   }`;
@@ -148,7 +151,7 @@ function RendererSwitch({
         <input
           type="text"
           value={(value as string) ?? ""}
-          placeholder={question.placeholder || "Enter your answer"}
+          placeholder={question.placeholder || t("answerField.enterAnswer")}
           onChange={(e) => onChange(e.target.value)}
           disabled={mode === "preview"}
           className={baseInputClasses}
@@ -161,7 +164,7 @@ function RendererSwitch({
         <input
           type="number"
           value={value === null || value === undefined ? "" : (value as number)}
-          placeholder={question.placeholder || "Enter a number"}
+          placeholder={question.placeholder || t("answerField.enterNumber")}
           onChange={(e) =>
             onChange(e.target.value === "" ? null : Number(e.target.value))
           }
@@ -203,7 +206,7 @@ function RendererSwitch({
           ))}
           {(!question.options || question.options.length === 0) && (
             <p className="text-xs text-muted-foreground italic">
-              No options defined yet.
+              {t("answerField.noOptions")}
             </p>
           )}
         </div>
@@ -237,7 +240,7 @@ function RendererSwitch({
           ))}
           {(!question.options || question.options.length === 0) && (
             <p className="text-xs text-muted-foreground italic">
-              No options defined yet.
+              {t("answerField.noOptions")}
             </p>
           )}
         </div>
@@ -257,7 +260,7 @@ function RendererSwitch({
                 ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm border-blue-600 text-white"
                 : "bg-background border-border text-muted-foreground hover:border-blue-500/50"
             }`}>
-            Yes
+            {t("answerField.yes")}
           </button>
           <button
             type="button"
@@ -268,7 +271,7 @@ function RendererSwitch({
                 ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm border-blue-600 text-white"
                 : "bg-background border-border text-muted-foreground hover:border-blue-500/50"
             }`}>
-            No
+            {t("answerField.no")}
           </button>
         </div>
       );
@@ -294,7 +297,7 @@ function RendererSwitch({
     default:
       return (
         <p className="text-xs text-muted-foreground italic">
-          Unsupported question type: {question.type}
+          {t("answerField.unsupportedType")} {question.type}
         </p>
       );
   }
@@ -312,6 +315,7 @@ function GeoPointPicker({
   disabled?: boolean;
   isInvalid?: boolean;
 }) {
+  const { t } = useTranslation();
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(
     null,
   );
@@ -362,9 +366,9 @@ function GeoPointPicker({
           backgroundColor: "#0d1117",
         }}>
         {/* Faux "land mass" shapes so it looks a bit map-like */}
-        <div className="absolute top-6 left-10 w-20 h-12 bg-muted rounded-full opacity-60" />
-        <div className="absolute bottom-8 right-12 w-24 h-16 bg-muted rounded-full opacity-60" />
-        <div className="absolute top-1/2 left-1/3 w-16 h-10 bg-muted rounded-full opacity-40" />
+        <div className="absolute top-6 start-10 w-20 h-12 bg-muted rounded-full opacity-60" />
+        <div className="absolute bottom-8 end-12 w-24 h-16 bg-muted rounded-full opacity-60" />
+        <div className="absolute top-1/2 start-1/3 w-16 h-10 bg-muted rounded-full opacity-40" />
 
         {/* Hover crosshair hint */}
         {hoverPos && !disabled && (
@@ -385,14 +389,14 @@ function GeoPointPicker({
 
         {!value && (
           <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs pointer-events-none">
-            Click to drop a pin
+            {t("answerField.clickToDropPin")}
           </div>
         )}
       </div>
 
       {value && (
         <p className="text-xs text-muted-foreground">
-          Lat: {value.lat}, Lng: {value.lng}
+          {t("answerField.lat")}: {value.lat}, {t("answerField.lng")}: {value.lng}
         </p>
       )}
     </div>

@@ -9,6 +9,10 @@ const backendProxy = createProxyMiddleware({
   changeOrigin: true,
   on: {
     proxyReq: (proxyReq, req: any) => {
+      console.log(`[PROD-DEBUG] Proxy callback executed for URL: ${req.url}`);
+      console.log(`[PROD-DEBUG] req.headers['x-user-id'] = ${req.headers['x-user-id']}`);
+      console.log(`[PROD-DEBUG] Before setHeader proxyReq.getHeader('X-User-Id') = ${proxyReq.getHeader('X-User-Id')}`);
+      
       // Inject headers that were set by the GatewayAuthGuard
       if (req.headers['x-user-id']) {
         proxyReq.setHeader('X-User-Id', req.headers['x-user-id']);
@@ -19,6 +23,9 @@ const backendProxy = createProxyMiddleware({
       if (req.headers['x-user-role']) {
         proxyReq.setHeader('X-User-Role', req.headers['x-user-role']);
       }
+      
+      console.log(`[PROD-DEBUG] After setHeader proxyReq.getHeader('X-User-Id') = ${proxyReq.getHeader('X-User-Id')}`);
+
       // Fix body parser hanging issue
       fixRequestBody(proxyReq, req);
     },
@@ -31,6 +38,7 @@ export class AppController {
   @Public()
   @All('auth/login')
   authLogin(@Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+    console.log(`[PROD-DEBUG] AppController.authLogin executed for URL: ${req.url}`);
     backendProxy(req, res, next);
   }
 
@@ -48,6 +56,7 @@ export class AppController {
 
   @All('*path')
   proxyAll(@Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+    console.log(`[PROD-DEBUG] AppController.proxyAll executed for URL: ${req.url}`);
     backendProxy(req, res, next);
   }
 }

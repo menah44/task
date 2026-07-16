@@ -26,7 +26,10 @@ export class HeaderAuthGuard implements CanActivate {
     const orgId = request.headers['x-org-id'];
     const role = request.headers['x-user-role'];
 
+    console.log(`[PROD-DEBUG] Backend HeaderAuthGuard received headers: x-user-id=${userId}, url=${request.url}`);
+
     if (!userId) {
+      console.error(`[PROD-DEBUG] Throwing Missing X-User-Id header from Gateway`);
       throw new UnauthorizedException('Missing X-User-Id header from Gateway');
     }
 

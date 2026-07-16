@@ -2,11 +2,11 @@ import axios from "axios";
 import { useAuthStore } from "@/lib/auth-store";
 import { toast } from "react-hot-toast";
 
-const baseURL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api/v1";
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api/v1";
+console.log(`[PROD-DEBUG] Frontend initialized. NEXT_PUBLIC_API_URL is: ${process.env.NEXT_PUBLIC_API_URL} (resolved: ${NEXT_PUBLIC_API_URL})`);
 
 const apiClient = axios.create({
-  baseURL,
+  baseURL: NEXT_PUBLIC_API_URL,
   headers: {
     "Content-Type": "application/json",
     "Cache-Control": "no-cache",
@@ -18,6 +18,9 @@ const apiClient = axios.create({
 // Request Interceptor
 apiClient.interceptors.request.use(
   (config) => {
+    const url = `${config.baseURL}${config.url}`;
+    console.log(`[PROD-DEBUG] Frontend making request: ${config.method?.toUpperCase()} ${url}`);
+
     // Get latest token exclusively from the Zustand store
     const token = useAuthStore.getState().accessToken;
 

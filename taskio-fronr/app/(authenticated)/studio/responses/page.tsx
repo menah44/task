@@ -178,16 +178,22 @@ const LocationAddressDisplay = ({ val }: { val: any }) => {
 
 const TableRowLocationCell = ({ lat, lng }: { lat: number; lng: number }) => {
   const [address, setAddress] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    if (lat === undefined || lng === undefined) return;
     let isMounted = true;
+    setIsLoading(true);
     apiClient.get(`/spatial/reverse-geocode?lat=${lat}&lng=${lng}`)
     .then(res => {
       if (isMounted && res.data && res.data.address) {
         setAddress(res.data.address);
       }
     })
-    .catch(() => {});
+    .catch(() => {})
+    .finally(() => {
+      if (isMounted) setIsLoading(false);
+    });
     return () => { isMounted = false; };
   }, [lat, lng]);
 
@@ -203,7 +209,12 @@ const TableRowLocationCell = ({ lat, lng }: { lat: number; lng: number }) => {
     >
       <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
       <div className="flex flex-col text-start overflow-hidden">
-        {address ? (
+        {isLoading ? (
+          <div className="space-y-1 py-1">
+            <div className="h-3.5 w-24 bg-muted-foreground/20 animate-pulse rounded" />
+            <div className="h-3 w-36 bg-muted-foreground/10 animate-pulse rounded" />
+          </div>
+        ) : address ? (
           <>
             <span className="text-sm font-semibold text-foreground truncate">{address.split(',')[0]}</span>
             <span className="text-[11px] text-muted-foreground truncate">{address.split(',').slice(1).join(',').trim()}</span>

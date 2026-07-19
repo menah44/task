@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import logoDark from "@/public/logo-dark.png";
+import logoLight from "@/public/logo-light.png";
 
 interface ThemeLogoProps {
   className?: string;
@@ -35,7 +37,7 @@ export default function ThemeLogo({ className = "", width = 160, height = 52 }: 
   }
 
   const isDark = resolvedTheme === "dark";
-  const src = isDark ? "/logo-dark.png" : "/logo-light.png";
+  const src = isDark ? logoDark : logoLight;
 
   return (
     <Image

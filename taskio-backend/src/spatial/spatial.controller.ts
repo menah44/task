@@ -52,6 +52,9 @@ export class SpatialController {
 
   @Get('reverse-geocode')
   reverseGeocode(@Query('lat') lat: string, @Query('lng') lng: string) {
+    console.log(
+      `[PROD-DEBUG] SpatialController.reverseGeocode called with lat: ${lat}, lng: ${lng}`,
+    );
     return this.spatialService.reverseGeocode(Number(lat), Number(lng));
   }
 }

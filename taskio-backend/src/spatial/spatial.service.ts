@@ -230,6 +230,9 @@ export class SpatialService {
   }
 
   async reverseGeocode(lat: number, lng: number): Promise<any> {
+    console.log(
+      `[PROD-DEBUG] SpatialService.reverseGeocode executing with lat: ${lat}, lng: ${lng}`,
+    );
     try {
       const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
       const response = await axios.get<NominatimReverseResponse>(url, {

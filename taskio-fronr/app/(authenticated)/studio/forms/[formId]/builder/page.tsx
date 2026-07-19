@@ -38,6 +38,7 @@ import {
   questionOptionValues,
 } from "@/lib/types/forms/answerFieldAdapter";
 import { useTranslation } from "react-i18next";
+import { safeRandomUUID } from "@/lib/utils";
 
 const QUESTION_TYPES: { type: QuestionType; labelKey: string; icon: string }[] = [
   { type: "text", labelKey: "formBuilder.qTypeShortText", icon: "📝" },
@@ -369,7 +370,7 @@ function FormSettingsPopover({
 }
 
 const DEFAULT_FORM: FormStructure = {
-  id: crypto.randomUUID(),
+  id: safeRandomUUID(),
   title: "Untitled Form",
   description: "",
   showProgress: true,

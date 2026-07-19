@@ -111,6 +111,6 @@ spec:
             limits:
               memory: {{ .Values.backend.resources.limits.memory }}
               cpu: {{ .Values.backend.resources.limits.cpu }}
-          volumes:
-            - name: uploads
-              emptyDir: {}
+      volumes:
+       - name: uploads
+         emptyDir: {}

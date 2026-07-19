@@ -180,6 +180,7 @@ jobs:
 
           script: |
 
+            set -euo pipefail
             cd ~/task
             git pull origin main
             cd helm

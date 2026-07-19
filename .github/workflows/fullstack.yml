@@ -37,6 +37,11 @@ jobs:
         with:
           dockerfile: taskio-fronr/Dockerfile
 
+      - name: Run Hadolint Gateway
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: taskio-gateway/Dockerfile
+
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@v12
         with:
@@ -84,6 +89,9 @@ jobs:
             context: ./taskio-fronr
             image: taskio-frontend
 
+          - app: gateway
+            context: ./taskio-gateway
+            image: taskio-gateway
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -184,6 +192,7 @@ jobs:
               --create-namespace \
               --set backend.image.tag=${{ github.sha }} \
               --set frontend.image.tag=${{ github.sha }} \
+              --set gateway.image.tag=${{ github.sha }} \
               --set secret.jwtSecret="${{ secrets.JWT_SECRET }}" \
               --wait \
               --timeout 5m \

@@ -12,17 +12,17 @@ backend:
     type: ClusterIP
 
   startupProbe:
-    path: /
+    path: /health
     failureThreshold: 30
     periodSeconds: 10
 
   livenessProbe:
-    path: /
+    path: /health
     initialDelaySeconds: 30
     periodSeconds: 10
 
   readinessProbe:
-    path: /
+    path: /health
     initialDelaySeconds: 30
     periodSeconds: 5
  
@@ -48,17 +48,17 @@ frontend:
   containerPort: 3000
 
   startupProbe:
-    path: /
+    path: /health
     failureThreshold: 30
     periodSeconds: 10
 
   livenessProbe:
-    path: /
+    path: /health
     initialDelaySeconds: 60
     periodSeconds: 10
 
   readinessProbe:
-    path: /
+    path: /health
     initialDelaySeconds: 30
     periodSeconds: 5
 
@@ -77,7 +77,8 @@ config:
   dbName: taskio
   port: "5000"
   nextPublicApiUrl: ""
-
+  gatewayPort: "4000"
+  backendUrl: "http://backend:5000"
 ingress:
   className: nginx
 
@@ -97,3 +98,34 @@ secret:
     name: ""
     email: ""
     password: ""
+
+gateway:
+  replicaCount: 2
+
+  image:
+    repository: emanabosamra/taskio-gateway
+    tag: latest
+    pullPolicy: Always
+
+  containerPort: 4000
+
+  service:
+    port: 4000
+    type: ClusterIP
+
+  livenessProbe:
+    path: /health
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+  readinessProbe:
+    path: /health
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi

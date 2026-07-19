@@ -20,6 +20,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: backend
+            name: gateway
             port:
-              number: {{ .Values.backend.service.port }}
+              number: {{ .Values.gateway.service.port }}

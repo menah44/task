@@ -11,13 +11,22 @@ spec:
     - Egress
 
   ingress:
+    # Allow traffic between pods in form-app
     - from:
         - podSelector: {}
 
+    # Allow traffic from NGINX Ingress Controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+
   egress:
+    # Allow communication between pods in form-app
     - to:
         - podSelector: {}
 
+    # Allow DNS queries to CoreDNS
     - to:
         - namespaceSelector:
             matchLabels:

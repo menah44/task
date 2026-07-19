@@ -200,7 +200,7 @@ jobs:
 
             echo "Running Smoke Test..."
 
-            curl -f http://${{ secrets.LOAD_BALANCER_IP }}/api/v1
+            curl -f http://${{ secrets.LOAD_BALANCER_IP }}/api
 
             echo "Smoke Test Passed"
 

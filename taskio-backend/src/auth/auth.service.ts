@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { JwtPayload } from './jwt-auth.guard';
-import { AuditService } from '../audit/audit.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class AuthService {
@@ -13,7 +13,7 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
-    private readonly auditService: AuditService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async findByEmail(email: string): Promise<User | null> {
@@ -54,23 +54,17 @@ export class AuthService {
       hashedRefreshToken,
     });
 
-    // Attempt to log login action
+    // Attempt to emit login event
     try {
       const user = await this.userRepository.findOne({
         where: { id: userId },
         relations: ['organization'],
       });
       if (user) {
-        await this.auditService.logAction(
-          user,
-          'USER_LOGIN',
-          'USER',
-          String(user.id),
-          { email: user.email },
-        );
+        this.eventEmitter.emit('user.login', user);
       }
     } catch (e) {
-      console.error('Failed to log login action:', e);
+      console.error('Failed to emit login event:', e);
     }
   }
 

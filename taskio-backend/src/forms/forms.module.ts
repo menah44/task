@@ -8,11 +8,13 @@ import { Question } from './entities/question.entity';
 import { FormVersion } from './entities/form-version.entity';
 import { Template } from './entities/template.entity';
 import { AuditModule } from '../audit/audit.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Form, Section, Question, FormVersion, Template]),
     AuditModule,
+    AuthModule,
   ],
   controllers: [FormsController],
   providers: [FormsService],

@@ -2,12 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-
+import { JwtAuthGuard } from './jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { User } from './entities/user.entity';
-
-import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
@@ -17,10 +15,9 @@ import { AuditModule } from '../audit/audit.module';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '15m' },
     }),
-    AuditModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService],
-  exports: [AuthService, PassportModule, JwtModule],
+  providers: [AuthService, JwtAuthGuard],
+  exports: [AuthService, PassportModule, JwtModule, JwtAuthGuard],
 })
 export class AuthModule {}

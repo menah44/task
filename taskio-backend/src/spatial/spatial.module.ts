@@ -4,9 +4,10 @@ import { SpatialController } from './spatial.controller';
 import { SpatialService } from './spatial.service';
 import { Response } from '../forms/entities/response.entity';
 import { FormsModule } from '../forms/forms.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Response]), FormsModule],
+  imports: [TypeOrmModule.forFeature([Response]), FormsModule, AuthModule],
   controllers: [SpatialController],
   providers: [SpatialService],
   exports: [SpatialService],

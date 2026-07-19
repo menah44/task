@@ -2,16 +2,40 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: taskio-network-policy
+  namespace: {{ .Release.Namespace }}
 spec:
   podSelector: {}
+
   policyTypes:
     - Ingress
     - Egress
 
   ingress:
+    # Allow traffic between pods in form-app
     - from:
         - podSelector: {}
 
+    # Allow traffic from NGINX Ingress Controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+
   egress:
+    # Allow communication between pods in form-app
     - to:
         - podSelector: {}
+
+    # Allow DNS queries to CoreDNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

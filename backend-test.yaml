@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "75"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"backend","namespace":"form-app"},"spec":{"replicas":2,"selector":{"matchLabels":{"app":"backend"}},"template":{"metadata":{"labels":{"app":"backend"}},"spec":{"containers":[{"env":[{"name":"DB_HOST","valueFrom":{"configMapKeyRef":{"key":"DB_HOST","name":"app-config"}}},{"name":"DB_PORT","valueFrom":{"configMapKeyRef":{"key":"DB_PORT","name":"app-config"}}},{"name":"DB_USERNAME","valueFrom":{"secretKeyRef":{"key":"username","name":"postgres-ha-app"}}},{"name":"DB_NAME","valueFrom":{"secretKeyRef":{"key":"dbname","name":"postgres-ha-app"}}},{"name":"PORT","valueFrom":{"configMapKeyRef":{"key":"PORT","name":"app-config"}}},{"name":"DB_PASSWORD","valueFrom":{"secretKeyRef":{"key":"password","name":"postgres-ha-app"}}},{"name":"JWT_SECRET","valueFrom":{"secretKeyRef":{"key":"JWT_SECRET","name":"secret"}}}],"image":"emanabosamra/taskio-backend:6578b5c71ad473924bf79c587aa79a3a68cc9672","livenessProbe":{"httpGet":{"path":"/health","port":5000},"initialDelaySeconds":30,"periodSeconds":10},"name":"backend","ports":[{"containerPort":5000}],"readinessProbe":{"httpGet":{"path":"/health","port":5000},"initialDelaySeconds":30,"periodSeconds":5},"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"250m","memory":"256Mi"}},"startupProbe":{"failureThreshold":30,"httpGet":{"path":"/health","port":5000},"periodSeconds":10}}]}}}}
+    meta.helm.sh/release-name: taskio
+    meta.helm.sh/release-namespace: form-app
+  creationTimestamp: "2026-07-05T10:40:42Z"
+  generation: 80
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: backend-test
+  namespace: form-app
+  resourceVersion: "3606067"
+  uid: 18e50667-f376-429d-bb79-7e23801a56ab
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: backend-test
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/restartedAt: "2026-07-08T11:28:40Z"
+      creationTimestamp: null
+      labels:
+        app: backend-test
+    spec:
+      containers:
+      - env:
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: DB_HOST
+              name: app-config
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: DB_PORT
+              name: app-config
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: postgres-ha-app
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              key: dbname
+              name: postgres-ha-app
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              key: PORT
+              name: app-config
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: postgres-ha-app
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: JWT_SECRET
+              name: secret
+        image: emanabosamra/taskio-backend:15c69b10b3767904b40ae55dcd4998289a4d99db
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 5000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: backend
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 5000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        startupProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /health
+            port: 5000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30

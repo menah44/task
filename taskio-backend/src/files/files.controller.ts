@@ -1,6 +1,6 @@
 import { Controller, Post, Get, Param, Res, UseInterceptors, UploadedFile, UseGuards, BadRequestException, NotFoundException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { HeaderAuthGuard } from '../auth/header-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import * as crypto from 'crypto';
 import { diskStorage } from 'multer';
 import * as path from 'path';
@@ -16,7 +16,7 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 @Controller('files')
 export class FilesController {
   @Post('upload')
-  @UseGuards(HeaderAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
       destination: UPLOADS_DIR,

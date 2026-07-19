@@ -13,7 +13,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { HeaderAuthGuard } from '../auth/header-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { UsersService } from './users.service';
 import { User } from '../auth/entities/user.entity';
@@ -23,7 +23,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @ApiTags('users')
 @ApiBearerAuth()
 @Controller('users')
-@UseGuards(HeaderAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

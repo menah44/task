@@ -13,14 +13,14 @@ import { SpatialService } from './spatial.service';
 import { ValidateGeofenceDto } from './dto/validate-geofence.dto';
 import { ContainsDto } from './dto/contains.dto';
 import { NearbyDto } from './dto/nearby.dto';
-import { HeaderAuthGuard } from '../auth/header-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { User } from '../auth/entities/user.entity';
 
 @ApiTags('spatial')
 @ApiBearerAuth()
 @Controller('spatial')
-@UseGuards(HeaderAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class SpatialController {
   constructor(private readonly spatialService: SpatialService) {}
 

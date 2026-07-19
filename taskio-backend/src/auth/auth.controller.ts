@@ -11,7 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AuthService } from './auth.service';
-import { HeaderAuthGuard } from './header-auth.guard';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -67,7 +67,7 @@ export class AuthController {
     return this.authService.validateAndRefreshTokens(body.refreshToken);
   }
 
-  @UseGuards(HeaderAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post('logout')
   async logout(@Req() req: any) {
     await this.authService.logout(req.user.id);

@@ -10,10 +10,10 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { ResponsesService } from './responses.service';
-import { HeaderAuthGuard } from '../auth/header-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
-@UseGuards(HeaderAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('responses')
 export class ResponsesController {
   constructor(private readonly responsesService: ResponsesService) {}

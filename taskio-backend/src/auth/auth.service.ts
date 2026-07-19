@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { JwtPayload } from './jwt-auth.guard';
 import { AuditService } from '../audit/audit.service';
 
 @Injectable()
@@ -96,10 +97,10 @@ export class AuthService {
   }
 
   async validateAndRefreshTokens(refreshToken: string) {
-    let payload;
+    let payload: JwtPayload;
     try {
-      payload = this.jwtService.verify(refreshToken);
-    } catch (e) {
+      payload = this.jwtService.verify<JwtPayload>(refreshToken);
+    } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
     return this.refreshTokens(payload.sub, refreshToken);

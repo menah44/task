@@ -2,14 +2,14 @@ import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { QuestionTypesService } from './question-types.service';
 import { CreateQuestionTypeDto } from './dto/create-question-type.dto';
-import { HeaderAuthGuard } from '../auth/header-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 
 @ApiTags('question-types')
 @ApiBearerAuth()
 @Controller('question-types')
-@UseGuards(HeaderAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class QuestionTypesController {
   constructor(private readonly questionTypesService: QuestionTypesService) {}
 

@@ -7,11 +7,11 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { TemplatesService } from './templates.service';
-import { HeaderAuthGuard } from '../auth/header-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { User } from '../auth/entities/user.entity';
 
-@UseGuards(HeaderAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('templates')
 export class TemplatesController {
   constructor(private readonly templatesService: TemplatesService) {}

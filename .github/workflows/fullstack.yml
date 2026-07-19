@@ -196,8 +196,7 @@ jobs:
               --set gateway.image.tag=${{ github.sha }} \
               --set secret.jwtSecret="${{ secrets.JWT_SECRET }}" \
               --wait \
-              --timeout 5m \
-              --atomic
+              --timeout 6m 
 
             echo "Running Smoke Test..."
 

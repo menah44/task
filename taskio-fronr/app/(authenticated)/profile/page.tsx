@@ -47,7 +47,11 @@ export default function ProfilePage() {
 
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-accent text-accent-foreground border-transparent shadow-sm">
             <Shield className="w-3.5 h-3.5" />
-            {currentUser.role === "ADMIN" ? t("profile.sysAdmin") : t("profile.standardUser")}
+            {currentUser.role === "SUPER_ADMIN"
+              ? t("profile.superAdmin")
+              : currentUser.role === "ADMIN"
+              ? t("profile.sysAdmin")
+              : t("profile.standardUser")}
           </span>
         </div>
 
@@ -110,7 +114,13 @@ export default function ProfilePage() {
               <div className="relative">
                 <input
                   type="text"
-                  value={currentUser.role === "ADMIN" ? t("profile.adminPriv") : t("profile.userPriv")}
+                  value={
+                    currentUser.role === "SUPER_ADMIN"
+                      ? t("profile.superAdminPriv")
+                      : currentUser.role === "ADMIN"
+                      ? t("profile.adminPriv")
+                      : t("profile.userPriv")
+                  }
                   disabled
                   className="w-full ps-10 pe-3 py-2.5 rounded-lg bg-card border border-border text-muted-foreground cursor-not-allowed"
                 />

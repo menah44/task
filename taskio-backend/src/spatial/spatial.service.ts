@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import axios from 'axios';
 import { Response } from '../forms/entities/response.entity';
 import { FormsService } from '../forms/forms.service';
 import { ValidateGeofenceDto } from './dto/validate-geofence.dto';
@@ -17,6 +18,11 @@ import {
   isPointInBoundary,
   haversineDistance,
 } from './utils/spatial-helpers';
+
+interface NominatimReverseResponse {
+  display_name?: string;
+  error?: string;
+}
 
 interface CacheEntry {
   boundary: any;
@@ -224,14 +230,17 @@ export class SpatialService {
   }
 
   async reverseGeocode(lat: number, lng: number): Promise<any> {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'taskio-app/1.0' },
-    });
-    if (!response.ok) {
-      throw new BadRequestException('Reverse geocoding failed');
+    try {
+      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+      const response = await axios.get<NominatimReverseResponse>(url, {
+        headers: { 'User-Agent': 'taskio-app/1.0' },
+        timeout: 5000,
+      });
+      const data = response.data;
+      return { address: data?.display_name || null };
+    } catch (error) {
+      console.error('Reverse geocoding failed:', error);
+      return { address: null };
     }
-    const data = await response.json();
-    return { address: data.display_name || null };
   }
 }

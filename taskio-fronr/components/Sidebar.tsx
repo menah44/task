@@ -120,12 +120,12 @@ export default function Sidebar({ userRole, pathname, logout }: SidebarProps) {
                 <div className={`px-3 text-[11px] font-bold text-muted-foreground/70 tracking-widest uppercase transition-all duration-300 ${isCollapsed ? "opacity-0 h-0 overflow-hidden mb-0" : "opacity-100 mb-3"}`}>{t("sidebar.system")}</div>
                 <div className="space-y-1">
                   <Link onClick={() => setMobileOpen(false)} title={isCollapsed ? t("sidebar.settings") : undefined}
-                    href="/super-admin/settings"
+                    href="/profile"
                     className={`flex items-center py-2.5 rounded-lg transition-all font-medium text-sm group ${isCollapsed ? "justify-center px-0" : "gap-3 px-3"}  rounded-lg transition-all font-medium text-sm group ${
-                      pathname?.startsWith("/super-admin/settings") ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      pathname === "/profile" ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
-                    <Settings className={`w-5 h-5 transition-colors ${pathname?.startsWith("/super-admin/settings") ? "text-primary" : "group-hover:text-primary"}`} />
+                    <Settings className={`w-5 h-5 transition-colors ${pathname === "/profile" ? "text-primary" : "group-hover:text-primary"}`} />
                     {!isCollapsed && <span>{t("sidebar.settings")}</span>}
                   </Link>
                 </div>

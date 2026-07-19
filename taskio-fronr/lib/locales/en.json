@@ -678,6 +678,7 @@
     "title": "My Profile",
     "subtitle": "View and update your account information and security settings.",
     "sysAdmin": "System Administrator",
+    "superAdmin": "Super Administrator",
     "standardUser": "Standard User",
     "editProfile": "Edit Profile Information",
     "savedSuccess": "Profile changes saved successfully!",
@@ -687,6 +688,7 @@
     "emailPlaceholder": "you@example.com",
     "sysPrivileges": "System Privileges",
     "adminPriv": "ADMIN (Full Privileges)",
+    "superAdminPriv": "SUPER_ADMIN (Full Platform Privileges)",
     "userPriv": "USER (Restricted Privileges)",
     "save": "Save Changes"
   },

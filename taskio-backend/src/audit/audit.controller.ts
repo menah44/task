@@ -31,9 +31,7 @@ export class AuditController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
-    if (
-      !isElevatedRole(user?.role)
-    ) {
+    if (!isElevatedRole(user?.role)) {
       throw new ForbiddenException('Only administrators can view audit logs.');
     }
     const pageNum = page ? parseInt(page, 10) : 1;
@@ -56,9 +54,7 @@ export class AuditController {
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    if (
-      !isElevatedRole(user?.role)
-    ) {
+    if (!isElevatedRole(user?.role)) {
       throw new ForbiddenException('Only administrators can view audit logs.');
     }
     return this.auditService.findOne(id, user);

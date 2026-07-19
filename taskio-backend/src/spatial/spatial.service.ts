@@ -37,19 +37,29 @@ export class SpatialService {
   /**
    * Check if a coordinate point lies inside a form's boundary.
    */
-  async validateGeofence(
-    dto: ValidateGeofenceDto,
-    user: User,
-  ): Promise<any> {
+  async validateGeofence(dto: ValidateGeofenceDto, user: User): Promise<any> {
     const form = await this.formsService.findOne(dto.formId, user);
-    const settings = (form.settings || {}) as any;
+    const settings = form.settings || {};
 
     console.log('\n======= VALIDATE GEOFENCE DEBUG =======');
-    console.log('[1] Full settings from DB:', JSON.stringify(settings, null, 2));
+    console.log(
+      '[1] Full settings from DB:',
+      JSON.stringify(settings, null, 2),
+    );
     console.log('[2] restrictByLocation:', settings.restrictByLocation);
     console.log('[3] validationMode:', settings.validationMode);
-    console.log('[4] allowedRadius:', settings.allowedRadius, '| type:', typeof settings.allowedRadius);
-    console.log('[5] graceRadius:', settings.graceRadius, '| type:', typeof settings.graceRadius);
+    console.log(
+      '[4] allowedRadius:',
+      settings.allowedRadius,
+      '| type:',
+      typeof settings.allowedRadius,
+    );
+    console.log(
+      '[5] graceRadius:',
+      settings.graceRadius,
+      '| type:',
+      typeof settings.graceRadius,
+    );
     console.log('[6] location:', settings.location);
     console.log('[7] Has boundary in DB:', !!form.boundary);
     console.log('[8] User coords: lat=', dto.latitude, 'lng=', dto.longitude);
@@ -65,13 +75,27 @@ export class SpatialService {
 
     // 1. Point + Radius check (preferred, more precise)
     if (settings.location && settings.allowedRadius) {
-      const distance = haversineDistance(lat, lng, settings.location.lat, settings.location.lng);
+      const distance = haversineDistance(
+        lat,
+        lng,
+        settings.location.lat,
+        settings.location.lng,
+      );
       const mode = (settings.validationMode as string) || 'STRICT';
       const allowedRadius = Number(settings.allowedRadius);
-      const graceRadius = settings.graceRadius ? Number(settings.graceRadius) : null;
+      const graceRadius = settings.graceRadius
+        ? Number(settings.graceRadius)
+        : null;
 
       console.log('[CALC] distance:', distance.toFixed(1), 'm');
-      console.log('[CALC] mode:', mode, '| allowedRadius:', allowedRadius, '| graceRadius:', graceRadius);
+      console.log(
+        '[CALC] mode:',
+        mode,
+        '| allowedRadius:',
+        allowedRadius,
+        '| graceRadius:',
+        graceRadius,
+      );
 
       let status = 'AVAILABLE';
       let inside = true;
@@ -79,7 +103,9 @@ export class SpatialService {
       if (distance > allowedRadius) {
         if (mode === 'ALLOW_NEARBY' && graceRadius && distance <= graceRadius) {
           status = 'NEARBY';
-          console.log('[RESULT] NEARBY — outside allowedRadius but inside graceRadius');
+          console.log(
+            '[RESULT] NEARBY — outside allowedRadius but inside graceRadius',
+          );
         } else if (mode === 'DIRECTIONS') {
           status = 'BLOCKED_DIRECTIONS';
           inside = false;
@@ -87,7 +113,9 @@ export class SpatialService {
         } else {
           status = 'BLOCKED';
           inside = false;
-          console.log('[RESULT] BLOCKED — outside allowedRadius in STRICT mode');
+          console.log(
+            '[RESULT] BLOCKED — outside allowedRadius in STRICT mode',
+          );
         }
       } else {
         console.log('[RESULT] AVAILABLE — inside allowedRadius');
@@ -203,7 +231,7 @@ export class SpatialService {
     if (!response.ok) {
       throw new BadRequestException('Reverse geocoding failed');
     }
-    const data = await response.json() as any;
+    const data = await response.json();
     return { address: data.display_name || null };
   }
 }

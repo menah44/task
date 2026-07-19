@@ -26,7 +26,10 @@ export class ResponsesController {
   @Post('forms/:formId')
   createDraft(
     @Param('formId', ParseIntPipe) formId: number,
-    @Body('gps') gps: { latitude?: number; longitude?: number; lat?: number; lng?: number } | undefined,
+    @Body('gps')
+    gps:
+      | { latitude?: number; longitude?: number; lat?: number; lng?: number }
+      | undefined,
     @CurrentUser() user: any,
   ) {
     return this.responsesService.createDraft(formId, gps, user);
@@ -42,17 +45,17 @@ export class ResponsesController {
   }
 
   @Get(':id/full')
-  findOneFull(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: any,
-  ) {
+  findOneFull(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
     return this.responsesService.findOneFull(id, user);
   }
 
   @Post(':id/submit')
   submitResponse(
     @Param('id', ParseIntPipe) id: number,
-    @Body('gps') gps: { latitude?: number; longitude?: number; lat?: number; lng?: number } | undefined,
+    @Body('gps')
+    gps:
+      | { latitude?: number; longitude?: number; lat?: number; lng?: number }
+      | undefined,
     @CurrentUser() user: any,
   ) {
     return this.responsesService.submitResponse(id, gps, user);

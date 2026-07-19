@@ -9,7 +9,7 @@ export function haversineDistance(
 ): number {
   const R = 6371e3; // Earth radius in meters
   const toRad = (angle: number) => (angle * Math.PI) / 180;
-  
+
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const a =
@@ -71,11 +71,14 @@ function isPointInRing(x: number, y: number, ring: number[][]): boolean {
  * Extracts polygon coordinates from various boundary structures and validates if a point is inside.
  * Supports: FeatureCollection, Feature, Polygon, and { geojson, areaKm2 } wrapper.
  */
-export function isPointInBoundary(point: [number, number], boundaryObj: any): boolean {
+export function isPointInBoundary(
+  point: [number, number],
+  boundaryObj: any,
+): boolean {
   if (!boundaryObj) return false;
 
   const geojson = boundaryObj.geojson ?? boundaryObj;
-  
+
   if (
     geojson.type === 'FeatureCollection' &&
     Array.isArray(geojson.features) &&
@@ -92,7 +95,7 @@ export function isPointInBoundary(point: [number, number], boundaryObj: any): bo
     }
     return false;
   }
-  
+
   if (
     geojson.type === 'Feature' &&
     geojson.geometry &&
@@ -100,11 +103,11 @@ export function isPointInBoundary(point: [number, number], boundaryObj: any): bo
   ) {
     return isPointInPolygon(point, geojson.geometry.coordinates);
   }
-  
+
   if (geojson.type === 'Polygon') {
     return isPointInPolygon(point, geojson.coordinates);
   }
-  
+
   return false;
 }
 

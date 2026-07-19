@@ -1,4 +1,10 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { Response } from 'express';
 
 @Catch()
@@ -17,10 +23,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         ? exception.getResponse()
         : { message: 'Internal server error from Gateway' };
 
-    response.status(status).json(
-      typeof message === 'object' && message !== null
-        ? { ...message, timestamp: new Date().toISOString() }
-        : { message, timestamp: new Date().toISOString() }
-    );
+    response
+      .status(status)
+      .json(
+        typeof message === 'object' && message !== null
+          ? { ...message, timestamp: new Date().toISOString() }
+          : { message, timestamp: new Date().toISOString() },
+      );
   }
 }

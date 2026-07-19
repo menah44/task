@@ -11,7 +11,10 @@ import { Form } from '../forms/entities/form.entity';
 import { User } from '../auth/entities/user.entity';
 import { AuditService } from '../audit/audit.service';
 
-import { isPointInBoundary, haversineDistance } from '../spatial/utils/spatial-helpers';
+import {
+  isPointInBoundary,
+  haversineDistance,
+} from '../spatial/utils/spatial-helpers';
 import { isElevatedRole } from '../auth/auth.utils';
 
 @Injectable()
@@ -32,7 +35,11 @@ export class ResponsesService {
     return orgId;
   }
 
-  private async hasUserSubmitted(formId: number, userId: number, orgId: number): Promise<boolean> {
+  private async hasUserSubmitted(
+    formId: number,
+    userId: number,
+    orgId: number,
+  ): Promise<boolean> {
     const existing = await this.responseRepository.findOne({
       where: { formId, userId, organizationId: orgId, status: 'SUBMITTED' },
     });
@@ -40,7 +47,7 @@ export class ResponsesService {
   }
 
   private validateLocation(form: any, gps: any) {
-    const settings = (form.settings || {}) as any;
+    const settings = form.settings || {};
     if (!settings.restrictByLocation) return;
 
     const lat = gps?.latitude ?? gps?.lat;
@@ -49,23 +56,39 @@ export class ResponsesService {
 
     console.log(`\n--- LOCATION VALIDATION DEBUG ---`);
     console.log(`restrictByLocation: ${settings.restrictByLocation}`);
-    
-    if (lat === undefined || lng === undefined || lat === null || lng === null) {
+
+    if (
+      lat === undefined ||
+      lng === undefined ||
+      lat === null ||
+      lng === null
+    ) {
       console.log(`Validation Result: NO GPS PROVIDED`);
-      throw new ForbiddenException("You must be inside the configured location to submit this form.");
+      throw new ForbiddenException(
+        'You must be inside the configured location to submit this form.',
+      );
     }
 
-    console.log(`User Location: { lat: ${lat}, lng: ${lng}, accuracy: ${accuracy} }`);
+    console.log(
+      `User Location: { lat: ${lat}, lng: ${lng}, accuracy: ${accuracy} }`,
+    );
 
     // 1. Check Point+Radius setup
     if (settings.location && settings.allowedRadius) {
       // Accuracy check
       if (accuracy && accuracy > settings.allowedRadius * 2 && accuracy > 150) {
         console.log(`Validation Result: POOR ACCURACY`);
-        throw new ForbiddenException("Your current GPS accuracy is too low. Please enable High Accuracy Location or move to an open area and try again.");
+        throw new ForbiddenException(
+          'Your current GPS accuracy is too low. Please enable High Accuracy Location or move to an open area and try again.',
+        );
       }
 
-      const distance = haversineDistance(lat, lng, settings.location.lat, settings.location.lng);
+      const distance = haversineDistance(
+        lat,
+        lng,
+        settings.location.lat,
+        settings.location.lng,
+      );
       console.log(`Haversine Distance: ${distance} meters`);
 
       let maxDistance = settings.allowedRadius;
@@ -75,7 +98,9 @@ export class ResponsesService {
 
       if (distance > maxDistance) {
         console.log(`Validation Result: OUTSIDE RADIUS`);
-        throw new ForbiddenException("You must be inside the configured location to submit this form.");
+        throw new ForbiddenException(
+          'You must be inside the configured location to submit this form.',
+        );
       }
       console.log(`Validation Result: INSIDE RADIUS`);
       return;
@@ -87,19 +112,25 @@ export class ResponsesService {
     if (!form.boundary) {
       isInside = true;
     } else {
-      console.log(`Calculated Position (GeoJSON check): executing isPointInBoundary...`);
+      console.log(
+        `Calculated Position (GeoJSON check): executing isPointInBoundary...`,
+      );
       isInside = isPointInBoundary(point, form.boundary);
     }
-    
+
     console.log(`Validation Result: ${isInside ? 'INSIDE' : 'OUTSIDE'}`);
     if (!isInside) {
-      throw new ForbiddenException("You must be inside the configured location to submit this form.");
+      throw new ForbiddenException(
+        'You must be inside the configured location to submit this form.',
+      );
     }
   }
 
   async createDraft(
     formId: number,
-    gps: { latitude?: number; longitude?: number; lat?: number; lng?: number } | undefined,
+    gps:
+      | { latitude?: number; longitude?: number; lat?: number; lng?: number }
+      | undefined,
     user: any,
   ): Promise<Response> {
     const orgId = this.getOrgId(user);
@@ -146,7 +177,9 @@ export class ResponsesService {
     }
 
     if (response.status === 'SUBMITTED') {
-      throw new BadRequestException('Cannot edit a response that has already been submitted');
+      throw new BadRequestException(
+        'Cannot edit a response that has already been submitted',
+      );
     }
 
     response.answers = answers;
@@ -200,8 +233,10 @@ export class ResponsesService {
 
   async submitResponse(
     id: number,
-    gps: { latitude?: number; longitude?: number; lat?: number; lng?: number } | undefined,
-    user: any
+    gps:
+      | { latitude?: number; longitude?: number; lat?: number; lng?: number }
+      | undefined,
+    user: any,
   ): Promise<Response> {
     const orgId = this.getOrgId(user);
 
@@ -222,10 +257,13 @@ export class ResponsesService {
     }
 
     const form = response.form;
-    const settings = (form?.settings || {}) as any;
-    
+    const settings = form?.settings || {};
+
     // Check location restriction again on submit using the live gps
-    if (settings.restrictByLocation === true && settings.requireLiveLocationOnSubmit === true) {
+    if (
+      settings.restrictByLocation === true &&
+      settings.requireLiveLocationOnSubmit === true
+    ) {
       this.validateLocation(form, gps);
 
       const lat = gps?.latitude ?? gps?.lat;

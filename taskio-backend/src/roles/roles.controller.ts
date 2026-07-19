@@ -28,9 +28,7 @@ export class RolesController {
 
   @Get()
   async findAll(@CurrentUser() currentUser: User) {
-    if (
-      !isElevatedRole(currentUser?.role)
-    ) {
+    if (!isElevatedRole(currentUser?.role)) {
       throw new ForbiddenException(
         'Only administrators can access this resource.',
       );
@@ -43,9 +41,7 @@ export class RolesController {
     @CurrentUser() currentUser: User,
     @Body() dto: CreateRoleDto,
   ) {
-    if (
-      !isElevatedRole(currentUser?.role)
-    ) {
+    if (!isElevatedRole(currentUser?.role)) {
       throw new ForbiddenException(
         'Only administrators can perform this action.',
       );
@@ -58,9 +54,7 @@ export class RolesController {
     @CurrentUser() currentUser: User,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    if (
-      !isElevatedRole(currentUser?.role)
-    ) {
+    if (!isElevatedRole(currentUser?.role)) {
       throw new ForbiddenException(
         'Only administrators can perform this action.',
       );
@@ -74,9 +68,7 @@ export class RolesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateRoleDto,
   ) {
-    if (
-      !isElevatedRole(currentUser?.role)
-    ) {
+    if (!isElevatedRole(currentUser?.role)) {
       throw new ForbiddenException(
         'Only administrators can perform this action.',
       );
@@ -90,9 +82,7 @@ export class RolesController {
     @Param('roleId', ParseIntPipe) roleId: number,
     @Param('userId', ParseIntPipe) userId: number,
   ) {
-    if (
-      !isElevatedRole(currentUser?.role)
-    ) {
+    if (!isElevatedRole(currentUser?.role)) {
       throw new ForbiddenException(
         'Only administrators can perform this action.',
       );
@@ -106,9 +96,7 @@ export class RolesController {
     @Param('roleId', ParseIntPipe) roleId: number,
     @Param('userId', ParseIntPipe) userId: number,
   ) {
-    if (
-      !isElevatedRole(currentUser?.role)
-    ) {
+    if (!isElevatedRole(currentUser?.role)) {
       throw new ForbiddenException(
         'Only administrators can perform this action.',
       );
@@ -121,9 +109,7 @@ export class RolesController {
     @CurrentUser() currentUser: User,
     @Param('roleId', ParseIntPipe) roleId: number,
   ) {
-    if (
-      !isElevatedRole(currentUser?.role)
-    ) {
+    if (!isElevatedRole(currentUser?.role)) {
       throw new ForbiddenException(
         'Only administrators can access this resource.',
       );

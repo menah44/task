@@ -349,7 +349,9 @@ export class FormsService {
 
       if (form.status.toUpperCase() === 'PUBLISHED') {
         if (updateFormDto.sections || updateFormDto.schema) {
-          console.log(`[FormsService] Validation failed: cannot modify sections of published form`);
+          console.log(
+            `[FormsService] Validation failed: cannot modify sections of published form`,
+          );
           throw new BadRequestException(
             'Cannot modify the structure (sections/schema) of a PUBLISHED form.',
           );
@@ -357,7 +359,9 @@ export class FormsService {
       }
 
       if (updateFormDto.title && updateFormDto.title !== form.title) {
-        console.log(`[FormsService] Validating unique title: ${updateFormDto.title}`);
+        console.log(
+          `[FormsService] Validating unique title: ${updateFormDto.title}`,
+        );
         // Title unique per organization validation
         const existing = await manager.getRepository(Form).findOne({
           where: {

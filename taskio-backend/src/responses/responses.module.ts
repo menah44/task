@@ -7,10 +7,7 @@ import { Form } from '../forms/entities/form.entity';
 import { AuditModule } from '../audit/audit.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Response, Form]),
-    AuditModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Response, Form]), AuditModule],
   controllers: [ResponsesController],
   providers: [ResponsesService],
   exports: [ResponsesService],

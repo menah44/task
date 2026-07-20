@@ -241,8 +241,15 @@ export class SpatialService {
       });
       const data = response.data;
       return { address: data?.display_name || null };
-    } catch (error) {
-      console.error('Reverse geocoding failed:', error);
+    } catch (error: any) {
+      console.error('[PROD-DEBUG] Reverse geocoding failed with detailed error:', {
+        message: error.message,
+        code: error.code,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+      });
       return { address: null };
     }
   }

@@ -4,7 +4,6 @@ import { isElevatedRole } from "@/lib/auth-utils";
 import { useEffect } from "react";
 import { useAuthStore, parseJwt } from "@/lib/auth-store";
 import { usePathname, useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";

@@ -8,7 +8,9 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev\
+    && npm cache clean --force \
+    && rm -rf /usr/local/lib/node_modules/npm
 COPY --from=builder /app/dist ./dist
 EXPOSE 5000
 CMD ["node", "dist/src/main"]

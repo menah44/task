@@ -55,12 +55,18 @@ jobs:
         uses: azure/setup-helm@v4
 
       - name: Helm Lint
-        run: helm lint ./helm
+        run: helm lint ./helm 
 
       - name: Helm Template Validation
         run: |
           helm template taskio ./helm \
-            -f helm/values-prod.yaml > /dev/null
+            -f helm/values-prod.yaml \
+           --set backend.image.tag=${{ github.sha }} \
+           --set frontend.image.tag=${{ github.sha }} \
+           --set gateway.image.tag=${{ github.sha }} \
+           --set secret.jwtSecret=test \
+           --set secret.superAdmin.password=test \
+           > /dev/null
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6

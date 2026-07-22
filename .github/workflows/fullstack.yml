@@ -195,6 +195,7 @@ jobs:
               --set frontend.image.tag=${{ github.sha }} \
               --set gateway.image.tag=${{ github.sha }} \
               --set secret.jwtSecret="${{ secrets.JWT_SECRET }}" \
+              --set secret.superAdmin.password="${{ secrets.SUPER_ADMIN_PASSWORD }}" \
               --wait \
               --timeout 6m 
 

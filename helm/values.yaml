@@ -3,7 +3,7 @@ backend:
 
   image:
     repository: emanabosamra/taskio-backend
-    tag: latest
+    tag: ""
     pullPolicy: Always
 
   containerPort: 5000
@@ -23,7 +23,7 @@ backend:
 
   readinessProbe:
     path: /health
-    initialDelaySeconds: 30
+    initialDelaySeconds: 10
     periodSeconds: 5
  
   resources:
@@ -34,12 +34,17 @@ backend:
       cpu: 500m
       memory: 512Mi
 
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
 frontend:
   replicaCount: 2
 
   image:
     repository: emanabosamra/taskio-frontend
-    tag: latest
+    tag: ""
 
   service:
     port: 3000
@@ -48,18 +53,18 @@ frontend:
   containerPort: 3000
 
   startupProbe:
-    path: /health
+    path: /
     failureThreshold: 30
     periodSeconds: 10
 
   livenessProbe:
-    path: /health
-    initialDelaySeconds: 60
+    path: /
+    initialDelaySeconds: 30
     periodSeconds: 10
 
   readinessProbe:
-    path: /health
-    initialDelaySeconds: 30
+    path: /
+    initialDelaySeconds: 10
     periodSeconds: 5
 
   resources:
@@ -69,6 +74,12 @@ frontend:
     limits:
       cpu: 250m
       memory: 256Mi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
 
 config:
   dbHost: postgres-ha-rw
@@ -104,7 +115,7 @@ gateway:
 
   image:
     repository: emanabosamra/taskio-gateway
-    tag: latest
+    tag: ""
     pullPolicy: Always
 
   containerPort: 4000
@@ -112,6 +123,11 @@ gateway:
   service:
     port: 4000
     type: ClusterIP
+
+  startupProbe:
+    path: /health
+    failureThreshold: 30
+    periodSeconds: 10
 
   livenessProbe:
     path: /health
@@ -129,3 +145,9 @@ gateway:
     limits:
       cpu: 250m
       memory: 256Mi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70

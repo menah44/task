@@ -24,9 +24,17 @@ spec:
         seccompProfile:
           type: RuntimeDefault
 
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: frontend
+
       containers:
         - name: frontend
-          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+          image: "{{ .Values.frontend.image.repository }}:{{ required "frontend.image.tag is required" .Values.frontend.image.tag }}"
 
           ports:
             - containerPort: {{ .Values.frontend.containerPort }}
@@ -46,21 +54,21 @@ spec:
 
           startupProbe:
             httpGet:
-              path: /
+              path: {{ .Values.frontend.startupProbe.path }}
               port: {{ .Values.frontend.containerPort }}
             failureThreshold: {{ .Values.frontend.startupProbe.failureThreshold }}
             periodSeconds: {{ .Values.frontend.startupProbe.periodSeconds }}
 
           livenessProbe:
             httpGet:
-              path: /
+              path: {{ .Values.frontend.livenessProbe.path }}
               port: {{ .Values.frontend.containerPort }}
             initialDelaySeconds: {{ .Values.frontend.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.frontend.livenessProbe.periodSeconds }}
 
           readinessProbe:
             httpGet:
-              path: /
+              path: {{ .Values.frontend.readinessProbe.path }}
               port: {{ .Values.frontend.containerPort }}
             initialDelaySeconds: {{ .Values.frontend.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.frontend.readinessProbe.periodSeconds }}

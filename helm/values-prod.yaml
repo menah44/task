@@ -3,7 +3,7 @@ secret:
   superAdmin:
     name: Super Admin
     email: super@taskio.com
-    password: SuperSecret123!
+    password: ""
 
 config:
   nextPublicApiUrl: "http://20.47.65.42/api/v1"

@@ -1,4 +1,35 @@
-.env.production
-.env.deploy
-dist
-.next
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Node dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+.next/
+**/.next/
+
+# Secrets / certificates / keys
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs
+*.log
+npm-debug.log*
+
+# Security reports
+trivy_envs.txt
+trivy-*.sarif
+sbom-*.json
+kubescape-report.json
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/

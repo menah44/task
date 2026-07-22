@@ -26,9 +26,17 @@ spec:
         seccompProfile:
           type: RuntimeDefault
 
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: gateway
+
       containers:
         - name: gateway
-          image: "{{ .Values.gateway.image.repository }}:{{ .Values.gateway.image.tag }}"
+          image: "{{ .Values.gateway.image.repository }}:{{ required "gateway.image.tag is required" .Values.gateway.image.tag }}"
           imagePullPolicy: {{ .Values.gateway.image.pullPolicy }}
 
           ports:
@@ -53,6 +61,13 @@ spec:
                 secretKeyRef:
                   name: secret
                   key: JWT_SECRET
+
+          startupProbe:
+            httpGet:
+              path: {{ .Values.gateway.startupProbe.path }}
+              port: {{ .Values.gateway.containerPort }}
+            failureThreshold: {{ .Values.gateway.startupProbe.failureThreshold }}
+            periodSeconds: {{ .Values.gateway.startupProbe.periodSeconds }}
 
           livenessProbe:
             httpGet:

@@ -41,7 +41,7 @@ spec:
 
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
@@ -91,6 +91,7 @@ spec:
           volumeMounts:
             - name: uploads
               mountPath: /app/uploads
+
           startupProbe:
             httpGet:
               path: {{ .Values.backend.startupProbe.path }}
@@ -120,5 +121,6 @@ spec:
               memory: {{ .Values.backend.resources.limits.memory }}
               cpu: {{ .Values.backend.resources.limits.cpu }}
       volumes:
-       - name: uploads
-         emptyDir: {}
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-backend-uploads

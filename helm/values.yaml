@@ -25,6 +25,12 @@ backend:
     path: /health
     initialDelaySeconds: 10
     periodSeconds: 5
+  
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    accessMode: ReadWriteMany
+    size: 10Gi
  
   resources:
     requests:
@@ -98,7 +104,7 @@ postgres:
 
   storage:
     size: 5Gi
-    class: local-path
+    class: longhorn
 
   database: taskio
   owner: taskio_user
